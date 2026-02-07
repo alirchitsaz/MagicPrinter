@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | 50% Less Than Big Box</title>
+    <title>Magic Printer | v48 Logic</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -29,11 +29,11 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
 
-        /* GLOBAL */
+        /* GLOBAL RESET */
         body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
 
-        /* --- GLOBAL HEADER --- */
+        /* --- HEADER --- */
         .global-header { 
             height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
             padding: 0 16px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px);
@@ -66,7 +66,6 @@
         .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 24px; }
         .feature-card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
         
-        /* Price Comparison Table */
         .price-comp { margin: 0 24px 24px; background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
         .pc-row { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #334155; font-size: 13px; }
         .pc-row:last-child { border-bottom: none; }
@@ -96,7 +95,7 @@
         .booklet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #cbd5e1; }
         .booklet-grid .page-slot { background: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
-        /* DIMENSIONS (External) */
+        /* DIMENSIONS */
         .dim-line { position: absolute; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px; font-family: monospace; font-weight: bold; pointer-events: none; }
         .dim-top { top: -25px; left: 0; width: 100%; height: 20px; border-bottom: 1px solid #475569; }
         .dim-top span { background: #0f172a; padding: 0 8px; position: relative; top: 10px; }
@@ -123,6 +122,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
         }
         .btn-toggle.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 2px 5px rgba(37,99,235,0.3); }
+        .btn-toggle:disabled { opacity: 0.3; cursor: not-allowed; border-color: #334155; background: #0f172a; color: #475569; }
 
         /* PROFILE DRAWER */
         #profile-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); display: none; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
@@ -166,26 +166,29 @@
 
         <div id="homepage">
             <div class="hero">
-                <div class="hero-badge">HALF THE PRICE OF FEDEX & STAPLES</div>
+                <div class="hero-badge">50% CHEAPER THAN COPY SHOPS</div>
                 <h1>Stop Overpaying at<br>the Copy Shop.</h1>
-                <p>Professional quality prints for less than it costs to buy ink for your home printer.</p>
+                <p>Professional quality prints for less than half the price of the big box stores.</p>
             </div>
 
             <div class="price-comp">
                 <div class="pc-row pc-head">
-                    <div>Product (Color)</div>
-                    <div>Copy Shop</div>
+                    <div>Price Per Page (Color)</div>
+                    <div>Retail</div>
                     <div>Us</div>
                 </div>
                 <div class="pc-row">
                     <div class="text-slate-300">Letter (8.5x11)</div>
                     <div class="pc-them">$0.79</div>
-                    <div class="pc-us">$0.35</div>
+                    <div class="pc-us">$0.29</div>
                 </div>
                 <div class="pc-row">
                     <div class="text-slate-300">Tabloid (11x17)</div>
                     <div class="pc-them">$2.49</div>
-                    <div class="pc-us">$0.75</div>
+                    <div class="pc-us">$0.59</div>
+                </div>
+                <div class="text-center text-[10px] text-slate-500 py-2 bg-slate-900/50">
+                    *Compared to avg. retail walk-in prices (2025)
                 </div>
             </div>
 
@@ -193,7 +196,7 @@
                 <div class="feature-card">
                     <i class="fa-solid fa-truck-fast text-blue-500 text-2xl mb-2"></i>
                     <div class="font-bold text-sm text-white">Local Delivery</div>
-                    <div class="text-xs text-slate-400">Temecula + 50 Miles</div>
+                    <div class="text-xs text-slate-400">Temecula + 50 Miles ($20)</div>
                 </div>
                 <div class="feature-card">
                     <i class="fa-solid fa-plane-departure text-blue-500 text-2xl mb-2"></i>
@@ -203,7 +206,7 @@
             </div>
 
             <div class="text-center mb-4 mt-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Trusted By</span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">We Serve</span>
             </div>
             <div class="flex justify-center gap-2 flex-wrap px-6 mb-8">
                 <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Families</span>
@@ -218,7 +221,7 @@
                 </button>
             </div>
             
-            <div class="text-center pb-8 text-[10px] text-slate-600">v46 Value • PDF, JPG, PNG</div>
+            <div class="text-center pb-8 text-[10px] text-slate-600">v48 Logic • PDF, JPG, PNG</div>
         </div>
 
         <div id="screen-config" class="app-screen">
@@ -304,7 +307,7 @@
                     </div>
                     <button class="flex-1 h-12 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg flex items-center justify-between px-6" onclick="addToCart()">
                         <span>Add to Cart</span>
-                        <span id="price-disp">$0.10</span>
+                        <span id="price-disp">$0.29</span>
                     </button>
                 </div>
             </div>
@@ -327,7 +330,7 @@
                         <input type="text" class="select-input" placeholder="Address">
                     </div>
                     <div id="info-local" class="hidden text-xs text-slate-400 bg-slate-800 p-3 rounded">
-                        <i class="fa-solid fa-map-pin mr-1 text-blue-400"></i> Free delivery within 50 miles of Temecula.
+                        <i class="fa-solid fa-map-pin mr-1 text-blue-400"></i> Fee: $20.00 (Temecula + 50 Miles)
                     </div>
                 </div>
 
@@ -371,11 +374,11 @@
     <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
 
     <script>
-        // --- COMPETITIVE PRICING LOGIC ---
-        // Letter B&W: $0.10 | Letter Color: $0.35 | Tabloid B&W: $0.25 | Tabloid Color: $0.75
+        // --- PRICING & DATA ---
         const DIMS={letter:{w:8.5,h:11},legal:{w:8.5,h:14},tabloid:{w:11,h:17}, '12x18':{w:12,h:18}, a4:{w:8.3,h:11.7}, a3:{w:11.7,h:16.5}};
-        const BASE_PRICES={letter:0.10,legal:0.15,tabloid:0.25, '12x18':0.35, a4:0.12, a3:0.28};
-        const COLOR_ADD={letter:0.25,legal:0.30,tabloid:0.50, '12x18':0.75, a4:0.25, a3:0.50};
+        // Aggressive Pricing: B&W=0.09, Color=0.29
+        const BASE_PRICES={letter:0.09,legal:0.12,tabloid:0.19, '12x18':0.29, a4:0.09, a3:0.19};
+        const COLOR_ADD={letter:0.20,legal:0.25,tabloid:0.40, '12x18':0.50, a4:0.20, a3:0.40};
         
         let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:'',delivery:'ship'};
         let cart=[];
@@ -435,7 +438,6 @@
                     document.getElementById('range-group').style.display='none';
                     document.getElementById('nav-overlay').style.display='none';
                 }
-                
                 document.getElementById('homepage').classList.add('hidden-page');
                 showScreen('config');
                 state.previewIdx=0; renderPreview(); updatePrice();
@@ -450,8 +452,6 @@
             const w=state.orient==='portrait'?dim.w:dim.h;
             const h=state.orient==='portrait'?dim.h:dim.w;
             paper.style.aspectRatio=`${w}/${h}`;
-            
-            // Update External Dimensions
             document.getElementById('lbl-w').innerText=`${w}"`;
             document.getElementById('lbl-h').innerText=`${h}"`;
             
@@ -468,7 +468,7 @@
                 await renderSlot(area,state.printList[state.previewIdx]);
                 document.getElementById('nav-info').innerText=`${state.previewIdx+1}/${state.printList.length}`;
             }
-            updateFinishOverlay();
+            updateFinishUI(); // Ensure logic checks
         }
 
         async function renderSlot(container,pageNum){
@@ -491,25 +491,53 @@
         // --- CONTROLS ---
         function updateSize(v){ state.size=v; renderPreview(); updatePrice(); }
         function setOrient(v){ state.orient=v; toggle('btn-port',v==='portrait'); toggle('btn-land',v==='landscape'); renderPreview(); }
+        
         function setLayout(v){ 
             state.layout=v; toggle('btn-std',v==='standard'); toggle('btn-book',v==='booklet');
-            if(v==='booklet'){ state.orient='landscape'; state.size='tabloid'; toggle('btn-land',true); toggle('btn-port',false); document.getElementById('size-sel').value='tabloid'; }
+            if(v==='booklet'){ 
+                // Force Tabloid Landscape
+                state.orient='landscape'; state.size='tabloid'; 
+                toggle('btn-land',true); toggle('btn-port',false); 
+                document.getElementById('size-sel').value='tabloid'; 
+                // Disable Punch if active
+                if(state.punch==='3') state.punch='none';
+            }
             renderPreview(); updatePrice();
         }
+        
         function toggleColor(){ state.color=state.color==='color'?'bw':'color'; toggle('btn-bw',state.color==='bw'); toggle('btn-color',state.color==='color'); renderPreview(); updatePrice(); }
         
+        // --- FINISHING LOGIC ---
         function clearFinish(){ state.staple=false; state.punch='none'; updateFinishUI(); }
         function toggleStaple(){ state.staple=!state.staple; updateFinishUI(); }
-        function setPunch(v){ state.punch=(state.punch===v)?'none':v; updateFinishUI(); }
+        function setPunch(v){ 
+            if(state.layout==='booklet') return; // Prevent punch in booklet
+            state.punch=(state.punch===v)?'none':v; updateFinishUI(); 
+        }
+        
         function updateFinishUI(){ 
-            toggle('fn-none',!state.staple && state.punch==='none'); toggle('fn-staple',state.staple); toggle('fn-punch3',state.punch==='3');
+            const isBooklet = state.layout === 'booklet';
+            // Disable Punch Button if Booklet
+            const p3 = document.getElementById('fn-punch3');
+            p3.disabled = isBooklet;
+            p3.style.opacity = isBooklet ? '0.3' : '1';
+
+            toggle('fn-none',!state.staple && state.punch==='none'); 
+            toggle('fn-staple',state.staple); 
+            // Only toggle visual active state if logic allows
+            const p3Active = state.punch==='3' && !isBooklet;
+            if(p3Active) { p3.classList.add('active'); p3.classList.replace('text-gray-500','white'); } 
+            else { p3.classList.remove('active'); p3.classList.replace('white','text-gray-500'); }
+
             updateFinishOverlay(); updatePrice();
         }
+
         function updateFinishOverlay(){
             const l=document.getElementById('finish-layer'); l.innerHTML='';
             if(state.staple){ const s=document.createElement('div'); s.className='staple'; s.style.top='4%'; s.style.left='4%'; s.style.transform='rotate(-45deg)'; l.appendChild(s); }
             if(state.punch!=='none'){ for(let i=1;i<=3;i++){ const p=document.createElement('div'); p.className='punch'; p.style.left='2%'; p.style.top=(i/4*100)+'%'; l.appendChild(p); } }
         }
+
         function toggle(id,active){ const el=document.getElementById(id); if(active){ el.classList.add('active'); el.classList.replace('text-gray-500','white'); } else { el.classList.remove('active'); el.classList.replace('white','text-gray-500'); } }
         
         function updatePrice(){
@@ -531,7 +559,7 @@
             let tot=0;
             cart.forEach((i, idx)=>{ tot+=i.price; l.innerHTML+=`<div class="cart-item"><div class="flex-1 text-white font-bold text-sm">${i.file}<div class="text-xs text-slate-400 font-normal">${i.desc} • Qty ${i.qty}</div></div><div class="text-white font-bold">$${i.price.toFixed(2)}</div><div class="text-red-500 ml-3 cursor-pointer" onclick="cart.splice(${idx},1);updateCartUI()"><i class="fa-solid fa-trash"></i></div></div>`; });
             
-            let del=state.delivery==='ship'?12:0; 
+            let del=state.delivery==='ship'?12:20; // Local = 20
             document.getElementById('sum-sub').innerText='$'+tot.toFixed(2);
             document.getElementById('sum-del').innerText='$'+del.toFixed(2);
             document.getElementById('sum-total').innerText='$'+(tot+del).toFixed(2);

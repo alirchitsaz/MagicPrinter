@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Printer | Business Portal</title>
+    <title>Magic Printer | Professional Print Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,8 +14,8 @@
             theme: {
                 extend: {
                     colors: {
-                        magic: { 950: '#020617', 900: '#0f172a', 800: '#1e293b', 600: '#2563eb', 500: '#3b82f6', 400: '#60a5fa' },
-                        kyocera: { red: '#c41230', gray: '#333333' }
+                        brand: { 950: '#0b0f19', 900: '#111827', 800: '#1f2937', 600: '#2563eb', 500: '#3b82f6', 400: '#60a5fa' },
+                        kyocera: { red: '#c41230' }
                     }
                 }
             }
@@ -24,509 +24,572 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; }
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: white; }
         
-        /* UI Polish */
-        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-        .kyocera-badge { background: #c41230; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        /* Realistic Paper Shadow */
+        .paper-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2); }
         
-        /* Finishing Overlays */
-        .staple-tl { position: absolute; top: 12px; left: 12px; width: 30px; height: 6px; background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); transform: rotate(-45deg); box-shadow: 1px 1px 2px rgba(0,0,0,0.5); z-index: 20; }
-        .staple-bk { position: absolute; left: 50%; top: 50%; width: 2px; height: 90%; background: rgba(0,0,0,0.1); transform: translate(-50%, -50%); border-left: 1px dashed #94a3b8; z-index: 10; }
+        /* Visual Finishing Marks */
+        .staple-mark { position: absolute; width: 30px; height: 6px; background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); border-radius: 2px; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); z-index: 20; }
+        .punch-hole { width: 14px; height: 14px; background: #111827; border-radius: 50%; box-shadow: inset 1px 1px 3px rgba(0,0,0,0.8); z-index: 20; }
+        .fold-line { position: absolute; border-left: 1px dashed rgba(0,0,0,0.3); height: 100%; z-index: 10; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden selection:bg-magic-500 selection:text-white">
+<body class="h-screen flex overflow-hidden text-gray-100">
 
-    <nav class="w-20 lg:w-64 bg-magic-900 border-r border-gray-800 flex flex-col justify-between hidden md:flex">
+    <nav class="w-20 lg:w-64 bg-brand-900 border-r border-gray-800 flex flex-col justify-between hidden md:flex z-20">
         <div>
             <div class="p-6 flex items-center gap-3">
-                <div class="w-8 h-8 bg-magic-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-print text-white text-sm"></i>
+                <div class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+                    <i class="fa-solid fa-layer-group text-white"></i>
                 </div>
-                <span class="font-bold text-lg tracking-tight hidden lg:block">MAGIC<span class="text-magic-400">PRINTER</span></span>
+                <div class="hidden lg:block">
+                    <h1 class="font-bold text-lg leading-tight">MAGIC<span class="text-brand-400">PRINTER</span></h1>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">Business Hub</p>
+                </div>
             </div>
 
-            <div class="mt-8 px-4 space-y-2">
-                <button onclick="switchTab('new')" id="nav-new" class="w-full flex items-center gap-4 px-4 py-3 bg-magic-800 text-white rounded-xl transition-all shadow-md border border-gray-700">
-                    <i class="fa-solid fa-plus-circle text-magic-400"></i>
-                    <span class="hidden lg:block font-medium">New Job</span>
+            <div class="mt-8 px-3 space-y-1">
+                <button onclick="setView('new')" id="nav-new" class="nav-btn active w-full flex items-center gap-4 px-4 py-3 bg-brand-800 text-white rounded-xl border border-gray-700 transition-all">
+                    <i class="fa-solid fa-circle-plus text-brand-400"></i>
+                    <span class="hidden lg:block font-medium">New Project</span>
                 </button>
-                <button onclick="switchTab('history')" id="nav-history" class="w-full flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-magic-800/50 rounded-xl transition-all">
+                <button onclick="setView('history')" id="nav-history" class="nav-btn w-full flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-brand-800/50 rounded-xl transition-all">
                     <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span class="hidden lg:block font-medium">Order History</span>
+                    <span class="hidden lg:block font-medium">Past Orders</span>
                 </button>
             </div>
         </div>
 
-        <div class="p-4 border-t border-gray-800">
-            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 cursor-pointer" onclick="logout()">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold" id="user-avatar">?</div>
+        <div class="p-4 border-t border-gray-800 bg-brand-950/50">
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="logout()">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold ring-2 ring-brand-900 group-hover:ring-brand-500 transition-all" id="avatar">?</div>
                 <div class="hidden lg:block">
-                    <p class="text-sm font-semibold" id="user-name-display">Guest</p>
-                    <p class="text-xs text-gray-500">Log Out</p>
+                    <p class="text-sm font-semibold truncate w-32" id="username">Guest User</p>
+                    <p class="text-xs text-brand-400 group-hover:underline">Sign Out</p>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="flex-1 flex flex-col relative">
+    <main class="flex-1 flex flex-col relative bg-brand-950">
         
-        <header class="md:hidden h-16 bg-magic-900 border-b border-gray-800 flex items-center justify-between px-4">
-            <span class="font-bold text-lg">MAGIC<span class="text-magic-400">PRINTER</span></span>
-            <button onclick="document.getElementById('cart-drawer').classList.toggle('translate-x-full')" class="relative">
-                <i class="fa-solid fa-cart-shopping text-gray-300"></i>
-                <span id="mobile-cart-count" class="absolute -top-2 -right-2 bg-magic-600 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+        <header class="md:hidden h-16 bg-brand-900 border-b border-gray-800 flex items-center justify-between px-4 z-30">
+            <span class="font-bold text-lg">MAGIC<span class="text-brand-400">PRINTER</span></span>
+            <button onclick="toggleCart()" class="relative p-2">
+                <i class="fa-solid fa-basket-shopping text-gray-300"></i>
+                <span id="mobile-badge" class="absolute top-1 right-0 bg-brand-600 text-[9px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
             </button>
         </header>
 
-        <div id="login-view" class="absolute inset-0 z-50 bg-magic-950 flex flex-col items-center justify-center p-6">
-            <div class="w-full max-w-md p-8 glass-panel rounded-2xl shadow-2xl">
+        <div id="login-modal" class="fixed inset-0 z-50 bg-brand-950/95 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-brand-900 border border-gray-700 rounded-2xl shadow-2xl p-8">
                 <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-magic-600 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-xl shadow-blue-500/20">
-                        <i class="fa-solid fa-print text-3xl"></i>
-                    </div>
-                    <h1 class="text-2xl font-bold">Welcome Back</h1>
-                    <p class="text-gray-400 text-sm">Sign in to access your print portal</p>
+                    <div class="w-14 h-14 bg-brand-600 rounded-xl mx-auto flex items-center justify-center mb-4 text-2xl"><i class="fa-solid fa-print"></i></div>
+                    <h2 class="text-2xl font-bold">Client Portal</h2>
+                    <p class="text-gray-400 text-sm">Log in to manage your print orders</p>
                 </div>
                 <div class="space-y-4">
-                    <div>
-                        <label class="text-xs uppercase text-gray-500 font-bold ml-1">Full Name</label>
-                        <input type="text" id="login-name" class="w-full bg-magic-900 border border-gray-700 rounded-xl p-3 mt-1 focus:border-magic-500 focus:outline-none transition-colors" placeholder="e.g. Ali Chitsaz">
-                    </div>
-                    <div>
-                        <label class="text-xs uppercase text-gray-500 font-bold ml-1">Email</label>
-                        <input type="email" id="login-email" class="w-full bg-magic-900 border border-gray-700 rounded-xl p-3 mt-1 focus:border-magic-500 focus:outline-none transition-colors" placeholder="name@company.com">
-                    </div>
-                    <button onclick="login()" class="w-full bg-magic-600 hover:bg-magic-500 text-white font-bold py-3 rounded-xl transition-all mt-2">Access Portal</button>
+                    <input type="text" id="login-name" class="w-full bg-brand-950 border border-gray-700 rounded-xl p-3 focus:border-brand-500 focus:outline-none" placeholder="Company / Name">
+                    <input type="email" id="login-email" class="w-full bg-brand-950 border border-gray-700 rounded-xl p-3 focus:border-brand-500 focus:outline-none" placeholder="Email Address">
+                    <button onclick="handleLogin()" class="w-full bg-brand-600 hover:bg-brand-500 py-3 rounded-xl font-bold transition-all">Enter Portal</button>
                 </div>
             </div>
         </div>
 
         <div id="view-new" class="flex-1 flex flex-col lg:flex-row h-full">
             
-            <div class="flex-1 bg-gray-900/50 flex flex-col relative p-4 lg:p-8 overflow-hidden">
-                <div id="drop-zone" class="w-full h-full border-2 border-dashed border-gray-700 rounded-2xl bg-gray-800/30 hover:bg-gray-800/50 hover:border-magic-500 transition-all cursor-pointer flex flex-col items-center justify-center group relative overflow-hidden">
+            <div class="flex-1 relative bg-[#0f1218] flex flex-col overflow-hidden">
+                <div class="h-14 border-b border-gray-800 flex items-center justify-between px-6 bg-brand-900/50">
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Visual Preview</span>
+                    <div class="flex gap-2">
+                         <span id="file-badge" class="hidden text-xs bg-gray-800 border border-gray-700 px-2 py-1 rounded text-gray-300"></span>
+                         <button onclick="resetJob()" class="text-gray-500 hover:text-red-500 text-sm px-2"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex items-center justify-center p-8 overflow-auto relative" id="stage-container">
                     
-                    <div id="empty-state" class="text-center p-6 transition-all duration-300">
-                        <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-600 group-hover:text-magic-400 mb-4 transition-colors"></i>
-                        <h3 class="text-xl font-semibold text-gray-200">Upload Document</h3>
-                        <p class="text-gray-500 text-sm mt-2">PDF files up to 50MB</p>
+                    <div id="drop-zone" class="absolute inset-4 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center transition-all hover:border-brand-500 hover:bg-gray-800/30 cursor-pointer z-10">
+                        <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-200">Upload Files</h3>
+                        <p class="text-sm text-gray-500 mt-2">PDF, JPG, PNG, TIFF</p>
+                        <button class="mt-6 px-6 py-2 bg-brand-600 rounded-full text-sm font-medium hover:bg-brand-500">Browse Device</button>
+                        <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.tiff">
                     </div>
 
-                    <div id="preview-stage" class="hidden w-full h-full flex items-center justify-center p-4 lg:p-12 relative">
-                         <div id="paper-mockup" class="relative shadow-2xl transition-all duration-500 bg-white" style="width:0; height:0;">
-                            <canvas id="pdf-canvas" class="w-full h-full object-contain"></canvas>
-                            <div id="vis-staple" class="staple-tl hidden"></div>
-                            <div id="vis-fold" class="staple-bk hidden"></div>
-                        </div>
+                    <div id="paper-mockup" class="hidden relative bg-white transition-all duration-500 paper-shadow">
+                        <canvas id="main-canvas" class="w-full h-full object-contain block"></canvas>
                         
-                        <div class="absolute top-4 left-4 bg-gray-900/90 border border-gray-700 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg">
-                            <i class="fa-solid fa-file-pdf text-red-500"></i>
-                            <span id="filename" class="text-xs font-mono text-gray-300 truncate max-w-[150px]">doc.pdf</span>
-                            <button onclick="resetBuilder()" class="hover:text-red-400 ml-2"><i class="fa-solid fa-times"></i></button>
-                        </div>
+                        <div id="finish-staple-tl" class="staple-mark hidden" style="top:12px; left:12px; transform:rotate(-45deg);"></div>
+                        <div id="finish-staple-tr" class="staple-mark hidden" style="top:12px; right:12px; transform:rotate(45deg);"></div>
+                        <div id="finish-punch-2" class="hidden absolute left-2 top-0 h-full flex flex-col justify-around py-10"><div class="punch-hole"></div><div class="punch-hole"></div></div>
+                        <div id="finish-punch-3" class="hidden absolute left-2 top-0 h-full flex flex-col justify-around py-4"><div class="punch-hole"></div><div class="punch-hole"></div><div class="punch-hole"></div></div>
+                        <div id="finish-fold-c" class="fold-line hidden" style="left:50%;"></div>
                     </div>
-                    <input type="file" id="file-upload" class="hidden" accept=".pdf">
                 </div>
             </div>
 
-            <div class="w-full lg:w-96 bg-magic-950 border-l border-gray-800 flex flex-col overflow-y-auto">
-                <div class="p-6 border-b border-gray-800">
-                    <h2 class="font-bold text-lg">Job Configuration</h2>
-                    <p class="text-xs text-gray-500">Kyocera TASKalfa / Ecosys Compatible</p>
+            <div class="w-full lg:w-[400px] bg-brand-900 border-l border-gray-800 flex flex-col h-full overflow-hidden">
+                <div class="p-5 border-b border-gray-800 bg-brand-900 z-10">
+                    <h2 class="font-bold text-white">Print Settings</h2>
+                    <p class="text-xs text-gray-500">Kyocera TASKalfa / Ecosys Driver</p>
                 </div>
 
-                <div class="p-6 space-y-8 flex-1 opacity-50 pointer-events-none transition-opacity duration-300" id="controls-area">
+                <div class="flex-1 overflow-y-auto p-5 space-y-8 opacity-50 pointer-events-none transition-opacity" id="controls-panel">
                     
                     <div class="space-y-3">
-                        <label class="text-xs uppercase text-magic-400 font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-scroll"></i> Media Selection
-                        </label>
+                        <label class="text-xs font-bold text-brand-400 uppercase tracking-wider">Media & Layout</label>
                         
                         <div class="grid grid-cols-3 gap-2">
-                            <button onclick="setMediaSize('letter')" id="btn-letter" class="media-btn active p-2 rounded-lg border border-magic-500 bg-magic-900/50 text-center hover:bg-magic-800">
+                            <button onclick="setSize('letter')" id="sz-letter" class="size-btn active bg-brand-800 border border-brand-500 rounded-lg p-2 text-center hover:bg-gray-800">
                                 <div class="text-xs font-bold">Letter</div>
-                                <div class="text-[10px] text-gray-500">8.5 x 11</div>
+                                <div class="text-[9px] text-gray-400">8.5 x 11</div>
                             </button>
-                            <button onclick="setMediaSize('legal')" id="btn-legal" class="media-btn p-2 rounded-lg border border-gray-700 bg-gray-900 text-center hover:bg-gray-800">
+                            <button onclick="setSize('legal')" id="sz-legal" class="size-btn bg-brand-950 border border-gray-700 rounded-lg p-2 text-center hover:bg-gray-800">
                                 <div class="text-xs font-bold">Legal</div>
-                                <div class="text-[10px] text-gray-500">8.5 x 14</div>
+                                <div class="text-[9px] text-gray-400">8.5 x 14</div>
                             </button>
-                            <button onclick="setMediaSize('tabloid')" id="btn-tabloid" class="media-btn p-2 rounded-lg border border-gray-700 bg-gray-900 text-center hover:bg-gray-800">
+                            <button onclick="setSize('tabloid')" id="sz-tabloid" class="size-btn bg-brand-950 border border-gray-700 rounded-lg p-2 text-center hover:bg-gray-800">
                                 <div class="text-xs font-bold">Tabloid</div>
-                                <div class="text-[10px] text-gray-500">11 x 17</div>
+                                <div class="text-[9px] text-gray-400">11 x 17</div>
                             </button>
                         </div>
 
-                        <select id="paper-type" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-magic-500 outline-none">
-                            <option value="plain">Plain (Standard 24lb)</option>
-                            <option value="thick">Cardstock / Thick (90lb)</option>
-                            <option value="coated">Coated / Glossy</option>
-                            <option value="transparency">Transparency</option>
-                        </select>
+                        <div class="grid grid-cols-2 gap-3">
+                             <select id="paper-stock" class="bg-brand-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-brand-500 outline-none">
+                                <option value="plain">Plain (20lb)</option>
+                                <option value="bond">Bond (24lb)</option>
+                                <option value="cardstock">Cardstock (100lb)</option>
+                                <option value="glossy">Glossy / Coated</option>
+                                <option value="label">Adhesive Label</option>
+                            </select>
+                            <select id="print-color" onchange="calcPrice()" class="bg-brand-950 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-brand-500 outline-none">
+                                <option value="bw">Black & White</option>
+                                <option value="color">Full Color (CMYK)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="space-y-3">
-                        <label class="text-xs uppercase text-magic-400 font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-layer-group"></i> Output & Finishing
-                        </label>
+                        <label class="text-xs font-bold text-brand-400 uppercase tracking-wider">Finishing Options</label>
                         
-                        <div class="flex items-center justify-between bg-gray-900 p-2 rounded-lg border border-gray-700">
-                            <span class="text-sm pl-2">Duplex (2-Sided)</span>
-                            <div onclick="toggleDuplex()" id="duplex-toggle" class="w-10 h-5 bg-gray-700 rounded-full relative cursor-pointer transition-colors">
-                                <div class="w-3 h-3 bg-white rounded-full absolute top-1 left-1 transition-transform"></div>
-                            </div>
-                        </div>
-
-                        <select id="finishing-opt" onchange="updateFinishing()" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-sm focus:border-magic-500 outline-none">
-                            <option value="none">No Finishing</option>
-                            <option value="staple-tl">Staple: Top Left</option>
+                        <select id="finishing" onchange="updateFinish()" class="w-full bg-brand-950 border border-gray-700 rounded-lg p-3 text-sm focus:border-brand-500 outline-none">
+                            <option value="none">No Finishing (Collate)</option>
+                            <option value="staple-tl">Staple: Top-Left Corner</option>
+                            <option value="staple-dual">Staple: Dual (Left Edge)</option>
                             <option value="punch-2">Hole Punch: 2-Hole</option>
-                            <option value="booklet">Booklet (Fold & Saddle Stitch)</option>
+                            <option value="punch-3">Hole Punch: 3-Hole</option>
+                            <option value="fold-tri">Tri-Fold (Marketing)</option>
+                            <option value="booklet">Saddle Stitch Booklet</option>
                         </select>
+
+                        <div class="flex items-center justify-between bg-brand-950 p-3 rounded-lg border border-gray-700">
+                            <span class="text-sm text-gray-300">Double Sided (Duplex)</span>
+                            <button onclick="toggleDuplex()" id="btn-duplex" class="w-10 h-5 bg-gray-700 rounded-full relative transition-colors">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-1 left-1 transition-transform"></div>
+                            </button>
+                        </div>
                     </div>
 
-                    <div>
-                         <label class="text-xs uppercase text-magic-400 font-bold">Copies</label>
-                         <div class="flex items-center mt-2">
-                            <button onclick="updateCopies(-1)" class="w-10 h-10 bg-gray-800 rounded-l-lg hover:bg-gray-700">-</button>
-                            <input type="number" id="copy-count" value="1" readonly class="flex-1 h-10 bg-gray-900 border-y border-gray-800 text-center focus:outline-none">
-                            <button onclick="updateCopies(1)" class="w-10 h-10 bg-gray-800 rounded-r-lg hover:bg-gray-700">+</button>
+                    <div class="space-y-3">
+                         <label class="text-xs font-bold text-brand-400 uppercase tracking-wider">Instructions</label>
+                         <div class="flex gap-3">
+                             <div class="w-1/3">
+                                 <label class="text-[10px] text-gray-500 uppercase">Copies</label>
+                                 <input type="number" id="qty" value="1" min="1" onchange="calcPrice()" class="w-full bg-brand-950 border border-gray-700 rounded-lg p-2 text-center text-white focus:border-brand-500 outline-none">
+                             </div>
+                             <div class="w-2/3">
+                                <label class="text-[10px] text-gray-500 uppercase">Special Instructions</label>
+                                <input type="text" id="notes" placeholder="e.g. Cut to bleed..." class="w-full bg-brand-950 border border-gray-700 rounded-lg p-2 text-sm focus:border-brand-500 outline-none">
+                             </div>
                          </div>
                     </div>
 
                 </div>
 
-                <div class="p-6 border-t border-gray-800 bg-gray-900/50 mt-auto">
+                <div class="p-5 border-t border-gray-800 bg-brand-900/90 backdrop-blur-md">
                     <div class="flex justify-between items-end mb-4">
-                        <span class="text-xs text-gray-500" id="item-specs">Letter • Plain</span>
-                        <span class="text-xl font-bold text-white" id="item-price">$0.00</span>
+                        <div>
+                            <p class="text-xs text-gray-500">Unit Cost</p>
+                            <p class="font-bold text-gray-300 text-sm" id="unit-cost">$0.10 / ea</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">Subtotal</p>
+                            <p class="font-bold text-2xl text-white" id="total-price">$0.00</p>
+                        </div>
                     </div>
-                    <button onclick="addToCart()" id="btn-add" disabled class="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                        Add to Order
+                    <button onclick="addToCart()" id="btn-add" disabled class="w-full py-3.5 bg-white hover:bg-gray-100 text-brand-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                        <span>Add to Project</span>
+                        <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
         </div>
 
         <div id="view-history" class="hidden flex-1 p-8 overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-6">Order History</h2>
-            <div id="history-list" class="space-y-4 max-w-4xl">
-                </div>
+            <h2 class="text-2xl font-bold mb-6">Past Orders</h2>
+            <div id="history-list" class="grid gap-4 max-w-5xl"></div>
         </div>
 
     </main>
 
-    <aside id="cart-drawer" class="fixed right-0 top-0 h-full w-full md:w-96 bg-gray-900 border-l border-gray-700 shadow-2xl transform translate-x-full transition-transform duration-300 z-40 flex flex-col">
-        <div class="p-6 border-b border-gray-800 flex justify-between items-center">
-            <h2 class="font-bold text-lg"><i class="fa-solid fa-cart-shopping mr-2"></i> Current Order</h2>
+    <div id="cart-drawer" class="fixed inset-y-0 right-0 w-full md:w-[450px] bg-brand-900 border-l border-gray-700 shadow-2xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col">
+        <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-brand-950">
+            <div>
+                <h2 class="font-bold text-lg text-white">Project Summary</h2>
+                <p class="text-xs text-gray-500">Review items before submission</p>
+            </div>
             <button onclick="toggleCart()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
         </div>
-        
-        <div class="flex-1 overflow-y-auto p-6 space-y-4" id="cart-items">
-            <div class="text-center text-gray-500 mt-10">
-                <i class="fa-solid fa-basket-shopping text-4xl mb-3 opacity-50"></i>
-                <p>Your cart is empty</p>
-            </div>
-        </div>
 
-        <div class="p-6 bg-gray-800 border-t border-gray-700">
-            <div class="flex justify-between mb-2">
-                <span class="text-gray-400">Subtotal</span>
-                <span class="font-bold" id="cart-total">$0.00</span>
+        <div class="p-6 bg-brand-800/30 border-b border-gray-800 space-y-3">
+             <div class="grid grid-cols-2 gap-3">
+                 <div>
+                     <label class="text-[10px] text-gray-500 uppercase font-bold">PO / Reference #</label>
+                     <input type="text" id="po-ref" placeholder="Optional" class="w-full bg-brand-950 border border-gray-700 rounded-lg p-2 text-sm focus:border-brand-500 outline-none">
+                 </div>
+                 <div>
+                     <label class="text-[10px] text-gray-500 uppercase font-bold">Due Date</label>
+                     <select id="due-date" class="w-full bg-brand-950 border border-gray-700 rounded-lg p-2 text-sm focus:border-brand-500 outline-none">
+                         <option>Standard (24h)</option>
+                         <option>Rush (4h)</option>
+                         <option>Economy (3 Days)</option>
+                     </select>
+                 </div>
+             </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-6 space-y-4" id="cart-items"></div>
+
+        <div class="p-6 bg-brand-950 border-t border-gray-800">
+            <div class="flex justify-between mb-4">
+                <span class="text-gray-400">Total Estimate</span>
+                <span class="font-bold text-xl text-brand-400" id="cart-total">$0.00</span>
             </div>
-            <button onclick="checkout()" id="btn-checkout" disabled class="w-full py-4 bg-magic-600 hover:bg-magic-500 text-white font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                Complete Order
+            <button onclick="submitOrder()" id="btn-submit" disabled class="w-full py-4 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50">
+                Submit Order
             </button>
         </div>
-    </aside>
+    </div>
 
     <script>
-        // --- DATA & STATE ---
-        const PRICES = {
-            letter: 0.10, legal: 0.15, tabloid: 0.25,
-            plain: 0, thick: 0.05, coated: 0.10, transparency: 0.50,
-            staple: 0.02, punch: 0.01, booklet: 0.25
+        // --- CONFIG ---
+        const PRICING = {
+            letter: { bw: 0.10, color: 0.35 },
+            legal: { bw: 0.15, color: 0.45 },
+            tabloid: { bw: 0.25, color: 0.75 },
+            stock: { plain: 0, bond: 0.05, cardstock: 0.15, glossy: 0.20, label: 0.50 },
+            finish: { none: 0, 'staple-tl': 0.02, 'staple-dual': 0.03, 'punch-2': 0.01, 'punch-3': 0.01, 'fold-tri': 0.10, booklet: 0.35 }
         };
 
-        let app = {
+        const PAPER_DIMS = { // Pixels for mock display (approx 1in = 40px)
+            letter: { w: 340, h: 440 },
+            legal: { w: 340, h: 560 },
+            tabloid: { w: 440, h: 680 }
+        };
+
+        // --- STATE ---
+        let state = {
             user: null,
-            currentJob: {
-                file: null,
-                fileName: '',
-                pageCount: 0,
-                size: 'letter',
-                type: 'plain',
-                duplex: false,
-                finishing: 'none',
-                copies: 1
+            job: {
+                file: null, type: null, pages: 1, 
+                size: 'letter', stock: 'plain', color: 'bw', 
+                finish: 'none', duplex: false, copies: 1, notes: ''
             },
             cart: [],
-            history: JSON.parse(localStorage.getItem('magicHistory')) || []
+            history: JSON.parse(localStorage.getItem('mp_history')) || []
         };
 
-        // --- AUTHENTICATION ---
-        function checkLogin() {
-            const savedUser = localStorage.getItem('magicUser');
-            if (savedUser) {
-                app.user = JSON.parse(savedUser);
-                updateUserUI();
-                document.getElementById('login-view').classList.add('hidden');
-            }
+        // --- AUTH ---
+        if(localStorage.getItem('mp_user')) {
+            state.user = JSON.parse(localStorage.getItem('mp_user'));
+            updateUserUI();
+            document.getElementById('login-modal').classList.add('hidden');
         }
 
-        function login() {
+        function handleLogin() {
             const name = document.getElementById('login-name').value;
             const email = document.getElementById('login-email').value;
-            if(!name || !email) return alert('Please enter details');
-            
-            app.user = { name, email, joinDate: new Date().toLocaleDateString() };
-            localStorage.setItem('magicUser', JSON.stringify(app.user));
-            
+            if(!name) return;
+            state.user = { name, email };
+            localStorage.setItem('mp_user', JSON.stringify(state.user));
             updateUserUI();
-            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('login-modal').classList.add('hidden');
         }
 
         function logout() {
-            localStorage.removeItem('magicUser');
+            localStorage.removeItem('mp_user');
             location.reload();
         }
 
         function updateUserUI() {
-            document.getElementById('user-name-display').innerText = app.user.name;
-            const initials = app.user.name.split(' ').map(n => n[0]).join('').substring(0,2);
-            document.getElementById('user-avatar').innerText = initials;
+            document.getElementById('username').innerText = state.user.name;
+            document.getElementById('avatar').innerText = state.user.name.substring(0,2).toUpperCase();
             renderHistory();
         }
 
-        // --- BUILDER LOGIC ---
+        // --- UPLOAD ENGINE ---
         const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-upload');
+        const fileInput = document.getElementById('file-input');
 
         dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-magic-500'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-magic-500'));
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-brand-500'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-brand-500'));
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('border-magic-500');
-            if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+            dropZone.classList.remove('border-brand-500');
+            if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
         });
-        fileInput.addEventListener('change', (e) => { if(e.target.files[0]) loadFile(e.target.files[0]); });
+        fileInput.addEventListener('change', (e) => { if(e.target.files[0]) processFile(e.target.files[0]); });
 
-        async function loadFile(file) {
-            if(file.type !== 'application/pdf') return Swal.fire('Error', 'Please upload a PDF file.', 'error');
+        async function processFile(file) {
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/tiff'];
+            if(!validTypes.includes(file.type)) return Swal.fire('Format Error', 'Please upload PDF, JPG, or PNG.', 'error');
+
+            state.job.file = file;
+            state.job.type = file.type.includes('pdf') ? 'pdf' : 'img';
             
-            app.currentJob.file = file;
-            app.currentJob.fileName = file.name;
-            document.getElementById('filename').innerText = file.name;
-
-            // UI State
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('preview-stage').classList.remove('hidden');
-            document.getElementById('controls-area').classList.remove('opacity-50', 'pointer-events-none');
+            // UI Update
+            document.getElementById('drop-zone').classList.add('hidden');
+            document.getElementById('paper-mockup').classList.remove('hidden');
+            document.getElementById('controls-panel').classList.remove('opacity-50', 'pointer-events-none');
             document.getElementById('btn-add').disabled = false;
+            document.getElementById('file-badge').innerText = file.type.split('/')[1].toUpperCase();
+            document.getElementById('file-badge').classList.remove('hidden');
 
-            // PDF Render
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-            app.currentJob.pageCount = pdf.numPages;
-            
-            const page = await pdf.getPage(1);
-            const viewport = page.getViewport({ scale: 1 });
-            const canvas = document.getElementById('pdf-canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-
-            updatePrice();
+            renderVisualizer();
+            calcPrice();
         }
 
-        function setMediaSize(size) {
-            app.currentJob.size = size;
+        async function renderVisualizer() {
+            const canvas = document.getElementById('main-canvas');
+            const ctx = canvas.getContext('2d');
+            const dims = PAPER_DIMS[state.job.size];
             
-            // Visual Updates
-            document.querySelectorAll('.media-btn').forEach(b => {
-                b.classList.remove('border-magic-500', 'bg-magic-900/50', 'active');
-                b.classList.add('border-gray-700', 'bg-gray-900');
-            });
-            document.getElementById(`btn-${size}`).classList.add('border-magic-500', 'bg-magic-900/50', 'active');
-            document.getElementById(`btn-${size}`).classList.remove('border-gray-700', 'bg-gray-900');
-
-            // Paper Aspect Ratio Logic
+            // Resize Container
             const mockup = document.getElementById('paper-mockup');
-            // Mock sizes in pixels (100px = 1 inch approx for relative scale)
-            if(size === 'letter') { mockup.style.width = '300px'; mockup.style.height = '388px'; }
-            if(size === 'legal') { mockup.style.width = '300px'; mockup.style.height = '494px'; }
-            if(size === 'tabloid') { mockup.style.width = '388px'; mockup.style.height = '600px'; } // 11x17
+            mockup.style.width = dims.w + 'px';
+            mockup.style.height = dims.h + 'px';
+            
+            // Resize Canvas
+            canvas.width = dims.w * 2; // HiDPI
+            canvas.height = dims.h * 2;
+            
+            ctx.clearRect(0,0, canvas.width, canvas.height);
 
-            updatePrice();
+            if(state.job.type === 'pdf') {
+                const buffer = await state.job.file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(buffer).promise;
+                state.job.pages = pdf.numPages;
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: canvas.width / page.getViewport({scale:1}).width });
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            } else {
+                state.job.pages = 1;
+                const img = new Image();
+                img.onload = () => {
+                    // "Fit to Page" Logic
+                    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                    const x = (canvas.width / 2) - (img.width / 2) * scale;
+                    const y = (canvas.height / 2) - (img.height / 2) * scale;
+                    ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+                };
+                img.src = URL.createObjectURL(state.job.file);
+            }
+        }
+
+        // --- CONTROLS LOGIC ---
+        function setSize(sz) {
+            state.job.size = sz;
+            document.querySelectorAll('.size-btn').forEach(b => {
+                b.classList.remove('active', 'bg-brand-800', 'border-brand-500');
+                b.classList.add('bg-brand-950', 'border-gray-700');
+            });
+            document.getElementById('sz-'+sz).classList.add('active', 'bg-brand-800', 'border-brand-500');
+            renderVisualizer();
+            calcPrice();
+        }
+
+        function updateFinish() {
+            const val = document.getElementById('finishing').value;
+            state.job.finish = val;
+            
+            // Hide all marks
+            document.querySelectorAll('.staple-mark, .punch-hole, .fold-line, #finish-punch-2, #finish-punch-3').forEach(e => e.classList.add('hidden'));
+            document.getElementById('finish-fold-c').classList.add('hidden');
+
+            if(val === 'staple-tl') document.getElementById('finish-staple-tl').classList.remove('hidden');
+            if(val === 'staple-dual') {
+                document.getElementById('finish-staple-tl').classList.remove('hidden');
+                document.getElementById('finish-staple-tl').style.transform = 'rotate(0deg)';
+                document.getElementById('finish-staple-tl').style.top = '25%';
+                // Add second staple visually via JS if needed, simplifying for demo
+            }
+            if(val === 'punch-2') document.getElementById('finish-punch-2').classList.remove('hidden');
+            if(val === 'punch-3') document.getElementById('finish-punch-3').classList.remove('hidden');
+            if(val === 'booklet' || val === 'fold-tri') document.getElementById('finish-fold-c').classList.remove('hidden');
+            
+            calcPrice();
         }
 
         function toggleDuplex() {
-            app.currentJob.duplex = !app.currentJob.duplex;
-            const toggle = document.getElementById('duplex-toggle');
-            if(app.currentJob.duplex) {
-                toggle.classList.replace('bg-gray-700', 'bg-magic-500');
-                toggle.firstElementChild.classList.add('translate-x-5');
+            state.job.duplex = !state.job.duplex;
+            const btn = document.getElementById('btn-duplex');
+            if(state.job.duplex) {
+                btn.classList.replace('bg-gray-700', 'bg-brand-500');
+                btn.firstElementChild.classList.add('translate-x-5');
             } else {
-                toggle.classList.replace('bg-magic-500', 'bg-gray-700');
-                toggle.firstElementChild.classList.remove('translate-x-5');
+                btn.classList.replace('bg-brand-500', 'bg-gray-700');
+                btn.firstElementChild.classList.remove('translate-x-5');
             }
+            calcPrice();
         }
 
-        function updateFinishing() {
-            const opt = document.getElementById('finishing-opt').value;
-            app.currentJob.finishing = opt;
+        function calcPrice() {
+            state.job.stock = document.getElementById('paper-stock').value;
+            state.job.color = document.getElementById('print-color').value;
+            state.job.copies = parseInt(document.getElementById('qty').value) || 1;
+            state.job.notes = document.getElementById('notes').value;
+
+            const base = PRICING[state.job.size][state.job.color];
+            const stockCost = PRICING.stock[state.job.stock];
+            const finishCost = PRICING.finish[state.job.finish];
             
-            document.getElementById('vis-staple').classList.add('hidden');
-            document.getElementById('vis-fold').classList.add('hidden');
+            let unit = base + stockCost + finishCost;
+            if(state.job.duplex) unit *= 1.8; // Duplex discount (not 2x)
             
-            if(opt === 'staple-tl') document.getElementById('vis-staple').classList.remove('hidden');
-            if(opt === 'booklet') document.getElementById('vis-fold').classList.remove('hidden');
-            
-            updatePrice();
+            const total = unit * state.job.pages * state.job.copies;
+            state.job.unitCost = unit;
+            state.job.totalCost = total;
+
+            document.getElementById('unit-cost').innerText = '$' + unit.toFixed(2) + ' / sht';
+            document.getElementById('total-price').innerText = '$' + total.toFixed(2);
         }
 
-        function updateCopies(delta) {
-            const newVal = app.currentJob.copies + delta;
-            if(newVal >= 1) {
-                app.currentJob.copies = newVal;
-                document.getElementById('copy-count').value = newVal;
-                updatePrice();
-            }
-        }
-
-        function updatePrice() {
-            const j = app.currentJob;
-            const paperCost = PRICES[j.size] + PRICES[document.getElementById('paper-type').value];
-            const finishCost = j.finishing === 'none' ? 0 : PRICES[j.finishing.split('-')[0]];
-            
-            // Approx logic: Duplex saves paper but counts as impression? 
-            // For simplicity: Price per sheet.
-            const unitPrice = paperCost + finishCost;
-            const total = unitPrice * j.pageCount * j.copies;
-            
-            app.currentJob.estimatedTotal = total;
-            document.getElementById('item-price').innerText = '$' + total.toFixed(2);
-            document.getElementById('item-specs').innerText = `${j.size.toUpperCase()} • ${j.pageCount} Pgs`;
-        }
-
-        function resetBuilder() {
-            app.currentJob.file = null;
-            document.getElementById('preview-stage').classList.add('hidden');
-            document.getElementById('empty-state').classList.remove('hidden');
-            document.getElementById('controls-area').classList.add('opacity-50', 'pointer-events-none');
+        function resetJob() {
+            state.job.file = null;
+            document.getElementById('paper-mockup').classList.add('hidden');
+            document.getElementById('drop-zone').classList.remove('hidden');
+            document.getElementById('controls-panel').classList.add('opacity-50', 'pointer-events-none');
             document.getElementById('btn-add').disabled = true;
-            document.getElementById('file-upload').value = '';
+            document.getElementById('file-badge').classList.add('hidden');
+            document.getElementById('file-input').value = '';
         }
 
-        // --- CART & ORDERING ---
+        // --- CART LOGIC ---
         function addToCart() {
-            // Deep copy current settings + file ref
-            const item = { ...app.currentJob, id: Date.now(), type: document.getElementById('paper-type').value };
-            app.cart.push(item);
-            
-            renderCart();
-            resetBuilder();
+            // Clone job to cart
+            state.cart.push({ ...state.job, id: Date.now() });
+            updateCartUI();
+            resetJob();
             toggleCart(true);
-            
-            const badge = document.getElementById('mobile-cart-count');
-            badge.innerText = app.cart.length;
-            badge.classList.remove('hidden');
         }
 
-        function renderCart() {
+        function updateCartUI() {
             const container = document.getElementById('cart-items');
-            if(app.cart.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 mt-10"><i class="fa-solid fa-basket-shopping text-4xl mb-3 opacity-50"></i><p>Empty</p></div>`;
-                document.getElementById('btn-checkout').disabled = true;
+            const badge = document.getElementById('mobile-badge');
+            let grandTotal = 0;
+            
+            badge.innerText = state.cart.length;
+            badge.classList.toggle('hidden', state.cart.length === 0);
+            document.getElementById('btn-submit').disabled = state.cart.length === 0;
+
+            if(state.cart.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-600 mt-10"><i class="fa-solid fa-folder-open text-4xl mb-2"></i><p>No items in project</p></div>';
                 document.getElementById('cart-total').innerText = '$0.00';
                 return;
             }
 
             let html = '';
-            let grandTotal = 0;
-
-            app.cart.forEach((item, index) => {
-                grandTotal += item.estimatedTotal;
+            state.cart.forEach((item, idx) => {
+                grandTotal += item.totalCost;
                 html += `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative group">
-                    <button onclick="removeFromCart(${index})" class="absolute top-2 right-2 text-gray-500 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
-                    <div class="flex items-center gap-3 mb-2">
-                        <i class="fa-solid fa-file-pdf text-red-500 text-xl"></i>
-                        <div class="overflow-hidden">
-                            <p class="font-bold text-sm truncate w-40">${item.fileName}</p>
-                            <p class="text-[10px] text-gray-400">${item.pageCount} Pages • ${item.copies} Copies</p>
+                <div class="bg-brand-800 p-4 rounded-xl border border-gray-700 relative group">
+                    <button onclick="remItem(${idx})" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-xmark"></i></button>
+                    <div class="flex gap-3">
+                        <div class="w-10 h-10 rounded bg-gray-700 flex items-center justify-center text-lg">
+                            ${item.type === 'pdf' ? '<i class="fa-solid fa-file-pdf text-red-400"></i>' : '<i class="fa-solid fa-image text-blue-400"></i>'}
                         </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-sm truncate">${item.file.name}</p>
+                            <p class="text-[10px] text-gray-400 uppercase">${item.size} • ${item.stock} • ${item.color}</p>
+                            <p class="text-[10px] text-brand-400 mt-1">${item.pages} Pages x ${item.copies} Copies</p>
+                        </div>
+                        <div class="font-bold text-right">$${item.totalCost.toFixed(2)}</div>
                     </div>
-                    <div class="flex items-center gap-2 mt-2">
-                         <span class="kyocera-badge">${item.size}</span>
-                         <span class="text-[10px] bg-gray-700 px-2 py-0.5 rounded text-gray-300">${item.finishing}</span>
-                    </div>
-                    <div class="mt-2 text-right font-bold text-magic-400">$${item.estimatedTotal.toFixed(2)}</div>
+                    ${item.notes ? `<div class="mt-2 pt-2 border-t border-gray-700 text-[10px] text-yellow-500"><i class="fa-solid fa-note-sticky mr-1"></i>${item.notes}</div>` : ''}
                 </div>`;
             });
 
             container.innerHTML = html;
             document.getElementById('cart-total').innerText = '$' + grandTotal.toFixed(2);
-            document.getElementById('btn-checkout').disabled = false;
         }
 
-        function removeFromCart(index) {
-            app.cart.splice(index, 1);
-            renderCart();
+        function remItem(idx) {
+            state.cart.splice(idx, 1);
+            updateCartUI();
         }
 
-        function toggleCart(forceOpen) {
-            const drawer = document.getElementById('cart-drawer');
-            if(forceOpen) drawer.classList.remove('translate-x-full');
-            else drawer.classList.toggle('translate-x-full');
+        function toggleCart(force) {
+            const el = document.getElementById('cart-drawer');
+            if(force) el.classList.remove('translate-x-full');
+            else el.classList.toggle('translate-x-full');
         }
 
-        function checkout() {
+        function submitOrder() {
+            const po = document.getElementById('po-ref').value || 'None';
+            const due = document.getElementById('due-date').value;
+            
             Swal.fire({
-                title: 'Confirm Order',
-                text: `Total: ${document.getElementById('cart-total').innerText}. Send to production?`,
+                title: 'Submit Project?',
+                html: `<div class="text-left text-sm">
+                       <p><strong>PO Reference:</strong> ${po}</p>
+                       <p><strong>Due:</strong> ${due}</p>
+                       <p><strong>Items:</strong> ${state.cart.length}</p>
+                       </div>`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#3b82f6',
-                confirmButtonText: 'Yes, Print It!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Save to history
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Confirm Order',
+                background: '#111827', color: '#fff'
+            }).then((res) => {
+                if(res.isConfirmed) {
                     const order = {
-                        id: '#' + Math.floor(Math.random()*9000 + 1000),
+                        id: 'JOB-' + Math.floor(Math.random()*100000),
                         date: new Date().toLocaleDateString(),
-                        items: app.cart.length,
+                        po: po,
                         total: document.getElementById('cart-total').innerText,
-                        status: 'Processing'
+                        status: 'Received'
                     };
-                    app.history.unshift(order);
-                    localStorage.setItem('magicHistory', JSON.stringify(app.history));
-                    
-                    // Clear cart
-                    app.cart = [];
-                    renderCart();
-                    toggleCart(false);
-                    renderHistory();
-                    
-                    Swal.fire('Sent!', 'Your files have been sent to the Kyocera MFP.', 'success');
+                    state.history.unshift(order);
+                    localStorage.setItem('mp_history', JSON.stringify(state.history));
+                    state.cart = [];
+                    updateCartUI();
+                    toggleCart();
+                    setView('history');
+                    Swal.fire({title: 'Received!', text: 'Job ticket sent to production.', icon: 'success', background: '#111827', color: '#fff'});
                 }
             });
         }
 
         // --- NAVIGATION ---
-        function switchTab(tab) {
-            document.getElementById('view-new').classList.add('hidden');
-            document.getElementById('view-history').classList.add('hidden');
-            document.getElementById('nav-new').classList.remove('bg-magic-800', 'text-white');
-            document.getElementById('nav-new').classList.add('text-gray-400');
-            document.getElementById('nav-history').classList.remove('bg-magic-800', 'text-white'); // Fix active state logic visually if needed
-            
-            if(tab === 'new') {
+        function setView(v) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'bg-brand-800', 'text-white'));
+            if(v === 'new') {
+                document.getElementById('nav-new').classList.add('active', 'bg-brand-800', 'text-white');
                 document.getElementById('view-new').classList.remove('hidden');
+                document.getElementById('view-history').classList.add('hidden');
             } else {
+                document.getElementById('nav-history').classList.add('active', 'bg-brand-800', 'text-white');
+                document.getElementById('view-new').classList.add('hidden');
                 document.getElementById('view-history').classList.remove('hidden');
                 renderHistory();
             }
@@ -534,34 +597,21 @@
 
         function renderHistory() {
             const list = document.getElementById('history-list');
-            if(app.history.length === 0) {
-                list.innerHTML = '<p class="text-gray-500">No past orders found.</p>';
-                return;
-            }
+            if(state.history.length === 0) return list.innerHTML = '<p class="text-gray-500">No history found.</p>';
             
-            let html = '';
-            app.history.forEach(order => {
-                html += `
-                <div class="glass-panel p-4 rounded-xl flex justify-between items-center">
+            list.innerHTML = state.history.map(o => `
+                <div class="bg-gray-900 border border-gray-800 p-4 rounded-xl flex justify-between items-center">
                     <div>
-                        <span class="font-mono text-magic-400 font-bold">${order.id}</span>
-                        <span class="text-gray-500 text-sm ml-2">${order.date}</span>
-                        <p class="text-sm text-gray-300 mt-1">${order.items} Items</p>
+                        <p class="font-bold text-brand-400">${o.id}</p>
+                        <p class="text-xs text-gray-500">${o.date} • PO: ${o.po}</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-white">${order.total}</p>
-                        <span class="text-[10px] bg-blue-900 text-blue-200 px-2 py-1 rounded uppercase">${order.status}</span>
+                        <p class="font-bold text-white">${o.total}</p>
+                        <span class="text-[10px] bg-blue-900/50 text-blue-300 px-2 py-1 rounded border border-blue-800">${o.status}</span>
                     </div>
-                </div>`;
-            });
-            list.innerHTML = html;
+                </div>
+            `).join('');
         }
-
-        // Initialize
-        checkLogin();
-        // Set Default Paper Size visual
-        setMediaSize('letter'); 
-
     </script>
 </body>
 </html>

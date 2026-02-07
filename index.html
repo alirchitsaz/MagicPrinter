@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Print Portal | v37</title>
+    <title>Print Portal | v38 Stable</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -53,7 +53,7 @@
         #paper-preview {
             background: white; 
             box-shadow: 0 30px 80px rgba(0,0,0,0.6);
-            transition: aspect-ratio 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: aspect-ratio 0.3s ease, width 0.3s ease;
             position: relative; 
             width: auto; height: auto;
             max-width: 95%; max-height: 90%;
@@ -64,19 +64,19 @@
         /* Dimension Badge */
         .dim-badge {
             position: absolute; bottom: 10px; right: 10px;
-            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px);
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px);
             color: #e2e8f0; font-size: 10px; font-weight: 600; font-family: monospace;
             padding: 4px 8px; border-radius: 6px; pointer-events: none; z-index: 30;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* NAVIGATION OVERLAY (New) */
+        /* NAVIGATION OVERLAY */
         .nav-overlay {
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
             display: flex; align-items: center; gap: 12px; z-index: 40;
-            background: rgba(15, 23, 42, 0.9); padding: 6px 12px; border-radius: 99px;
+            background: rgba(15, 23, 42, 0.95); padding: 6px 12px; border-radius: 99px;
             border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            display: none; /* Hidden by default */
+            display: none; 
         }
         .nav-btn {
             width: 28px; height: 28px; border-radius: 50%; background: #334155; 
@@ -105,7 +105,7 @@
         .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; -webkit-overflow-scrolling: touch; }
         .controls-footer { padding: 16px 20px; background: #1e293b; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; align-items: center; }
 
-        /* INPUTS */
+        /* UI ELEMENTS */
         .label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
         .control-group { margin-bottom: 20px; }
         .input-text { width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; font-size: 13px; outline: none; }
@@ -278,7 +278,7 @@
             size: 'letter', orient: 'portrait', sides: '1', color: 'color', layout: 'standard',
             staple: false, punch: 'none', qty: 1, 
             doc: null, type: 'none', pages: 1,
-            printList: [], previewIdx: 0 // For navigation
+            printList: [], previewIdx: 0
         };
 
         // --- FILE HANDLING ---
@@ -294,7 +294,6 @@
                     state.doc = await pdfjsLib.getDocument(buff).promise;
                     state.type = 'pdf';
                     state.pages = state.doc.numPages;
-                    // Default to printing all
                     state.printList = Array.from({length: state.pages}, (_, i) => i + 1);
                     
                     document.getElementById('range-group').style.display = 'block';
@@ -309,7 +308,7 @@
                 }
 
                 document.getElementById('portal').style.display = 'none';
-                state.previewIdx = 0; // Reset preview
+                state.previewIdx = 0;
                 renderPreview();
                 updatePrice();
                 loader.style.display = 'none';
@@ -339,7 +338,7 @@
                 });
                 state.printList = Array.from(list).sort((a,b)=>a-b);
             }
-            state.previewIdx = 0; // Go to first selected page
+            state.previewIdx = 0;
             renderPreview();
             updatePrice();
         }
@@ -352,7 +351,6 @@
             }
         }
         function nextPage() {
-            // Need to account for layout (booklet jumps 2)
             const jump = state.layout === 'booklet' ? 2 : 1;
             if (state.previewIdx + jump < state.printList.length) {
                 state.previewIdx += jump;
@@ -360,7 +358,7 @@
             }
         }
 
-        // --- RENDER ENGINE v37 ---
+        // --- RENDER ENGINE v38 ---
         async function renderPreview() {
             const paper = document.getElementById('paper-preview');
             const dim = DIMS[state.size];
@@ -379,11 +377,9 @@
             if (state.layout === 'booklet') {
                 area.classList.add('booklet-grid');
                 await renderSlot(area, state.printList[state.previewIdx]);
-                // Check if next page exists in print list
                 if (state.previewIdx + 1 < state.printList.length) {
                     await renderSlot(area, state.printList[state.previewIdx + 1]);
                 } else {
-                    // Blank slot
                     const div = document.createElement('div'); div.className = 'page-slot'; area.appendChild(div);
                 }
                 document.getElementById('nav-info').innerText = `${state.previewIdx+1}-${Math.min(state.previewIdx+2, state.printList.length)} of ${state.printList.length}`;
@@ -407,7 +403,7 @@
                 content.className = 'render-target';
             } else if (state.type === 'pdf' && pageNum) {
                 const page = await state.doc.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 0.5 }); // Preview quality
+                const viewport = page.getViewport({ scale: 0.5 });
                 content = document.createElement('canvas');
                 content.className = 'render-target';
                 content.width = viewport.width; content.height = viewport.height;
@@ -429,12 +425,23 @@
         function setSides(v) { state.sides = v; toggle('btn-1s', v==='1'); toggle('btn-2s', v==='2'); updatePrice(); }
         
         function setLayout(v) {
+            if (state.layout === v) return; // Prevent strict toggle
             state.layout = v;
-            toggle('btn-std', v==='standard'); toggle('btn-book', v==='booklet');
-            if(v==='booklet') { setSize('tabloid'); document.getElementById('size-sel').value='tabloid'; setOrient('landscape'); }
-            else renderPreview();
+            
+            // UI
+            toggle('btn-std', v==='standard'); 
+            toggle('btn-book', v==='booklet');
+            
+            if (v === 'booklet') {
+                state.orient = 'landscape';
+                state.size = 'tabloid';
+                toggle('btn-port', false); toggle('btn-land', true);
+                document.getElementById('size-sel').value = 'tabloid';
+            }
+            renderPreview();
             updatePrice();
         }
+        
         function toggleColor() { state.color = state.color==='color' ? 'bw' : 'color'; toggle('btn-bw', state.color==='bw'); renderPreview(); updatePrice(); }
 
         // --- FINISHING ---
@@ -471,8 +478,10 @@
 
         function toggle(id, active) {
             const el = document.getElementById(id);
-            if(active) { el.classList.add('active'); el.classList.replace('text-gray-500', 'white'); }
-            else { el.classList.remove('active'); }
+            if(el) {
+                if(active) { el.classList.add('active'); el.classList.replace('text-gray-500', 'white'); }
+                else { el.classList.remove('active'); }
+            }
         }
 
         function updatePrice() {
@@ -481,7 +490,6 @@
             if (state.sides === '2') base *= 1.6;
             
             const qty = document.getElementById('qty-input').value || 1;
-            // Count sheets based on filtered print list
             const pageCount = state.printList.length;
             const sheets = state.layout === 'booklet' ? Math.ceil(pageCount / 4) : Math.ceil(pageCount / (state.sides==='2'?2:1));
             

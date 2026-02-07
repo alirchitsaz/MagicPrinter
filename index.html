@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | v31 True Dimensions</title>
+    <title>Corporate Print Portal | v32</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -16,7 +16,9 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { brand: { 950: '#020617', 900: '#0f172a', 800: '#1e293b', 600: '#2563eb', 500: '#3b82f6' } },
+                    colors: { 
+                        corp: { 900: '#0f172a', 800: '#1e293b', 600: '#2563eb', 500: '#3b82f6', 100: '#f1f5f9' } 
+                    },
                     spacing: { 'safe-b': 'env(safe-area-inset-bottom)' }
                 }
             }
@@ -25,211 +27,251 @@
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
-        /* APP SHELL */
-        body { background: #020617; color: white; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
+        /* SHELL */
+        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app { display: flex; flex-direction: column; height: 100dvh; width: 100vw; }
 
-        /* HEADER */
-        .header { height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #111827; border-bottom: 1px solid #1f2937; z-index: 50; padding-top: env(safe-area-inset-top); }
-
-        /* WORKSPACE (The Stage) */
-        .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        
-        /* THE PAPER (Physical Aspect Ratio) */
-        #paper-stage {
-            background: white; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative;
-            /* Default Letter Portrait */
-            aspect-ratio: 8.5 / 11; 
-            height: 70%; /* Max height relative to workspace */
-            max-width: 90%;
-            display: flex; align-items: center; justify-content: center;
+        /* HEADER (Branded) */
+        .header { 
+            height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 20px; background: #1e293b; border-bottom: 1px solid #334155; z-index: 50; 
+            padding-top: env(safe-area-inset-top); box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand-logo { width: 32px; height: 32px; background: #3b82f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
+        .brand-text { font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.5px; }
+
+        /* WORKSPACE (The Gray Area) */
+        .workspace { 
+            flex: 1; position: relative; background: #0f172a; 
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; padding: 20px;
+        }
+        
+        /* THE PAPER (Physical Object) */
+        #paper-preview {
+            background: white; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative; 
+            display: flex; flex-wrap: wrap; /* Allows 2-up grid */
+            max-width: 90%; max-height: 80%; /* Ensure it fits on screen */
+        }
+        
+        /* Dynamic Aspect Ratio (Controlled by JS) */
+        /* Default: Letter Portrait (8.5 / 11) */
         
         /* Rulers */
-        .ruler-w { 
-            position: absolute; top: -25px; left: 0; width: 100%; text-align: center; 
-            border-bottom: 1px solid #64748b; color: #94a3b8; font-size: 11px; font-family: monospace; 
-        }
-        .ruler-w::before, .ruler-w::after { content: ''; position: absolute; bottom: -3px; width: 1px; height: 7px; background: #64748b; }
-        .ruler-w::before { left: 0; } .ruler-w::after { right: 0; }
+        .ruler-top { position: absolute; top: -20px; width: 100%; text-align: center; color: #64748b; font-size: 10px; font-family: monospace; border-bottom: 1px solid #334155; }
+        .ruler-side { position: absolute; left: -20px; height: 100%; display: flex; align-items: center; color: #64748b; font-size: 10px; font-family: monospace; border-right: 1px solid #334155; writing-mode: vertical-rl; transform: rotate(180deg); }
 
-        .ruler-h { 
-            position: absolute; left: -25px; top: 0; height: 100%; 
+        /* CONTENT INSIDE PAPER */
+        .page-slot {
+            position: relative; overflow: hidden; 
             display: flex; align-items: center; justify-content: center;
-            border-right: 1px solid #64748b; color: #94a3b8; font-size: 11px; font-family: monospace;
-            writing-mode: vertical-rl; transform: rotate(180deg);
+            border: 1px dashed rgba(0,0,0,0.05);
+            width: 100%; height: 100%; /* Default 1-Up */
         }
-        .ruler-h::before, .ruler-h::after { content: ''; position: absolute; right: -3px; width: 7px; height: 1px; background: #64748b; }
-        .ruler-h::before { top: 0; } .ruler-h::after { bottom: 0; }
-
-        /* Content inside the paper */
-        .paper-content { width: 100%; height: 100%; overflow: hidden; position: relative; }
-        #image-preview { width: 100%; height: 100%; object-fit: contain; } /* Default FIT */
-        .paper-content.fill #image-preview { object-fit: cover; } /* FILL MODE */
-
-        /* 2-Up Grid */
-        .nup-grid { 
-            display: grid; width: 100%; height: 100%; 
-            grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; /* Default Portrait Split */
-        }
-        .nup-grid.landscape { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; } /* Landscape Split */
         
-        .nup-cell { border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .nup-cell img { max-width: 100%; max-height: 100%; }
-
-        /* CONTROLS */
-        .controls { height: 50vh; flex-shrink: 0; background: #111827; border-top: 1px solid #1f2937; display: flex; flex-direction: column; z-index: 40; }
-        .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; -webkit-overflow-scrolling: touch; }
-        .controls-footer { padding: 16px 20px; background: #111827; border-top: 1px solid #1f2937; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; }
-
-        /* UI ELEMENTS */
-        .section-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .opt-grid { display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); margin-bottom: 24px; }
-        .opt-grid.three { grid-template-columns: repeat(3, 1fr); }
-        .btn-opt { 
-            padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 10px; 
-            color: #94a3b8; font-size: 13px; font-weight: 500; text-align: center; transition: all 0.15s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+        /* 2-Pages / Sheet Grid */
+        #paper-preview.layout-2up {
+            /* Flex logic handles the split better than grid for variable aspects */
+            flex-direction: column; 
         }
-        .btn-opt.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        #paper-preview.layout-2up.landscape {
+            flex-direction: row; /* Side by side on landscape paper */
+        }
+        #paper-preview.layout-2up .page-slot {
+            flex: 1; /* Split space evenly */
+            border: 1px dashed #e2e8f0;
+            padding: 4px;
+        }
+
+        /* The Content (PDF Canvas or Img) */
+        .render-target {
+            max-width: 100%; max-height: 100%;
+            object-fit: contain; /* CRITICAL: Never cut off */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .render-target.fill { object-fit: cover; } /* Only for full bleed photos */
+
+        /* CONTROLS (Bottom Panel) */
+        .controls { 
+            height: 55vh; flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155; 
+            display: flex; flex-direction: column; z-index: 40; 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        }
+        .controls-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 40px; -webkit-overflow-scrolling: touch; }
+        .controls-footer { padding: 16px 24px; background: #1e293b; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; }
+
+        /* UI Inputs */
+        .input-group { margin-bottom: 24px; }
+        .label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
         
-        .context-group { display: none; }
-        .context-group.active { display: block; }
+        /* Select Dropdown */
+        .select-box {
+            width: 100%; background: #0f172a; color: white; border: 1px solid #334155; 
+            padding: 12px 16px; border-radius: 8px; font-size: 14px; appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 16px center; background-size: 10px;
+        }
+
+        /* Toggle Grid */
+        .toggle-row { display: flex; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid #334155; }
+        .toggle-btn { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 600; color: #64748b; border-radius: 6px; transition: all 0.2s; }
+        .toggle-btn.active { background: #3b82f6; color: white; shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* UPLOAD PORTAL */
+        #portal-screen { 
+            position: absolute; inset: 0; background: #0f172a; z-index: 100; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px;
+        }
+        .portal-card { 
+            width: 100%; max-width: 400px; background: #1e293b; border: 1px solid #334155; 
+            border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .upload-btn {
+            margin-top: 24px; width: 100%; padding: 16px; background: #3b82f6; color: white; 
+            font-weight: bold; border-radius: 8px; font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: transform 0.1s;
+        }
+        .upload-btn:active { transform: scale(0.98); }
 
         /* LOADER */
-        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s infinite linear; }
+        #loader { position: fixed; inset: 0; background: rgba(15,23,42,0.9); z-index: 200; display: none; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #1e293b; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div class="spinner mb-4"></div><div class="text-sm font-bold text-gray-400">Loading...</div></div>
+    <div id="loader"><div class="spinner"></div></div>
 
     <div id="app">
+        
         <div class="header">
-            <button onclick="alert('Profile')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300"><i class="fa-solid fa-user"></i></button>
-            <div class="font-bold text-sm tracking-wide">MAGIC<span class="text-blue-500">PRINTER</span></div>
-            <button onclick="alert('Cart')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300 relative">
-                <i class="fa-solid fa-shopping-bag"></i>
-                <span id="cart-badge" class="absolute -top-1 -right-1 bg-blue-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+            <div class="brand">
+                <div class="brand-logo">C</div>
+                <div class="brand-text">Corporate<span class="text-blue-500">Print</span></div>
+            </div>
+            <button class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300">
+                <i class="fa-solid fa-user"></i>
             </button>
         </div>
 
         <div class="workspace">
-            <div id="paper-stage">
-                <div class="ruler-w" id="lbl-w">8.5"</div>
-                <div class="ruler-h" id="lbl-h">11"</div>
+            <div id="paper-preview">
+                <div class="ruler-top" id="lbl-w">8.5"</div>
+                <div class="ruler-side" id="lbl-h">11"</div>
                 
-                <div id="paper-content" class="paper-content">
-                    <img id="image-preview" src="" alt="Preview">
-                </div>
+                <div class="page-slot"><div class="text-xs text-gray-300">Preview Area</div></div>
             </div>
         </div>
 
         <div class="controls">
             <div class="controls-scroll">
                 
-                <div class="opt-grid">
+                <div class="input-group">
+                    <label class="label">Paper Size</label>
+                    <select id="sel-size" class="select-box" onchange="setSize(this.value)">
+                        <option value="letter">Letter (8.5 x 11)</option>
+                        <option value="legal">Legal (8.5 x 14)</option>
+                        <option value="tabloid">Tabloid (11 x 17)</option>
+                        <option value="12x18">Arch B (12 x 18)</option>
+                        <option value="a4">A4 (8.3 x 11.7)</option>
+                        <option value="a3">A3 (11.7 x 16.5)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
-                        <div class="section-title">Color Mode</div>
-                        <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700 h-10">
-                            <button onclick="setColor('color')" id="col-color" class="flex-1 rounded text-xs font-bold bg-brand-800 text-white shadow">Color</button>
-                            <button onclick="setColor('bw')" id="col-bw" class="flex-1 rounded text-xs font-bold text-gray-500">B&W</button>
+                        <label class="label">Orientation</label>
+                        <div class="toggle-row">
+                            <button class="toggle-btn active" id="btn-port" onclick="setOrient('portrait')">Port</button>
+                            <button class="toggle-btn" id="btn-land" onclick="setOrient('landscape')">Land</button>
                         </div>
                     </div>
                     <div>
-                        <div class="section-title">Orientation</div>
-                        <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700 h-10">
-                            <button onclick="setOrient('portrait')" id="btn-port" class="flex-1 rounded text-xs font-bold bg-brand-800 text-white shadow">Port</button>
-                            <button onclick="setOrient('landscape')" id="btn-land" class="flex-1 rounded text-xs font-bold text-gray-500">Land</button>
+                        <label class="label">Color</label>
+                        <div class="toggle-row">
+                            <button class="toggle-btn active" id="btn-color" onclick="setColor('color')">Color</button>
+                            <button class="toggle-btn" id="btn-bw" onclick="setColor('bw')">B&W</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="section-title">Paper Size</div>
-                <div class="opt-grid three">
-                    <button class="btn-opt active" id="sz-letter" onclick="setSize('letter')">Letter</button>
-                    <button class="btn-opt" id="sz-legal" onclick="setSize('legal')">Legal</button>
-                    <button class="btn-opt" id="sz-tabloid" onclick="setSize('tabloid')">Tabloid</button>
-                </div>
-
-                <div id="group-photo" class="context-group active">
-                    <div class="section-title">Photo Fit</div>
-                    <div class="opt-grid">
-                        <button class="btn-opt active" id="fit-contain" onclick="setFit('contain')">Fit to Page</button>
-                        <button class="btn-opt" id="fit-cover" onclick="setFit('cover')">Fill Page</button>
+                <div class="input-group">
+                    <label class="label">Page Layout</label>
+                    <div class="toggle-row">
+                        <button class="toggle-btn active" id="btn-1up" onclick="setNup('1')">1 Page / Sheet</button>
+                        <button class="toggle-btn" id="btn-2up" onclick="setNup('2')">2 Pages / Sheet</button>
                     </div>
                 </div>
 
-                <div id="group-doc" class="context-group">
-                    <div class="section-title">Layout</div>
-                    <div class="opt-grid three">
-                        <button class="btn-opt active" id="nup-1" onclick="setNup('1')">1-Up</button>
-                        <button class="btn-opt" id="nup-2" onclick="setNup('2')">2-Up</button>
-                        <button class="btn-opt" id="nup-book" onclick="setNup('booklet')">Booklet</button>
+                <div class="input-group" id="grp-fit" style="display:none;">
+                    <label class="label">Image Scaling</label>
+                    <div class="toggle-row">
+                        <button class="toggle-btn active" id="btn-fit" onclick="setFit('contain')">Fit (Whole Image)</button>
+                        <button class="toggle-btn" id="btn-fill" onclick="setFit('cover')">Fill (No Border)</button>
                     </div>
                 </div>
 
-                <div class="section-title">Finishing</div>
-                <div class="opt-grid three">
-                    <button class="btn-opt active" id="fn-none" onclick="setFinish('none')">None</button>
-                    <button class="btn-opt" id="fn-staple" onclick="setFinish('staple')">Staple</button>
-                    <button class="btn-opt" id="fn-punch" onclick="setFinish('punch')">Hole Punch</button>
-                </div>
             </div>
 
             <div class="controls-footer">
-                <div class="flex items-center bg-gray-900 rounded-lg border border-gray-700 px-2 h-12">
-                    <button onclick="adjQty(-1)" class="w-10 h-full text-gray-400 text-lg">-</button>
-                    <div class="w-8 text-center font-bold text-white" id="qty-disp">1</div>
-                    <button onclick="adjQty(1)" class="w-10 h-full text-gray-400 text-lg">+</button>
+                <div class="flex items-center bg-slate-800 rounded-lg border border-slate-700 px-3 h-12 gap-3">
+                    <span class="text-xs font-bold text-slate-400">QTY</span>
+                    <input type="number" value="1" class="bg-transparent w-10 text-center font-bold text-white outline-none" id="qty-input" onchange="updatePrice()">
                 </div>
-                <button onclick="addToCart()" id="btn-add" disabled class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg flex items-center justify-between px-6 disabled:opacity-50 disabled:grayscale">
-                    <span>Add to Order</span>
-                    <span id="price-disp">$0.00</span>
+                <button class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg flex items-center justify-between px-6" onclick="submitOrder()">
+                    <span>Place Order</span>
+                    <span id="price-disp">$0.35</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="upload-screen" class="absolute inset-0 bg-brand-950 z-50 flex flex-col items-center justify-center p-6 text-center">
-        <div onclick="document.getElementById('file-input').click()" class="w-full max-w-xs h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
-            <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-600 mb-6"></i>
-            <span class="font-bold text-xl text-gray-200">Start Project</span>
-            <span class="text-sm text-gray-500 mt-2">Tap to Upload</span>
+    <div id="portal-screen">
+        <div class="portal-card">
+            <div class="flex justify-center mb-6">
+                <div class="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center text-3xl text-white shadow-lg">
+                    <i class="fa-solid fa-print"></i>
+                </div>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-2">Print Center</h1>
+            <p class="text-slate-400 text-sm mb-6">Upload documents or photos to begin your print job.</p>
+            
+            <div class="upload-btn" onclick="document.getElementById('file-input').click()">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload File
+            </div>
+            <p class="text-xs text-slate-500 mt-4">Supports PDF, JPG, PNG</p>
         </div>
         <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp">
     </div>
 
     <script>
-        // --- DATA & STATE ---
-        const DIMS = { 
-            letter: { w: 8.5, h: 11, lbl: "8.5\" x 11\"" }, 
-            legal: { w: 8.5, h: 14, lbl: "8.5\" x 14\"" }, 
-            tabloid: { w: 11, h: 17, lbl: "11\" x 17\"" } 
+        // --- DATA ---
+        const DIMS = {
+            'letter': { w: 8.5, h: 11 },
+            'legal': { w: 8.5, h: 14 },
+            'tabloid': { w: 11, h: 17 },
+            '12x18': { w: 12, h: 18 },
+            'a4': { w: 8.27, h: 11.69 },
+            'a3': { w: 11.69, h: 16.53 }
         };
-        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
+        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25, '12x18': 0.35, a4: 0.12, a3: 0.28 };
         
         let state = {
-            mode: 'photo', // 'photo' or 'doc'
-            size: 'letter', orient: 'portrait', finish: 'none', color: 'color', 
-            fit: 'contain', nup: '1', qty: 1,
-            pdfDoc: null, pages: 1, imageSrc: null
+            mode: 'none', // 'photo' | 'doc'
+            size: 'letter', orient: 'portrait', color: 'color', 
+            nup: '1', fit: 'contain', pages: 1, 
+            pdfDoc: null, imageSrc: null
         };
 
-        // --- SAFE DOM HELPER (Fixes Crashes) ---
-        function safe(id, fn) {
-            const el = document.getElementById(id);
-            if (el) fn(el);
-        }
-
-        // --- FILE ENGINE ---
+        // --- FILE HANDLING ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
             const file = e.target.files[0];
@@ -237,186 +279,144 @@
             loader.style.display = 'flex';
 
             try {
-                if(file.type === 'application/pdf') {
-                    if(typeof pdfjsLib === 'undefined') throw new Error("PDF Engine Missing");
+                if (file.type === 'application/pdf') {
                     const buff = await file.arrayBuffer();
                     state.pdfDoc = await pdfjsLib.getDocument(buff).promise;
                     state.pages = state.pdfDoc.numPages;
-                    state.mode = (state.pages > 1) ? 'doc' : 'photo';
-                    
-                    if (state.mode === 'photo') {
-                        // Render single page PDF as image
-                        const page = await state.pdfDoc.getPage(1);
-                        const viewport = page.getViewport({ scale: 2 });
-                        const canvas = document.createElement('canvas');
-                        canvas.width = viewport.width; canvas.height = viewport.height;
-                        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                        state.imageSrc = canvas.toDataURL('image/jpeg');
-                    }
+                    state.mode = 'doc';
+                    document.getElementById('grp-fit').style.display = 'none';
                 } else {
+                    state.imageSrc = URL.createObjectURL(file);
                     state.mode = 'photo';
                     state.pages = 1;
-                    state.imageSrc = URL.createObjectURL(file);
+                    document.getElementById('grp-fit').style.display = 'block';
                 }
 
-                // Switch UI
-                document.getElementById('upload-screen').style.display = 'none';
-                document.getElementById('btn-add').disabled = false;
-                
-                // Toggle Context Controls
-                safe('group-photo', el => el.classList.toggle('active', state.mode === 'photo'));
-                safe('group-doc', el => el.classList.toggle('active', state.mode === 'doc'));
-
-                refreshPreview();
+                document.getElementById('portal-screen').style.display = 'none';
+                renderPreview();
                 loader.style.display = 'none';
                 updatePrice();
 
-            } catch(err) {
+            } catch (err) {
                 loader.style.display = 'none';
-                Swal.fire('Error', err.message, 'error');
+                alert("File Error: " + err.message);
             }
         });
 
-        // --- THE RENDER ENGINE (TRUE DIMENSIONS) ---
-        function refreshPreview() {
-            const stage = document.getElementById('paper-stage');
-            const content = document.getElementById('paper-content');
-            
-            // 1. Calculate Aspect Ratio
+        // --- RENDER ENGINE v3 (Scale & Grid) ---
+        async function renderPreview() {
+            const paper = document.getElementById('paper-preview');
             const dim = DIMS[state.size];
+            
+            // 1. Physical Dimensions (Aspect Ratio)
             const w = state.orient === 'portrait' ? dim.w : dim.h;
             const h = state.orient === 'portrait' ? dim.h : dim.w;
             
-            // Apply Physical Ratio
-            stage.style.aspectRatio = `${w} / ${h}`;
-            
-            // Update Rulers
-            document.getElementById('lbl-w').innerText = w + '"';
-            document.getElementById('lbl-h').innerText = h + '"';
+            paper.style.aspectRatio = `${w} / ${h}`;
+            document.getElementById('lbl-w').innerText = `${w}"`;
+            document.getElementById('lbl-h').innerText = `${h}"`;
 
-            // 2. Render Content based on Mode
-            content.innerHTML = ''; // Clear previous
+            // 2. Grid Configuration (1-Up vs 2-Up)
+            paper.innerHTML = ''; // Clear
+            paper.className = ''; // Reset classes
             
-            if (state.mode === 'photo') {
-                const img = document.createElement('img');
-                img.src = state.imageSrc;
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = state.fit; // Cover vs Contain
-                // Apply Grayscale
-                if (state.color === 'bw') img.style.filter = 'grayscale(100%)';
-                content.appendChild(img);
-            } 
-            else if (state.mode === 'doc') {
-                renderNupLayout(content, w, h);
-            }
-        }
+            // Re-add rulers (they were cleared)
+            const rw = document.createElement('div'); rw.className='ruler-top'; rw.innerText=`${w}"`; paper.appendChild(rw);
+            const rh = document.createElement('div'); rh.className='ruler-side'; rh.innerText=`${h}"`; paper.appendChild(rh);
 
-        async function renderNupLayout(container, paperW, paperH) {
-            container.className = 'nup-grid';
-            // Configure Grid
-            if (state.nup === '2' || state.nup === 'booklet') {
-                if (paperH > paperW) container.classList.remove('landscape'); // Portrait (Top/Bottom)
-                else container.classList.add('landscape'); // Landscape (Side/Side)
-            } else {
-                container.style.gridTemplateColumns = '1fr';
-                container.style.gridTemplateRows = '1fr';
+            if (state.nup === '2') {
+                paper.classList.add('layout-2up');
+                if (state.orient === 'landscape') paper.classList.add('landscape');
             }
 
-            const slots = (state.nup === '2' || state.nup === 'booklet') ? 2 : 1;
+            // 3. Render Slots
+            const slots = state.nup === '2' ? 2 : 1;
             
-            for (let i = 1; i <= Math.min(slots, state.pages); i++) {
-                const cell = document.createElement('div');
-                cell.className = 'nup-cell';
+            for (let i = 0; i < slots; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'page-slot';
                 
-                const canvas = document.createElement('canvas');
-                const page = await state.pdfDoc.getPage(i);
-                const viewport = page.getViewport({ scale: 0.5 }); // Low res preview
-                canvas.width = viewport.width; canvas.height = viewport.height;
-                
-                const ctx = canvas.getContext('2d');
-                if (state.color === 'bw') ctx.filter = 'grayscale(100%)';
-                
-                await page.render({ canvasContext: ctx, viewport }).promise;
-                cell.appendChild(canvas);
-                container.appendChild(cell);
+                // Content
+                let content;
+                if (state.mode === 'photo') {
+                    content = document.createElement('img');
+                    content.src = state.imageSrc;
+                    content.className = 'render-target ' + (state.fit === 'cover' ? 'fill' : '');
+                } else {
+                    // PDF Page
+                    const pageNum = i + 1;
+                    if (pageNum <= state.pages) {
+                        content = document.createElement('canvas');
+                        content.className = 'render-target';
+                        // Render logic
+                        const page = await state.pdfDoc.getPage(pageNum);
+                        const viewport = page.getViewport({ scale: 2 }); // High quality
+                        content.width = viewport.width; content.height = viewport.height;
+                        
+                        const ctx = content.getContext('2d');
+                        if (state.color === 'bw') ctx.filter = 'grayscale(100%)';
+                        
+                        // Render async
+                        page.render({ canvasContext: ctx, viewport }).promise;
+                    }
+                }
+
+                if (content) {
+                    if (state.mode === 'photo' && state.color === 'bw') content.style.filter = 'grayscale(100%)';
+                    slot.appendChild(content);
+                }
+                paper.appendChild(slot);
             }
         }
 
         // --- CONTROLS ---
-        function setSize(sz) { 
-            state.size = sz; 
-            updateBtn('sz', sz); 
-            refreshPreview(); 
-            updatePrice();
+        function setSize(val) { state.size = val; renderPreview(); updatePrice(); }
+        
+        function setOrient(val) { 
+            state.orient = val; 
+            toggle('btn-port', val==='portrait'); toggle('btn-land', val==='landscape');
+            renderPreview(); 
         }
-        function setOrient(o) { 
-            state.orient = o; 
-            safeToggle('btn-port', o === 'portrait'); 
-            safeToggle('btn-land', o === 'landscape');
-            refreshPreview(); 
+        
+        function setColor(val) { 
+            state.color = val; 
+            toggle('btn-color', val==='color'); toggle('btn-bw', val==='bw');
+            renderPreview(); updatePrice();
         }
-        function setColor(c) { 
-            state.color = c; 
-            safeToggle('col-color', c === 'color'); 
-            safeToggle('col-bw', c === 'bw'); 
-            refreshPreview(); 
-            updatePrice();
+        
+        function setNup(val) { 
+            state.nup = val;
+            toggle('btn-1up', val==='1'); toggle('btn-2up', val==='2');
+            renderPreview(); updatePrice();
         }
-        function setFit(f) { 
-            state.fit = f; 
-            safeToggle('fit-contain', f === 'contain'); 
-            safeToggle('fit-cover', f === 'cover'); 
-            refreshPreview(); 
-        }
-        function setNup(n) { 
-            state.nup = n; 
-            updateBtn('nup', n); 
-            if(n === 'booklet') { setSize('tabloid'); setOrient('landscape'); }
-            else refreshPreview(); 
-            updatePrice();
-        }
-        function setFinish(f) { 
-            state.finish = f; 
-            updateBtn('fn', f); 
-            updatePrice(); 
+        
+        function setFit(val) {
+            state.fit = val;
+            toggle('btn-fit', val==='contain'); toggle('btn-fill', val==='cover');
+            renderPreview();
         }
 
-        function updateBtn(prefix, val) {
-            document.querySelectorAll(`[id^="${prefix}-"]`).forEach(b => {
-                if(b.id === `${prefix}-${val}`) {
-                    b.classList.add('active'); 
-                    b.classList.replace('bg-brand-800', 'bg-brand-800'); // Hack to force redraw
-                } else {
-                    b.classList.remove('active');
-                }
-            });
-        }
-
-        function safeToggle(id, active) {
-            safe(id, el => {
-                if(active) { el.classList.add('active'); el.classList.replace('text-gray-500', 'text-white'); }
-                else { el.classList.remove('active'); el.classList.replace('text-white', 'text-gray-500'); }
-            });
-        }
-
-        function adjQty(n) {
-            state.qty = Math.max(1, state.qty + n);
-            safe('qty-disp', el => el.innerText = state.qty);
-            updatePrice();
+        function toggle(id, active) {
+            const el = document.getElementById(id);
+            if(active) { el.classList.add('active'); el.classList.replace('text-gray-500','white'); }
+            else { el.classList.remove('active'); }
         }
 
         function updatePrice() {
-            let base = PRICES[state.size] || 0.10;
+            const qty = document.getElementById('qty-input').value;
+            let base = PRICES[state.size];
             if (state.color === 'color') base += 0.25;
             
-            const total = base * state.qty;
-            safe('price-disp', el => el.innerText = '$' + total.toFixed(2));
+            // Page Calc
+            let printCount = state.pages;
+            if (state.nup === '2') printCount = Math.ceil(state.pages / 2);
+            
+            const total = base * printCount * qty;
+            document.getElementById('price-disp').innerText = '$' + total.toFixed(2);
         }
 
-        function addToCart() {
-            Swal.fire({ icon: 'success', title: 'Added', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
-            safe('cart-badge', el => { el.innerText = '1'; el.classList.remove('hidden'); });
+        function submitOrder() {
+            Swal.fire({ title: 'Order Submitted', text: 'Sending to Print Queue...', icon: 'success' });
         }
     </script>
 </body>

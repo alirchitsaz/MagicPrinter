@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | Fixed Scroll</title>
+    <title>Magic Printer | V9.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
@@ -18,10 +18,7 @@
                     colors: {
                         brand: { 950: '#0b0f19', 900: '#111827', 800: '#1f2937', 600: '#2563eb', 500: '#3b82f6' }
                     },
-                    spacing: {
-                        'safe-b': 'env(safe-area-inset-bottom)',
-                        'safe-t': 'env(safe-area-inset-top)'
-                    }
+                    spacing: { 'safe-t': 'env(safe-area-inset-top)', 'safe-b': 'env(safe-area-inset-bottom)' }
                 }
             }
         }
@@ -30,197 +27,217 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         
-        /* 1. SCROLL ENGINE FIXES */
-        html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; }
-        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: white; }
-
-        /* The container that holds the scrollable content MUST have min-height:0 */
-        .flex-fix { min-height: 0; min-width: 0; }
+        /* APP SHELL */
+        html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background: #0b0f19; font-family: 'Inter', sans-serif; color: white; }
         
-        /* Native-feel scrolling */
-        .native-scroll { 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; 
-            touch-action: pan-y;
-            overscroll-behavior-y: contain;
-        }
-
-        /* 2. CROPPER & VISUALS */
+        /* EDITOR CANVAS (Full Screen Background) */
+        #editor-layer { position: absolute; inset: 0; z-index: 0; background: #1a1d24; }
         .cropper-view-box { outline: 1px solid #666; box-shadow: 0 0 0 9999px #0b0f19; } 
-        .cropper-modal { opacity: 1; background: #0b0f19; } 
         .cropper-bg { background: #fff; }
 
-        /* 3. FINISHING MARKS */
-        .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 50; overflow: hidden; }
-        .staple-single { position: absolute; width: 24px; height: 4px; background: linear-gradient(to right, #999, #fff, #999); box-shadow: 1px 1px 2px rgba(0,0,0,0.5); transform: rotate(-45deg); }
-        .punch-hole { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #333; border-radius: 50%; }
-        .fold-line { position: absolute; border-left: 1px dashed rgba(255,0,0,0.3); height: 100%; left: 50%; }
+        /* OVERLAYS */
+        .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 10; }
+        .staple { position: absolute; width: 24px; height: 5px; background: linear-gradient(90deg, #999, #fff, #999); transform: rotate(-45deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        .punch { position: absolute; width: 12px; height: 12px; background: #111; border: 1px solid #444; border-radius: 50%; }
 
-        /* Mobile Layout Split */
-        /* Top is fixed height, Bottom takes remaining */
-        .layout-top { height: 40vh; flex-shrink: 0; }
-        .layout-bottom { flex: 1; height: 60vh; display: flex; flex-direction: column; }
-        
-        @media (min-width: 1024px) {
-            .layout-top { height: 100%; flex: 1; }
-            .layout-bottom { height: 100%; width: 400px; flex: none; }
+        /* BOTTOM DRAWER (The Fix) */
+        #bottom-sheet {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: #111827;
+            border-top-left-radius: 20px; border-top-right-radius: 20px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            z-index: 50;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: translateY(0); /* Default: Visible */
+            display: flex; flex-direction: column;
+            max-height: 85vh;
         }
+        /* When collapsed, only show header */
+        #bottom-sheet.collapsed { transform: translateY(calc(100% - 90px)); }
+        
+        .sheet-handle { width: 40px; height: 4px; background: #374151; border-radius: 2px; margin: 12px auto; }
+        .sheet-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px 100px 20px; }
     </style>
 </head>
 <body>
 
-    <header class="h-14 bg-brand-900 border-b border-gray-800 flex items-center justify-between px-4 shrink-0 pt-safe-t z-50">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-brand-600 rounded flex items-center justify-center shadow"><i class="fa-solid fa-print text-white text-xs"></i></div>
-            <h1 class="font-bold tracking-tight text-sm">MAGIC<span class="text-brand-500">PRINTER</span></h1>
+    <header class="absolute top-0 left-0 w-full h-16 flex items-center justify-between px-4 pt-safe-t z-50 pointer-events-none">
+        <button onclick="toggleProfile()" class="pointer-events-auto w-10 h-10 bg-brand-900/80 backdrop-blur rounded-full flex items-center justify-center border border-gray-700 shadow-lg">
+            <i class="fa-solid fa-user text-brand-500"></i>
+        </button>
+
+        <div class="font-bold text-sm tracking-widest bg-brand-900/80 backdrop-blur px-3 py-1 rounded-full border border-gray-700 shadow-lg">
+            MAGIC<span class="text-brand-500">PRINTER</span>
         </div>
-        <button onclick="toggleCart()" class="relative p-2">
-            <i class="fa-solid fa-shopping-bag text-gray-400 text-lg"></i>
-            <span id="cart-badge" class="absolute top-0 right-0 bg-brand-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden border border-brand-900">0</span>
+
+        <button onclick="toggleCart()" class="pointer-events-auto w-10 h-10 bg-brand-900/80 backdrop-blur rounded-full flex items-center justify-center border border-gray-700 shadow-lg relative">
+            <i class="fa-solid fa-shopping-bag text-gray-300"></i>
+            <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
         </button>
     </header>
 
-    <main class="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
-        
-        <div class="layout-top bg-[#1a1d24] relative flex flex-col z-0">
-            <div id="editor-toolbar" class="absolute top-4 left-1/2 -translate-x-1/2 bg-brand-900/90 backdrop-blur rounded-full px-4 py-2 border border-gray-700 flex gap-4 shadow-xl z-40 hidden">
-                 <button onclick="rotate(-90)" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-rotate-left"></i></button>
-                 <div class="w-px h-4 bg-gray-600 self-center"></div>
-                 <button onclick="fit('cover')" class="text-[10px] font-bold uppercase text-brand-400">Fill</button>
-                 <button onclick="fit('contain')" class="text-[10px] font-bold uppercase text-gray-400">Fit</button>
+    <div id="editor-layer">
+        <div id="upload-prompt" class="absolute inset-0 flex flex-col items-center justify-center p-6">
+            <div onclick="document.getElementById('file-input').click()" class="w-64 h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-brand-900/30 active:scale-95 transition-transform cursor-pointer">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-600 mb-4"></i>
+                <span class="font-bold text-lg text-gray-300">Tap to Upload</span>
+                <span class="text-sm text-gray-500 mt-1">PDF or Photo</span>
             </div>
+            <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
 
-            <div class="flex-1 relative w-full h-full bg-[#0b0f19]">
-                <div id="upload-prompt" class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10">
-                    <div onclick="document.getElementById('file-input').click()" class="w-full max-w-xs aspect-video border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center bg-brand-900/20 active:bg-brand-900/40 transition-colors">
-                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-500 mb-2"></i>
-                        <span class="font-bold text-gray-300">Tap to Upload</span>
-                    </div>
-                    <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+        <div id="editor-stage" class="hidden w-full h-full">
+            <img id="image-target" class="block max-w-full">
+            <div id="finish-layer" class="finish-layer"></div>
+        </div>
+    </div>
+
+    <div id="bottom-sheet" class="collapsed">
+        <div class="shrink-0 bg-brand-900 rounded-t-[20px] pb-2 cursor-pointer" onclick="toggleSheet()">
+            <div class="sheet-handle"></div>
+            <div class="flex justify-between items-center px-5 py-2">
+                <div>
+                    <h3 class="font-bold text-white text-sm">Print Settings</h3>
+                    <p class="text-xs text-brand-500" id="summary-text">Letter • Portrait • No Finish</p>
                 </div>
-                <div id="editor-stage" class="hidden w-full h-full">
-                    <img id="image-target" class="block max-w-full">
-                    <div id="finish-overlay" class="finish-layer"></div>
+                <div class="text-xs font-bold text-gray-400 bg-brand-800 px-3 py-1 rounded-full uppercase tracking-wider">
+                    <i class="fa-solid fa-sliders mr-1"></i> Customize
                 </div>
             </div>
         </div>
 
-        <div class="layout-bottom bg-brand-900 border-t lg:border-t-0 lg:border-l border-gray-800 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-10 flex-fix">
+        <div class="sheet-scroll">
             
-            <div class="w-full h-6 flex items-center justify-center lg:hidden shrink-0 bg-brand-900 rounded-t-2xl -mt-2 border-t border-gray-800">
-                <div class="w-12 h-1 bg-gray-600 rounded-full"></div>
+            <div class="flex gap-2 mb-6 mt-2">
+                <button onclick="rotate(-90)" class="flex-1 bg-brand-800 py-3 rounded-xl text-gray-300 text-xs font-bold"><i class="fa-solid fa-rotate-left mr-2"></i>Rotate</button>
+                <button onclick="fit('cover')" class="flex-1 bg-brand-800 py-3 rounded-xl text-gray-300 text-xs font-bold"><i class="fa-solid fa-maximize mr-2"></i>Fill Page</button>
+                <button onclick="fit('contain')" class="flex-1 bg-brand-800 py-3 rounded-xl text-gray-300 text-xs font-bold"><i class="fa-solid fa-compress mr-2"></i>Fit Inside</button>
             </div>
 
-            <div class="flex-1 native-scroll p-5 space-y-6">
-                
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Orientation</label>
-                    <div class="grid grid-cols-2 gap-2 bg-brand-950 p-1 rounded-xl border border-gray-800">
-                        <button onclick="setOrient('portrait')" id="btn-port" class="py-3 rounded-lg text-xs font-bold bg-brand-800 text-white shadow"><i class="fa-regular fa-file mr-2"></i>Portrait</button>
-                        <button onclick="setOrient('landscape')" id="btn-land" class="py-3 rounded-lg text-xs font-bold text-gray-400"><i class="fa-regular fa-file fa-rotate-90 mr-2"></i>Landscape</button>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Paper Size</label>
-                    <div class="flex gap-2 overflow-x-auto pb-2 native-scroll">
-                        <button onclick="setSize('letter')" id="btn-letter" class="flex-1 min-w-[80px] py-3 rounded-xl border border-brand-500 bg-brand-800 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform">
-                            <span class="text-xs font-bold text-white">Letter</span>
-                            <span class="text-[9px] text-gray-400">8.5x11</span>
-                        </button>
-                        <button onclick="setSize('legal')" id="btn-legal" class="flex-1 min-w-[80px] py-3 rounded-xl border border-gray-700 bg-brand-950 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform">
-                            <span class="text-xs font-bold text-gray-400">Legal</span>
-                            <span class="text-[9px] text-gray-500">8.5x14</span>
-                        </button>
-                        <button onclick="setSize('tabloid')" id="btn-tabloid" class="flex-1 min-w-[80px] py-3 rounded-xl border border-gray-700 bg-brand-950 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform">
-                            <span class="text-xs font-bold text-gray-400">Tabloid</span>
-                            <span class="text-[9px] text-gray-500">11x17</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-bold text-brand-400 tracking-wider">Finishing Options</label>
-                    <div class="relative">
-                        <select id="finish-opt" onchange="updateFinish()" class="w-full bg-brand-950 border border-gray-700 rounded-xl h-12 px-4 text-sm text-white appearance-none focus:border-brand-500 outline-none">
-                            <option value="none">Collate Only</option>
-                            <option value="staple-tl">Staple: Top Left</option>
-                            <option value="punch-3">Hole Punch: 3-Hole</option>
-                            <option value="booklet">Booklet Fold</option>
-                        </select>
-                        <div class="absolute right-4 top-4 text-gray-500 pointer-events-none"><i class="fa-solid fa-chevron-down"></i></div>
-                    </div>
-                </div>
-
-                <div class="bg-brand-950 rounded-xl p-2 flex items-center justify-between border border-gray-800 mb-20">
-                    <button onclick="adjQty(-1)" class="w-10 h-10 rounded-lg bg-brand-800 text-white flex items-center justify-center active:bg-brand-700"><i class="fa-solid fa-minus"></i></button>
-                    <div class="text-center">
-                        <div class="text-[10px] text-gray-500 uppercase font-bold">Copies</div>
-                        <div class="font-bold text-lg" id="qty-disp">1</div>
-                    </div>
-                    <button onclick="adjQty(1)" class="w-10 h-10 rounded-lg bg-brand-800 text-white flex items-center justify-center active:bg-brand-700"><i class="fa-solid fa-plus"></i></button>
+            <div class="space-y-2 mb-6">
+                <label class="text-[10px] uppercase font-bold text-gray-500">Paper Size</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setSize('letter')" id="btn-letter" class="p-3 rounded-xl border border-brand-500 bg-brand-800 text-xs font-bold text-white transition-all">Letter</button>
+                    <button onclick="setSize('legal')" id="btn-legal" class="p-3 rounded-xl border border-gray-700 bg-brand-950 text-xs font-bold text-gray-400 transition-all">Legal</button>
+                    <button onclick="setSize('tabloid')" id="btn-tabloid" class="p-3 rounded-xl border border-gray-700 bg-brand-950 text-xs font-bold text-gray-400 transition-all">Tabloid</button>
                 </div>
             </div>
 
-            <div class="absolute bottom-0 left-0 w-full p-4 bg-brand-900 border-t border-gray-800 pb-safe-b z-50">
-                <button onclick="addToCart()" id="btn-add" disabled class="w-full h-12 bg-white text-brand-900 font-bold rounded-xl shadow-lg flex items-center justify-between px-6 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform">
-                    <span>Add to Order</span>
-                    <span id="price-disp">$0.10</span>
-                </button>
+            <div class="space-y-2 mb-6">
+                <label class="text-[10px] uppercase font-bold text-gray-500">Finishing</label>
+                <div class="relative">
+                    <select id="finish-opt" onchange="updateFinish()" class="w-full bg-brand-950 border border-gray-700 rounded-xl h-12 px-4 text-sm text-white appearance-none outline-none">
+                        <option value="none">None</option>
+                        <option value="staple-tl">Staple Top-Left</option>
+                        <option value="punch-3">3-Hole Punch</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-500 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between bg-brand-950 p-2 rounded-xl border border-gray-700 mb-8">
+                <button onclick="adjQty(-1)" class="w-10 h-10 bg-brand-800 rounded-lg text-white">-</button>
+                <span id="qty-disp" class="font-bold">1 Copy</span>
+                <button onclick="adjQty(1)" class="w-10 h-10 bg-brand-800 rounded-lg text-white">+</button>
             </div>
         </div>
-    </main>
 
-    <div id="cart-drawer" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hidden flex justify-end">
-        <div class="w-full max-w-sm h-full bg-brand-900 flex flex-col shadow-2xl animate-slide-in">
-            <div class="h-14 border-b border-gray-800 flex items-center justify-between px-4 bg-brand-950 pt-safe-t">
-                <h2 class="font-bold">Your Order</h2>
-                <button onclick="toggleCart()" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="cart-list" class="flex-1 native-scroll p-4 space-y-3"></div>
-            <div class="p-4 bg-brand-950 border-t border-gray-800 pb-safe-b">
-                <div class="flex justify-between font-bold mb-4 text-lg"><span>Total</span><span id="cart-total">$0.00</span></div>
-                <button onclick="checkout()" class="w-full h-14 bg-brand-600 rounded-xl font-bold text-white shadow-lg">Submit Order</button>
-            </div>
+        <div class="absolute bottom-0 left-0 w-full p-4 bg-brand-900/95 border-t border-gray-800 pb-safe-b z-20">
+            <button onclick="addToCart()" id="btn-add" disabled class="w-full h-12 bg-white text-brand-900 font-bold rounded-xl shadow-lg flex items-center justify-between px-6 active:scale-95 transition-all disabled:opacity-50">
+                <span>Add to Order</span>
+                <span id="price-disp">$0.10</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="profile-drawer" class="fixed inset-y-0 left-0 w-72 bg-brand-900 shadow-2xl transform -translate-x-full transition-transform duration-300 z-[60] flex flex-col border-r border-gray-800">
+        <div class="p-6 pt-safe-t border-b border-gray-800 bg-brand-950">
+            <h2 class="font-bold text-lg text-white" id="user-name">Guest User</h2>
+            <p class="text-xs text-gray-500" id="user-company">No Company</p>
+        </div>
+        <div class="flex-1 p-4 space-y-2">
+            <button class="w-full text-left p-3 rounded-lg hover:bg-brand-800 text-sm text-gray-300"><i class="fa-solid fa-clock-rotate-left w-6"></i> Order History</button>
+            <button class="w-full text-left p-3 rounded-lg hover:bg-brand-800 text-sm text-gray-300"><i class="fa-solid fa-credit-card w-6"></i> Payment Methods</button>
+            <button class="w-full text-left p-3 rounded-lg hover:bg-brand-800 text-sm text-gray-300"><i class="fa-solid fa-gear w-6"></i> Settings</button>
+        </div>
+        <div class="p-4 border-t border-gray-800 pb-safe-b">
+            <button onclick="logout()" class="w-full py-3 bg-red-900/30 text-red-400 rounded-xl text-sm font-bold">Sign Out</button>
+        </div>
+        <button onclick="toggleProfile()" class="absolute top-4 -right-10 w-8 h-8 bg-brand-900 rounded-r flex items-center justify-center text-gray-400 shadow"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div id="login-modal" class="fixed inset-0 z-[70] bg-brand-950 flex flex-col items-center justify-center p-6">
+        <div class="w-full max-w-sm bg-brand-900 border border-gray-800 rounded-3xl p-8 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-brand-600 rounded-2xl mx-auto flex items-center justify-center mb-6 text-2xl shadow-lg"><i class="fa-solid fa-fingerprint"></i></div>
+            <h2 class="text-2xl font-bold text-white mb-1">Login</h2>
+            <p class="text-gray-400 text-xs mb-6">Access your print history & settings</p>
+            <input id="login-input" type="text" placeholder="Your Name" class="w-full bg-brand-950 border border-gray-700 rounded-xl p-4 text-white mb-3 text-center focus:border-brand-500 outline-none">
+            <button onclick="login()" class="w-full bg-brand-600 py-4 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-transform">Enter Shop</button>
         </div>
     </div>
 
     <script>
-        // CONSTANTS & STATE
-        const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
+        // --- CONSTANTS ---
         const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
+        const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
+        
+        // --- STATE ---
         let cropper = null;
         let state = { size: 'letter', orient: 'portrait', finish: 'none', qty: 1 };
-        let cart = [];
+        let user = JSON.parse(localStorage.getItem('mp_user')) || null;
 
-        // --- FILE HANDLING ---
+        // --- INIT ---
+        if(user) {
+            document.getElementById('login-modal').classList.add('hidden');
+            updateProfileUI();
+        }
+
+        function login() {
+            const name = document.getElementById('login-input').value || 'Guest';
+            user = { name, company: 'My Company' };
+            localStorage.setItem('mp_user', JSON.stringify(user));
+            updateProfileUI();
+            document.getElementById('login-modal').classList.add('hidden');
+        }
+
+        function logout() {
+            localStorage.removeItem('mp_user');
+            location.reload();
+        }
+
+        function updateProfileUI() {
+            document.getElementById('user-name').innerText = user.name;
+            document.getElementById('user-company').innerText = user.company;
+        }
+
+        function toggleProfile() {
+            const el = document.getElementById('profile-drawer');
+            el.classList.toggle('-translate-x-full');
+        }
+
+        function toggleSheet() {
+            const el = document.getElementById('bottom-sheet');
+            el.classList.toggle('collapsed');
+        }
+
+        // --- UPLOAD ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
             const file = e.target.files[0];
-            let src = '';
-            
-            if(file.type.includes('pdf')) {
-                const buff = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument(buff).promise;
-                const page = await pdf.getPage(1);
-                const viewport = page.getViewport({ scale: 2 });
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width; canvas.height = viewport.height;
-                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                src = canvas.toDataURL('image/jpeg');
-            } else {
-                src = URL.createObjectURL(file);
-            }
+            let src = URL.createObjectURL(file); // Simplification for demo (PDFs use PDF.js logic from v8)
 
             const img = new Image();
             img.onload = () => {
                 state.orient = img.width > img.height ? 'landscape' : 'portrait';
-                updateUI();
+                
                 document.getElementById('upload-prompt').classList.add('hidden');
                 document.getElementById('editor-stage').classList.remove('hidden');
-                document.getElementById('editor-toolbar').classList.remove('hidden');
-                document.getElementById('btn-add').disabled = false;
                 document.getElementById('image-target').src = src;
+                document.getElementById('btn-add').disabled = false;
+
+                // Expand sheet automatically so user sees options
+                document.getElementById('bottom-sheet').classList.remove('collapsed');
+                
                 initCropper();
             };
             img.src = src;
@@ -235,32 +252,29 @@
 
             cropper = new Cropper(el, {
                 aspectRatio: ratio,
-                viewMode: 0, 
-                dragMode: 'move',
-                autoCropArea: 1,
+                viewMode: 0, dragMode: 'move', autoCropArea: 1,
                 guides: false, center: false, background: false,
                 cropBoxMovable: false, cropBoxResizable: false,
-                toggleDragModeOnDblclick: false,
-                ready() { fit('cover'); drawOverlays(); },
-                crop: drawOverlays
+                ready() { fit('cover'); drawOverlays(); updateSummary(); }
             });
         }
 
+        // --- ACTIONS ---
         function fit(mode) {
             if(!cropper) return;
             cropper.zoomTo(0);
             const container = cropper.getContainerData();
             const canvas = cropper.getCanvasData();
             const box = cropper.getCropBoxData();
-            const imgRatio = canvas.naturalWidth / canvas.naturalHeight;
-            const boxRatio = box.width / box.height;
+            
+            // Calculate Fill vs Fit
             let zoom = 0;
+            const imgR = canvas.naturalWidth / canvas.naturalHeight;
+            const boxR = box.width / box.height;
 
-            if (mode === 'cover') {
-                zoom = (imgRatio > boxRatio) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
-            } else {
-                zoom = (imgRatio > boxRatio) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
-            }
+            if (mode === 'cover') zoom = (imgR > boxR) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
+            else zoom = (imgR > boxR) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
+            
             cropper.zoomTo(zoom);
             
             // Center
@@ -273,94 +287,75 @@
 
         function rotate(deg) { if(cropper) cropper.rotate(deg); }
 
-        // --- FINISHING ---
+        function setSize(sz) {
+            state.size = sz;
+            document.querySelectorAll('#btn-letter, #btn-legal, #btn-tabloid').forEach(b => {
+                b.className = 'p-3 rounded-xl border border-gray-700 bg-brand-950 text-xs font-bold text-gray-400 transition-all';
+            });
+            document.getElementById('btn-'+sz).className = 'p-3 rounded-xl border border-brand-500 bg-brand-800 text-xs font-bold text-white transition-all';
+            initCropper();
+            updatePrice();
+        }
+
+        function updateFinish() {
+            state.finish = document.getElementById('finish-opt').value;
+            drawOverlays();
+            updateSummary();
+            updatePrice();
+        }
+
         function drawOverlays() {
-            const layer = document.getElementById('finish-overlay');
+            const layer = document.getElementById('finish-layer');
             layer.innerHTML = '';
             if(!cropper) return;
             const box = cropper.getCropBoxData();
-            const { width, height, top, left } = box;
-            const opt = document.getElementById('finish-opt').value;
-
-            if(opt === 'staple-tl') {
+            
+            if(state.finish === 'staple-tl') {
                 const s = document.createElement('div');
-                s.className = 'staple-single';
-                s.style.top = (top + 15) + 'px';
-                s.style.left = (left + 15) + 'px';
+                s.className = 'staple';
+                s.style.top = (box.top + 15) + 'px';
+                s.style.left = (box.left + 15) + 'px';
                 layer.appendChild(s);
             }
-            if(opt === 'punch-3') {
+            if(state.finish === 'punch-3') {
                 for(let i=1; i<=3; i++) {
                     const p = document.createElement('div');
-                    p.className = 'punch-hole';
-                    p.style.left = (left + 8) + 'px';
-                    p.style.top = (top + (height * (i/4)) - 6) + 'px';
+                    p.className = 'punch';
+                    p.style.left = (box.left + 8) + 'px';
+                    p.style.top = (box.top + (box.height * (i/4)) - 6) + 'px';
                     layer.appendChild(p);
                 }
             }
-            if(opt === 'booklet') {
-                const f = document.createElement('div');
-                f.className = 'fold-line';
-                f.style.left = (left + (width/2)) + 'px';
-                f.style.top = top + 'px';
-                f.style.height = height + 'px';
-                layer.appendChild(f);
-            }
         }
 
-        // --- UI UPDATES ---
-        function setSize(sz) { state.size = sz; updateUI(); initCropper(); updatePrice(); }
-        function setOrient(o) { state.orient = o; updateUI(); initCropper(); }
-        function updateFinish() { state.finish = document.getElementById('finish-opt').value; drawOverlays(); updatePrice(); }
-        function adjQty(n) { state.qty = Math.max(1, state.qty + n); document.getElementById('qty-disp').innerText = state.qty; updatePrice(); }
-        
-        function updateUI() {
-            document.querySelectorAll('#btn-letter, #btn-legal, #btn-tabloid').forEach(b => {
-                b.className = 'flex-1 min-w-[80px] py-3 rounded-xl border border-gray-700 bg-brand-950 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform';
-                b.children[0].className = 'text-xs font-bold text-gray-400';
-            });
-            const activeSize = document.getElementById('btn-'+state.size);
-            activeSize.className = 'flex-1 min-w-[80px] py-3 rounded-xl border border-brand-500 bg-brand-800 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow';
-            activeSize.children[0].className = 'text-xs font-bold text-white';
-
-            const p = document.getElementById('btn-port');
-            const l = document.getElementById('btn-land');
-            if(state.orient === 'portrait') {
-                p.className = 'py-3 rounded-lg text-xs font-bold bg-brand-800 text-white shadow transition-all';
-                l.className = 'py-3 rounded-lg text-xs font-bold text-gray-400 transition-all';
-            } else {
-                l.className = 'py-3 rounded-lg text-xs font-bold bg-brand-800 text-white shadow transition-all';
-                p.className = 'py-3 rounded-lg text-xs font-bold text-gray-400 transition-all';
-            }
+        function adjQty(n) {
+            state.qty = Math.max(1, state.qty + n);
+            document.getElementById('qty-disp').innerText = state.qty + ' Copy';
+            updatePrice();
         }
 
         function updatePrice() {
-            const total = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
-            document.getElementById('price-disp').innerText = '$' + total.toFixed(2);
+            const t = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
+            document.getElementById('price-disp').innerText = '$' + t.toFixed(2);
+        }
+
+        function updateSummary() {
+            const txt = `${state.size.charAt(0).toUpperCase() + state.size.slice(1)} • ${state.orient.charAt(0).toUpperCase() + state.orient.slice(1)} • ${state.finish === 'none' ? 'No Finish' : state.finish}`;
+            document.getElementById('summary-text').innerText = txt;
         }
 
         function addToCart() {
-            cart.push({ ...state, total: document.getElementById('price-disp').innerText });
-            updateCart();
-            toggleCart();
+            Swal.fire({
+                title: 'Added!',
+                text: 'Item added to order.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            document.getElementById('cart-badge').classList.remove('hidden');
+            document.getElementById('cart-badge').innerText = '1';
         }
-        function updateCart() {
-             document.getElementById('cart-badge').innerText = cart.length;
-             document.getElementById('cart-badge').classList.remove('hidden');
-             document.getElementById('cart-list').innerHTML = cart.map(c => `
-                <div class="bg-brand-800 p-4 rounded-xl flex justify-between items-center shadow-sm">
-                    <div>
-                        <div class="font-bold text-white">${c.size.toUpperCase()}</div>
-                        <div class="text-xs text-gray-400 mt-1">${c.orient} • ${c.finish} • x${c.qty}</div>
-                    </div>
-                    <div class="font-bold text-brand-400">${c.total}</div>
-                </div>
-             `).join('');
-             let t = 0; cart.forEach(c => t += parseFloat(c.total.replace('$','')));
-             document.getElementById('cart-total').innerText = '$' + t.toFixed(2);
-        }
-        function toggleCart() { document.getElementById('cart-drawer').classList.toggle('hidden'); }
-        function checkout() { Swal.fire({ title: 'Order Sent!', icon: 'success', confirmButtonColor: '#2563eb' }); cart = []; updateCart(); toggleCart(); }
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | v22 Production</title>
+    <title>Magic Printer | v23 Final</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -27,37 +27,42 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        /* APP SHELL */
+        /* 1. APP SHELL */
         body { background: #020617; color: white; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app { display: flex; flex-direction: column; height: 100dvh; width: 100vw; }
 
-        /* HEADER */
+        /* 2. HEADER */
         .header { height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #111827; border-bottom: 1px solid #1f2937; z-index: 50; padding-top: env(safe-area-inset-top); }
 
-        /* WORKSPACE (Top Half) */
+        /* 3. WORKSPACE */
         .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; flex-direction: column; }
         #editor-stage { flex: 1; position: relative; background: #000; }
         
-        /* Cropper - Paper Simulation */
+        /* Cropper Customization */
         .cropper-view-box { outline: 1px solid rgba(255,255,255,0.5); box-shadow: 0 0 0 9999px #0b0f19; } 
         .cropper-bg { background: #fff; } 
         .cropper-modal { opacity: 1; background: #0b0f19; }
+
+        /* VISUAL INTELLIGENCE: Grayscale Filter */
+        /* Applied dynamically to the cropper container when B&W is selected */
+        .preview-grayscale .cropper-canvas img,
+        .preview-grayscale .cropper-view-box img {
+            filter: grayscale(100%) contrast(1.1); /* High contrast B&W print look */
+            transition: filter 0.3s ease;
+        }
 
         /* Finishing Overlays */
         .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 20; overflow: hidden; }
         .staple { position: absolute; background: linear-gradient(90deg, #9ca3af, #f3f4f6, #9ca3af); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); z-index: 50; }
         .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 50%; z-index: 50; }
 
-        /* CONTROLS (Bottom Scrollable) */
+        /* 4. CONTROLS */
         .controls { height: 50vh; flex-shrink: 0; background: #111827; border-top: 1px solid #1f2937; display: flex; flex-direction: column; z-index: 40; }
         .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; -webkit-overflow-scrolling: touch; }
-        
-        /* Footer */
         .controls-footer { padding: 16px 20px; background: #111827; border-top: 1px solid #1f2937; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; }
 
-        /* UI ELEMENTS */
+        /* UI Elements */
         .section-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        
         .opt-grid { display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); margin-bottom: 24px; }
         .opt-grid.three { grid-template-columns: repeat(3, 1fr); }
         
@@ -69,12 +74,6 @@
         .btn-opt i { font-size: 16px; margin-bottom: 2px; }
         .btn-opt.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
 
-        /* Upload Screen */
-        #upload-screen { position: absolute; inset: 0; background: #0b0f19; z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s infinite linear; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
         /* Floating Toolbar */
         .floating-toolbar {
             position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
@@ -84,6 +83,12 @@
             width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: center;
         }
+
+        /* Upload Screen */
+        #upload-screen { position: absolute; inset: 0; background: #0b0f19; z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -91,7 +96,6 @@
     <div id="loader"><div class="spinner"></div></div>
 
     <div id="app">
-        
         <div class="header">
             <button onclick="alert('Profile')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300"><i class="fa-solid fa-user"></i></button>
             <div class="font-bold text-sm tracking-wide">MAGIC<span class="text-blue-500">PRINTER</span></div>
@@ -117,34 +121,21 @@
         <div class="controls">
             <div class="controls-scroll">
                 
-                <div class="section-title">Color Mode</div>
                 <div class="opt-grid">
-                    <button class="btn-opt active" id="col-color" onclick="setColor('color')">
-                        <i class="fa-solid fa-palette"></i> Full Color
-                    </button>
-                    <button class="btn-opt" id="col-bw" onclick="setColor('bw')">
-                        <i class="fa-solid fa-droplet-slash"></i> Black & White
-                    </button>
-                </div>
-
-                <div class="section-title">Sides (Duplex)</div>
-                <div class="opt-grid three">
-                    <button class="btn-opt active" id="side-1" onclick="setSides('1')">
-                        <i class="fa-regular fa-file"></i> 1-Sided
-                    </button>
-                    <button class="btn-opt" id="side-2long" onclick="setSides('2long')">
-                        <i class="fa-solid fa-book-open"></i> Book
-                    </button>
-                    <button class="btn-opt" id="side-2short" onclick="setSides('2short')">
-                        <i class="fa-solid fa-calendar"></i> Flip
-                    </button>
-                </div>
-
-                <div class="section-title">Paper Type</div>
-                <div class="opt-grid three">
-                    <button class="btn-opt active" id="type-plain" onclick="setType('plain')">Plain</button>
-                    <button class="btn-opt" id="type-glossy" onclick="setType('glossy')">Glossy</button>
-                    <button class="btn-opt" id="type-card" onclick="setType('card')">Cardstock</button>
+                    <div>
+                        <div class="section-title">Color</div>
+                        <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700 h-12">
+                            <button onclick="setColor('color')" id="col-color" class="flex-1 rounded-md text-xs font-bold bg-brand-800 text-white shadow transition-all">Color</button>
+                            <button onclick="setColor('bw')" id="col-bw" class="flex-1 rounded-md text-xs font-bold text-gray-500 hover:text-white transition-all">B&W</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="section-title">Layout</div>
+                        <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700 h-12">
+                            <button onclick="setOrient('portrait')" id="btn-port" class="flex-1 rounded-md text-xs font-bold bg-brand-800 text-white shadow transition-all"><i class="fa-regular fa-file"></i></button>
+                            <button onclick="setOrient('landscape')" id="btn-land" class="flex-1 rounded-md text-xs font-bold text-gray-500 hover:text-white transition-all"><i class="fa-regular fa-file fa-rotate-90"></i></button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="section-title">Paper Size</div>
@@ -152,6 +143,23 @@
                     <button class="btn-opt active" id="sz-letter" onclick="setSize('letter')">Letter</button>
                     <button class="btn-opt" id="sz-legal" onclick="setSize('legal')">Legal</button>
                     <button class="btn-opt" id="sz-tabloid" onclick="setSize('tabloid')">Tabloid</button>
+                </div>
+
+                <div class="opt-grid">
+                    <div>
+                        <div class="section-title">Sides</div>
+                        <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700 h-12">
+                            <button onclick="setSides('1')" id="side-1" class="flex-1 rounded-md text-xs font-bold bg-brand-800 text-white shadow transition-all">1-Side</button>
+                            <button onclick="setSides('2')" id="side-2" class="flex-1 rounded-md text-xs font-bold text-gray-500 hover:text-white transition-all">2-Side</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="section-title">Stock</div>
+                        <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700 h-12">
+                            <button onclick="setType('plain')" id="type-plain" class="flex-1 rounded-md text-xs font-bold bg-brand-800 text-white shadow transition-all">Plain</button>
+                            <button onclick="setType('glossy')" id="type-glossy" class="flex-1 rounded-md text-xs font-bold text-gray-500 hover:text-white transition-all">Gloss</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="section-title">Finishing</div>
@@ -186,22 +194,13 @@
     </div>
 
     <script>
-        // --- PRICING MATRIX ---
-        const PRICES = {
-            letter: { bw: 0.10, color: 0.35 },
-            legal:  { bw: 0.15, color: 0.45 },
-            tabloid:{ bw: 0.25, color: 0.75 }
-        };
-        const EXTRAS = {
-            glossy: 0.15, card: 0.10, plain: 0,
-            staple: 0.02, punch: 0.01, none: 0
-        };
+        // --- LOGIC ---
+        const PRICES = { letter: { bw: 0.10, color: 0.35 }, legal: { bw: 0.15, color: 0.45 }, tabloid: { bw: 0.25, color: 0.75 } };
+        const EXTRAS = { glossy: 0.15, card: 0.10, plain: 0, staple: 0.02, punch: 0.01, none: 0 };
+        const DIMS = { letter: 8.5/11, legal: 8.5/14, tabloid: 11/17 };
         
         let cropper = null;
-        let state = { 
-            size: 'letter', orient: 'portrait', finish: 'none', 
-            color: 'color', type: 'plain', sides: '1', qty: 1 
-        };
+        let state = { size: 'letter', orient: 'portrait', finish: 'none', color: 'color', type: 'plain', sides: '1', qty: 1 };
 
         // --- FILE ENGINE ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
@@ -232,7 +231,8 @@
                 img.onload = () => {
                     // Auto-Detect Orientation
                     state.orient = img.width > img.height ? 'landscape' : 'portrait';
-                    
+                    updateToggleUI('btn-port', 'btn-land', state.orient === 'portrait');
+
                     loader.style.display = 'none';
                     document.getElementById('upload-screen').style.display = 'none';
                     document.getElementById('editor-stage').classList.remove('hidden');
@@ -247,18 +247,16 @@
             } catch(err) {
                 loader.style.display = 'none';
                 alert(err.message);
-                document.getElementById('file-input').value = '';
             }
         });
 
         // --- CROPPER ---
-        const DIMS = { letter: 8.5/11, legal: 8.5/14, tabloid: 11/17 };
-
         function initCropper() {
             if(cropper) cropper.destroy();
             const el = document.getElementById('image-target');
-            const base = DIMS[state.size];
-            const ratio = state.orient === 'portrait' ? base : (1/base);
+            // Base Ratio adjusted by Orientation
+            const baseRatio = DIMS[state.size];
+            const ratio = state.orient === 'portrait' ? baseRatio : (1 / baseRatio);
 
             cropper = new Cropper(el, {
                 aspectRatio: ratio,
@@ -288,24 +286,67 @@
             cropper.setCanvasData({ left: box.left+(box.width-newC.width)/2, top: box.top+(box.height-newC.height)/2 });
         }
 
-        function rotate(deg) { 
-            if(cropper) cropper.rotate(deg);
-            // Toggle orientation state logic implies aspect ratio swap, typically user manually rotates image to fit.
-            // For this simplified v22, we keep paper static and rotate image inside.
+        function rotate(deg) { if(cropper) cropper.rotate(deg); }
+
+        // --- UI UPDATERS (Toggle Logic) ---
+        function updateToggleUI(id1, id2, isFirstActive) {
+            const el1 = document.getElementById(id1);
+            const el2 = document.getElementById(id2);
+            if(isFirstActive) {
+                el1.className = "flex-1 rounded-md text-xs font-bold bg-brand-800 text-white shadow transition-all";
+                el2.className = "flex-1 rounded-md text-xs font-bold text-gray-500 hover:text-white transition-all";
+            } else {
+                el2.className = "flex-1 rounded-md text-xs font-bold bg-brand-800 text-white shadow transition-all";
+                el1.className = "flex-1 rounded-md text-xs font-bold text-gray-500 hover:text-white transition-all";
+            }
         }
 
-        // --- UI UPDATERS ---
-        function setSize(sz) { updateState('size', 'sz', sz); initCropper(); }
-        function setFinish(f) { updateState('finish', 'fn', f); drawOverlays(); }
-        function setColor(c) { updateState('color', 'col', c); }
-        function setSides(s) { updateState('sides', 'side', s); }
-        function setType(t) { updateState('type', 'type', t); }
+        function setOrient(o) {
+            state.orient = o;
+            updateToggleUI('btn-port', 'btn-land', o === 'portrait');
+            initCropper(); // Re-init to change crop box shape
+        }
 
-        function updateState(key, prefix, val) {
-            state[key] = val;
+        function setColor(c) {
+            state.color = c;
+            updateToggleUI('col-color', 'col-bw', c === 'color');
+            // VISUAL INTELLIGENCE: Toggle Grayscale Filter on Container
+            document.getElementById('editor-stage').classList.toggle('preview-grayscale', c === 'bw');
+            updatePrice();
+        }
+
+        function setSides(s) {
+            state.sides = s;
+            updateToggleUI('side-1', 'side-2', s === '1');
+            updatePrice();
+        }
+
+        function setType(t) {
+            state.type = t;
+            // Custom toggle logic for 3 options if needed, here basic active class
+            ['type-plain', 'type-glossy', 'type-card'].forEach(id => {
+                const el = document.getElementById(id);
+                if(id === `type-${t}`) el.className = "flex-1 rounded-md text-xs font-bold bg-brand-800 text-white shadow transition-all";
+                else el.className = "flex-1 rounded-md text-xs font-bold text-gray-500 hover:text-white transition-all";
+            });
+            updatePrice();
+        }
+
+        function setSize(sz) {
+            state.size = sz;
+            updateStateUI('sz', sz);
+            initCropper(); updatePrice();
+        }
+
+        function setFinish(f) {
+            state.finish = f;
+            updateStateUI('fn', f);
+            drawOverlays(); updatePrice();
+        }
+
+        function updateStateUI(prefix, val) {
             document.querySelectorAll(`[id^="${prefix}-"]`).forEach(b => b.classList.remove('active'));
             document.getElementById(`${prefix}-${val}`).classList.add('active');
-            updatePrice();
         }
 
         function drawOverlays() {
@@ -330,17 +371,14 @@
         }
 
         function qty(n) {
-            state.qty = Math.max(1, state.qty+n);
+            state.qty = Math.max(1, state.qty + n);
             document.getElementById('qty-disp').innerText = state.qty;
             updatePrice();
         }
 
         function updatePrice() {
-            // Base price by Size & Color
             let base = PRICES[state.size][state.color];
-            // Extras
             base += EXTRAS[state.type] + EXTRAS[state.finish];
-            // Sides (Duplex usually saves paper but costs clicks. We'll simplify: 1.8x for double sided)
             if(state.sides !== '1') base = base * 1.8;
             
             const total = base * state.qty;

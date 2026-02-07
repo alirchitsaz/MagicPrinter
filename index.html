@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | v29 Enterprise</title>
+    <title>Magic Printer | v30 True Scale</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -37,34 +37,43 @@
         /* WORKSPACE */
         .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* MODES */
-        .editor-view { width: 100%; height: 100%; display: none; }
-        .editor-view.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* MODE: PHOTO EDITOR */
+        #editor-photo { display: none; width: 100%; height: 100%; position: relative; }
         
-        /* DOC PREVIEW (The Paper Sheet) */
+        /* MODE: DOC PREVIEW */
+        #editor-doc { 
+            display: none; width: 100%; height: 100%; flex-direction: column; 
+            align-items: center; justify-content: center; background: #0f172a; 
+            position: relative; overflow: hidden;
+        }
+        
+        /* THE PAPER SHEET (True Scale Engine) */
         .paper-viewport {
-            width: 100%; height: 100%; overflow: auto;
-            display: flex; align-items: center; justify-content: center; padding: 20px;
-            background: #0f172a;
+            width: 100%; height: 100%; 
+            display: flex; align-items: center; justify-content: center; 
+            padding: 40px; /* Breathing room */
         }
         .paper-sheet {
-            background: white; box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: white; box-shadow: 0 30px 60px rgba(0,0,0,0.6); 
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy scaling */
             position: relative; overflow: hidden; display: flex; flex-wrap: wrap;
+            border: 1px solid #ccc;
         }
+        
+        /* Dimension Label Overlay */
+        .paper-label {
+            position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+            font-size: 11px; font-weight: 600; color: #64748b; background: #1e293b;
+            padding: 4px 10px; border-radius: 99px; border: 1px solid #334155;
+            white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.3s;
+        }
+        .paper-viewport:hover .paper-label, .paper-label.visible { opacity: 1; bottom: 10px; } /* Show on hover or active */
+
         .page-slot {
             position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
             border: 1px dashed rgba(0,0,0,0.05);
         }
         .page-render { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        
-        /* Page Number Stamp */
-        .page-stamp {
-            position: absolute; bottom: 8px; right: 8px; 
-            font-size: 8px; color: #666; font-family: monospace;
-            background: rgba(255,255,255,0.8); padding: 2px 4px; border-radius: 2px;
-            pointer-events: none;
-        }
 
         /* OVERLAYS */
         .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 20; overflow: hidden; }
@@ -111,7 +120,6 @@
     <div id="loader"><div class="spinner mb-4"></div><div class="text-sm font-bold text-gray-400">Processing...</div></div>
 
     <div id="app">
-        
         <div class="header">
             <button onclick="alert('Profile')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300"><i class="fa-solid fa-user"></i></button>
             <div class="font-bold text-sm tracking-wide">MAGIC<span class="text-blue-500">PRINTER</span></div>
@@ -123,7 +131,7 @@
 
         <div class="workspace">
             
-            <div id="view-photo" class="editor-view">
+            <div id="editor-photo">
                 <img id="image-target" class="block max-w-full">
                 <div id="finish-layer-photo" class="finish-layer"></div>
                 <div class="floating-toolbar" id="photo-tools">
@@ -133,10 +141,11 @@
                 </div>
             </div>
 
-            <div id="view-doc" class="editor-view">
-                <div class="paper-viewport">
+            <div id="editor-doc">
+                <div class="paper-viewport" id="doc-viewport">
                     <div id="paper-sheet" class="paper-sheet">
                         <div id="finish-layer-doc" class="finish-layer"></div>
+                        <div id="paper-dims" class="paper-label visible">8.5" x 11"</div>
                     </div>
                 </div>
                 <div class="absolute top-4 bg-black/60 px-3 py-1 rounded-full text-xs text-white backdrop-blur" id="doc-meta">Doc.pdf • 1 Page</div>
@@ -178,11 +187,6 @@
                         <button class="btn-opt" id="nup-2" onclick="setNup('2')">2-Up</button>
                         <button class="btn-opt" id="nup-book" onclick="setNup('booklet')">Booklet</button>
                     </div>
-                    
-                    <div class="flex items-center gap-3 bg-gray-900 p-3 rounded-lg border border-gray-700 mb-6">
-                        <input type="checkbox" id="check-nums" onchange="toggleNums()" class="w-5 h-5 rounded bg-gray-800 border-gray-600 text-blue-600">
-                        <label for="check-nums" class="text-sm font-bold text-gray-300">Add Page Numbers</label>
-                    </div>
                 </div>
 
                 <div class="section-title">Finishing</div>
@@ -221,14 +225,17 @@
     <script>
         // CONFIG
         const PRICES = { letter: { bw: 0.10, color: 0.35 }, legal: { bw: 0.15, color: 0.45 }, tabloid: { bw: 0.25, color: 0.75 } };
-        const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
+        const DIMS = { 
+            letter: {w:8.5, h:11, lbl:"8.5\" x 11\""}, 
+            legal: {w:8.5, h:14, lbl:"8.5\" x 14\""}, 
+            tabloid: {w:11, h:17, lbl:"11\" x 17\""} 
+        };
         const EXTRAS = { staple: 0.02, punch: 0.01, none: 0, slip: 0.05, sort: 0 };
         
         let cropper = null;
         let state = { 
             mode: 'none', pages: 1, size: 'letter', orient: 'portrait', 
-            finish: 'none', color: 'color', nup: '1', qty: 1,
-            pageNums: false
+            finish: 'none', color: 'color', nup: '1', qty: 1 
         };
 
         // --- FILE ENGINE ---
@@ -253,7 +260,6 @@
                         document.getElementById('doc-meta').innerText = `${file.name} • ${state.pages} Pages`;
                         renderDocPreview();
                     } else {
-                        // Single page PDF as photo
                         switchMode('photo');
                         const page = await pdf.getPage(1);
                         const viewport = page.getViewport({ scale: 2 });
@@ -284,15 +290,17 @@
 
         function switchMode(mode) {
             state.mode = mode;
-            // Toggle Views
-            document.getElementById('view-photo').classList.toggle('active', mode === 'photo');
-            document.getElementById('view-doc').classList.toggle('active', mode === 'doc');
-            // Toggle Context Controls
-            document.getElementById('group-doc').classList.toggle('active', mode === 'doc');
+            // Safely toggle display
+            const photoView = document.getElementById('editor-photo');
+            const docView = document.getElementById('editor-doc');
+            if(photoView) photoView.style.display = mode === 'photo' ? 'block' : 'none';
+            if(docView) docView.style.display = mode === 'doc' ? 'flex' : 'none';
             
-            // Show/Hide Floating Toolbar safely
-            const tools = document.getElementById('photo-tools');
-            if(tools) tools.style.display = (mode === 'photo') ? 'flex' : 'none';
+            // Toggle Context Controls
+            const groupDoc = document.getElementById('group-doc');
+            const groupPhoto = document.getElementById('group-photo');
+            if(groupDoc) groupDoc.classList.toggle('active', mode === 'doc');
+            if(groupPhoto) groupPhoto.classList.toggle('active', mode === 'photo');
         }
 
         function initPhotoEditor(src) {
@@ -306,25 +314,31 @@
             img.src = src;
         }
 
-        // --- PRECISION DOC RENDERER ---
+        // --- PRECISION DOC RENDERER (TRUE SCALE) ---
         async function renderDocPreview() {
             if (!state.pdfDoc) return;
             const sheet = document.getElementById('paper-sheet');
             if(!sheet) return;
             
-            // 1. CLEAR SLOTS (Keep finish layer)
+            // 1. CLEAR SLOTS (Keep finish layer and label)
             Array.from(sheet.children).forEach(c => {
-                if (!c.classList.contains('finish-layer')) c.remove(); 
+                if (!c.classList.contains('finish-layer') && !c.classList.contains('paper-label')) c.remove(); 
             });
 
-            // 2. SET PAPER DIMENSIONS (CSS Scale)
+            // 2. SET PAPER DIMENSIONS & LABEL
             const dim = DIMS[state.size];
             const isPort = state.orient === 'portrait';
             const w = isPort ? dim.w : dim.h;
             const h = isPort ? dim.h : dim.w;
+            const lbl = dim.lbl;
             
-            // Set Aspect Ratio (Base Scale ~ 25px per inch)
-            const baseScale = 25; 
+            // Update Label text
+            const lblEl = document.getElementById('paper-dims');
+            if(lblEl) lblEl.innerText = isPort ? lbl : lbl.split(' x ').reverse().join(' x ');
+
+            // Calculate Base Scale relative to viewport width (e.g. 350px max width)
+            // 8.5in -> 300px => 1in = 35px
+            const baseScale = 35; 
             sheet.style.width = (w * baseScale) + 'px';
             sheet.style.height = (h * baseScale) + 'px';
 
@@ -351,15 +365,6 @@
                 
                 await page.render({ canvasContext: ctx, viewport }).promise;
                 slot.appendChild(canvas);
-                
-                // Add Page Number
-                if(state.pageNums) {
-                    const num = document.createElement('div');
-                    num.className = 'page-stamp';
-                    num.innerText = i;
-                    slot.appendChild(num);
-                }
-                
                 sheet.appendChild(slot);
             }
             
@@ -414,7 +419,6 @@
         // --- UPDATES ---
         function updateState(key, prefix, val) {
             state[key] = val;
-            // Iterate known options to toggle UI safely
             const options = document.querySelectorAll(`[id^="${prefix}-"]`);
             options.forEach(b => safeToggle(b.id, b.id === `${prefix}-${val}`));
             updatePrice();
@@ -423,7 +427,7 @@
         function setColor(c) { 
             updateState('color', 'col', c); 
             if(state.mode === 'photo') {
-                const el = document.getElementById('view-photo');
+                const el = document.getElementById('editor-photo');
                 if(el) el.style.filter = c === 'bw' ? 'grayscale(100%)' : 'none';
             } else {
                 renderDocPreview();
@@ -454,11 +458,6 @@
         }
         
         function setFinish(f) { updateState('finish', 'fn', f); if(state.mode==='photo') drawOverlaysPhoto(); else drawOverlaysDoc(); }
-        
-        function toggleNums() {
-            state.pageNums = document.getElementById('check-nums').checked;
-            renderDocPreview();
-        }
 
         // --- OVERLAYS ---
         function drawOverlaysPhoto() {

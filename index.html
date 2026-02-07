@@ -2,359 +2,426 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | v20 Failsafe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Magic Printer | v21 Production</title>
     
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { brand: { 950: '#0b0f19', 900: '#111827', 800: '#1f2937', 600: '#2563eb', 500: '#3b82f6' } },
+                    spacing: { 'safe-t': 'env(safe-area-inset-top)', 'safe-b': 'env(safe-area-inset-bottom)' }
+                }
+            }
+        }
+        if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
     <style>
-        :root { --bg: #020617; --surface: #0f172a; --primary: #2563eb; --text: #fff; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        /* 1. APP SHELL (The Foundation) */
+        html, body { height: 100%; width: 100%; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; color: white; touch-action: none; }
         
-        body { 
-            margin: 0; padding: 0; background: var(--bg); color: var(--text); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow-x: hidden;
-            display: flex; flex-direction: column; min-height: 100vh;
+        #app { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
+
+        /* 2. HEADER */
+        .header { 
+            height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 16px; background: #111827; border-bottom: 1px solid #1f2937; z-index: 50;
+            padding-top: env(safe-area-inset-top);
         }
 
-        /* Status Bar for Errors */
-        #status-bar { background: #333; color: #ccc; font-size: 10px; padding: 4px 12px; text-align: center; display: none; }
-
-        /* NAV */
-        nav { 
-            height: 60px; display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 16px; background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid #1e293b;
-            position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px);
-        }
-        .logo { font-weight: 800; font-size: 16px; letter-spacing: -0.5px; }
-        .logo span { color: var(--primary); }
-        .icon-btn { width: 36px; height: 36px; border-radius: 50%; background: #1e293b; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; }
-
-        /* UPLOAD AREA */
-        #view-upload { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; min-height: 60vh; }
-        .drop-zone { 
-            width: 100%; max-width: 320px; aspect-ratio: 1; 
-            border: 2px dashed #334155; border-radius: 24px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #0f172a; transition: all 0.2s; cursor: pointer;
-        }
-        .drop-zone:active { background: #1e293b; border-color: var(--primary); transform: scale(0.98); }
-        .drop-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-        .drop-title { font-weight: 700; font-size: 18px; margin-bottom: 4px; }
-        .drop-sub { font-size: 13px; color: #94a3b8; }
-
-        /* EDITOR AREA (Hidden by default) */
-        #view-editor { display: none; flex-direction: column; width: 100%; }
+        /* 3. WORKSPACE (The Editor) */
+        .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
-        .canvas-container { 
-            width: 100%; height: 50vh; background: #000; position: relative; 
-            overflow: hidden; flex-shrink: 0;
-        }
-        #image-target { display: block; max-width: 100%; }
+        /* Cropper Customization - "The Paper" */
+        .cropper-view-box { outline: 1px solid rgba(255,255,255,0.5); box-shadow: 0 0 0 9999px #0b0f19; } 
+        .cropper-bg { background: #fff; } 
+        .cropper-modal { opacity: 1; background: #0b0f19; }
 
-        /* FINISHING OVERLAYS */
-        .overlay-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; overflow: hidden; }
-        .mark-staple { position: absolute; width: 24px; height: 4px; background: linear-gradient(90deg, #ccc, #fff, #ccc); transform: rotate(-45deg); box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-        .mark-punch { position: absolute; width: 12px; height: 12px; background: #020617; border: 1px solid #555; border-radius: 50%; }
+        /* Finishing Overlays */
+        .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 20; overflow: hidden; }
+        .staple { position: absolute; background: linear-gradient(90deg, #9ca3af, #f3f4f6, #9ca3af); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); z-index: 50; }
+        .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 50%; z-index: 50; }
 
-        /* TOOLBAR */
-        .toolbar { 
-            display: flex; gap: 8px; justify-content: center; padding: 12px; 
-            background: #0f172a; border-bottom: 1px solid #1e293b;
+        /* 4. CONTROLS (Scrollable Panel) */
+        .controls { 
+            height: 45vh; flex-shrink: 0; background: #111827; border-top: 1px solid #1f2937; 
+            display: flex; flex-direction: column; z-index: 40; box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
         }
-        .tool-btn { 
-            padding: 8px 16px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; 
-            color: #fff; font-size: 12px; font-weight: 600; cursor: pointer;
+        .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+        .controls-footer { 
+            padding: 16px 20px; background: #111827; border-top: 1px solid #1f2937; 
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            display: flex; gap: 12px;
         }
-        .tool-btn:active { background: var(--primary); border-color: var(--primary); }
 
-        /* CONTROLS LIST */
-        .controls { padding: 20px; padding-bottom: 120px; background: #020617; }
-        .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 10px; display: block; letter-spacing: 0.5px; }
+        /* UI Components */
+        .btn-tool { background: #1f2937; border: 1px solid #374151; color: #9ca3af; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 60px; }
+        .btn-tool:active { background: #374151; color: white; }
         
-        .opt-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 24px; }
+        .opt-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
         .opt-btn { 
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 16px; background: #0f172a; border: 2px solid #1e293b; 
-            border-radius: 12px; color: #fff; cursor: pointer; text-align: left;
+            padding: 10px 16px; border-radius: 8px; background: #1f2937; border: 1px solid #374151; 
+            color: #94a3b8; font-size: 13px; font-weight: 500; white-space: nowrap; flex: 1; text-align: center;
         }
-        .opt-btn.active { border-color: var(--primary); background: #0f172a; }
-        .opt-title { font-weight: 600; font-size: 14px; display: block; }
-        .opt-sub { font-size: 11px; color: #64748b; margin-top: 2px; display: block; }
-        .check-mark { display: none; color: var(--primary); font-weight: bold; }
-        .opt-btn.active .check-mark { display: block; }
+        .opt-btn.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; }
 
-        /* FOOTER */
-        .footer { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(15, 23, 42, 0.95); border-top: 1px solid #1e293b; 
-            padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom));
-            display: flex; gap: 12px; z-index: 100; backdrop-filter: blur(10px);
+        /* Upload Screen */
+        #upload-screen { position: absolute; inset: 0; background: #0b0f19; z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        
+        /* Overlays (Cart/Profile) */
+        .drawer { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; 
+            display: flex; justify-content: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
-        .qty-ctrl { display: flex; background: #0f172a; border-radius: 8px; border: 1px solid #334155; overflow: hidden; }
-        .qty-btn { width: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; background: transparent; color: #fff; border: none; }
-        .qty-val { width: 30px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-left: 1px solid #334155; border-right: 1px solid #334155; }
-        .add-btn { 
-            flex: 1; background: var(--primary); color: white; border: none; border-radius: 8px; 
-            font-size: 16px; font-weight: 700; cursor: pointer;
+        .drawer.active { opacity: 1; pointer-events: auto; }
+        .drawer-content { 
+            width: 85%; max-width: 350px; background: #111827; height: 100%; 
+            transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex; flex-direction: column;
         }
-        .add-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+        .drawer.active .drawer-content { transform: translateX(0); }
 
-        /* Loader Overlay */
-        #loader { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; 
-            display: none; align-items: center; justify-content: center; flex-direction: column; 
-        }
-        .spinner { width: 32px; height: 32px; border: 3px solid #333; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 12px; }
+        /* Loader */
+        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 </head>
 <body>
 
-    <div id="status-bar">System Ready</div>
+    <div id="loader"><div class="spinner"></div></div>
 
-    <nav>
-        <div class="logo">MAGIC<span>PRINTER</span></div>
-        <div style="display:flex; gap:8px;">
-            <button class="icon-btn" onclick="alert('Profile')">👤</button>
-            <button class="icon-btn" onclick="alert('Cart')">🛒</button>
-        </div>
-    </nav>
-
-    <div id="loader">
-        <div class="spinner"></div>
-        <div style="font-size:12px; font-weight:bold; color:#ccc">Processing...</div>
-    </div>
-
-    <div id="view-upload">
-        <div class="drop-zone" onclick="document.getElementById('file-input').click()">
-            <div class="drop-icon">☁️</div>
-            <div class="drop-title">Upload File</div>
-            <div class="drop-sub">PDF, JPG, PNG</div>
-        </div>
-        <input type="file" id="file-input" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.webp">
-    </div>
-
-    <div id="view-editor">
+    <div id="app">
         
-        <div class="canvas-container">
-            <img id="image-target" style="max-width:100%;">
-            <div id="finish-layer" class="overlay-layer"></div>
+        <div class="header">
+            <button onclick="toggleDrawer('profile')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300"><i class="fa-solid fa-user"></i></button>
+            <div class="font-bold text-sm tracking-wide">MAGIC<span class="text-blue-500">PRINTER</span></div>
+            <button onclick="toggleDrawer('cart')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300 relative">
+                <i class="fa-solid fa-shopping-bag"></i>
+                <span id="cart-badge" class="absolute -top-1 -right-1 bg-blue-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+            </button>
         </div>
 
-        <div class="toolbar">
-            <button class="tool-btn" onclick="rotate(-90)">↺ Rotate</button>
-            <button class="tool-btn" onclick="fit('cover')">⛶ Fill</button>
-            <button class="tool-btn" onclick="fit('contain')">↔ Fit</button>
+        <div class="workspace">
+            <div id="editor-stage" class="hidden w-full h-full relative">
+                <img id="image-target" class="block max-w-full">
+                <div id="finish-layer" class="finish-layer"></div>
+                
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4 z-30">
+                    <button onclick="rotate(-90)" class="btn-tool bg-black/80 backdrop-blur rounded-xl border-white/10 text-white shadow-lg"><i class="fa-solid fa-rotate-left text-lg"></i></button>
+                    <button onclick="doFit('cover')" class="btn-tool bg-black/80 backdrop-blur rounded-xl border-white/10 text-white shadow-lg"><i class="fa-solid fa-expand text-lg"></i></button>
+                    <button onclick="doFit('contain')" class="btn-tool bg-black/80 backdrop-blur rounded-xl border-white/10 text-white shadow-lg"><i class="fa-solid fa-compress text-lg"></i></button>
+                </div>
+            </div>
         </div>
 
         <div class="controls">
-            
-            <label class="section-label">Paper Size</label>
-            <div class="opt-grid">
-                <button class="opt-btn active" id="sz-letter" onclick="setSize('letter')">
-                    <div><span class="opt-title">Letter</span><span class="opt-sub">8.5 x 11"</span></div>
-                    <div class="check-mark">✔</div>
-                </button>
-                <button class="opt-btn" id="sz-legal" onclick="setSize('legal')">
-                    <div><span class="opt-title">Legal</span><span class="opt-sub">8.5 x 14"</span></div>
-                    <div class="check-mark">✔</div>
-                </button>
-                <button class="opt-btn" id="sz-tabloid" onclick="setSize('tabloid')">
-                    <div><span class="opt-title">Tabloid</span><span class="opt-sub">11 x 17"</span></div>
-                    <div class="check-mark">✔</div>
-                </button>
+            <div class="controls-scroll space-y-6">
+                
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Orientation</label>
+                    <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-800">
+                        <button onclick="setOrient('portrait')" id="btn-port" class="flex-1 py-2 rounded text-xs font-bold bg-gray-800 text-white shadow transition-all"><i class="fa-regular fa-file mr-2"></i>Portrait</button>
+                        <button onclick="setOrient('landscape')" id="btn-land" class="flex-1 py-2 rounded text-xs font-bold text-gray-500 hover:text-white transition-all"><i class="fa-regular fa-file fa-rotate-90 mr-2"></i>Landscape</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Paper Size</label>
+                    <div class="opt-row">
+                        <button onclick="setSize('letter')" id="sz-letter" class="opt-btn active">Letter</button>
+                        <button onclick="setSize('legal')" id="sz-legal" class="opt-btn">Legal</button>
+                        <button onclick="setSize('tabloid')" id="sz-tabloid" class="opt-btn">Tabloid</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Finishing</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setFinish('none')" id="fn-none" class="opt-btn active">None</button>
+                        <button onclick="setFinish('staple')" id="fn-staple" class="opt-btn">Staple</button>
+                        <button onclick="setFinish('punch')" id="fn-punch" class="opt-btn">Hole Punch</button>
+                        <button onclick="setFinish('booklet')" id="fn-booklet" class="opt-btn">Booklet</button>
+                        <button onclick="setFinish('dual')" id="fn-dual" class="opt-btn">Dual Staple</button>
+                    </div>
+                </div>
             </div>
 
-            <label class="section-label">Finishing</label>
-            <div class="opt-grid">
-                <button class="opt-btn active" id="fn-none" onclick="setFinish('none')">
-                    <div><span class="opt-title">None</span><span class="opt-sub">Collate Only</span></div>
-                    <div class="check-mark">✔</div>
-                </button>
-                <button class="opt-btn" id="fn-staple" onclick="setFinish('staple')">
-                    <div><span class="opt-title">Staple</span><span class="opt-sub">Top Left Corner</span></div>
-                    <div class="check-mark">✔</div>
-                </button>
-                <button class="opt-btn" id="fn-punch" onclick="setFinish('punch')">
-                    <div><span class="opt-title">Hole Punch</span><span class="opt-sub">3-Hole Left</span></div>
-                    <div class="check-mark">✔</div>
-                </button>
-                <button class="opt-btn" id="fn-booklet" onclick="setFinish('booklet')">
-                    <div><span class="opt-title">Booklet</span><span class="opt-sub">Fold & Stitch</span></div>
-                    <div class="check-mark">✔</div>
+            <div class="controls-footer">
+                <div class="flex items-center bg-gray-900 rounded-lg border border-gray-700 px-2 h-12">
+                    <button onclick="qty(-1)" class="w-10 h-full text-gray-400 active:text-white text-lg">-</button>
+                    <div class="w-8 text-center font-bold text-white" id="qty-disp">1</div>
+                    <button onclick="qty(1)" class="w-10 h-full text-gray-400 active:text-white text-lg">+</button>
+                </div>
+                <button onclick="addToCart()" id="btn-add" disabled class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg flex items-center justify-between px-6 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
+                    <span>Add to Order</span>
+                    <span id="price-disp">$0.10</span>
                 </button>
             </div>
-
         </div>
     </div>
 
-    <div class="footer">
-        <div class="qty-ctrl">
-            <button class="qty-btn" onclick="adjQty(-1)">-</button>
-            <div class="qty-val" id="qty-val">1</div>
-            <button class="qty-btn" onclick="adjQty(1)">+</button>
+    <div id="upload-screen">
+        <div onclick="document.getElementById('file-input').click()" class="w-64 h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
+            <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-600 mb-6"></i>
+            <span class="font-bold text-xl text-gray-200">Start Project</span>
+            <span class="text-sm text-gray-500 mt-2">PDF, JPG, PNG</span>
         </div>
-        <button class="add-btn" id="btn-add" disabled onclick="submitOrder()">Add to Order (<span id="price-disp">$0.10</span>)</button>
+        <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp">
+    </div>
+
+    <div id="drawer-profile" class="drawer">
+        <div class="drawer-content">
+            <div class="p-6 border-b border-gray-800 bg-gray-900 pt-safe-t">
+                <h2 class="text-xl font-bold text-white">Profile</h2>
+                <p class="text-xs text-gray-500">Logged in as Guest</p>
+            </div>
+            <div class="p-4 space-y-2">
+                <button class="w-full text-left p-4 bg-gray-800 rounded-lg text-gray-300">Order History</button>
+                <button class="w-full text-left p-4 bg-gray-800 rounded-lg text-gray-300">Saved Files</button>
+                <button class="w-full text-left p-4 bg-gray-800 rounded-lg text-gray-300">Settings</button>
+            </div>
+            <div class="mt-auto p-6 pb-safe-b">
+                <button onclick="toggleDrawer('profile')" class="w-full py-3 bg-gray-800 text-white font-bold rounded-lg">Close</button>
+            </div>
+        </div>
+        <div class="flex-1" onclick="toggleDrawer('profile')"></div>
+    </div>
+
+    <div id="drawer-cart" class="drawer">
+        <div class="drawer-content">
+            <div class="p-6 border-b border-gray-800 bg-gray-900 pt-safe-t">
+                <h2 class="text-xl font-bold text-white">Your Cart</h2>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <div class="text-center text-gray-500 mt-10">Cart is empty</div>
+            </div>
+            <div class="p-6 border-t border-gray-800 bg-gray-900 pb-safe-b">
+                <div class="flex justify-between mb-4 text-lg font-bold"><span>Total</span><span id="cart-total">$0.00</span></div>
+                <button onclick="checkout()" class="w-full py-4 bg-blue-600 text-white font-bold rounded-lg">Checkout</button>
+            </div>
+        </div>
+        <div class="flex-1" onclick="toggleDrawer('cart')"></div>
     </div>
 
     <script>
-        // Global Error Handler to catch crash issues
-        window.onerror = function(msg, url, line) {
-            const bar = document.getElementById('status-bar');
-            bar.style.display = 'block';
-            bar.style.background = '#991b1b';
-            bar.innerText = "Error: " + msg;
-            // Hide loader if stuck
-            document.getElementById('loader').style.display = 'none';
-        };
-
-        // Configuration
-        const DIMS = { letter: 8.5/11, legal: 8.5/14, tabloid: 11/17 };
+        // --- CONFIG ---
+        const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
         const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
         
         let cropper = null;
-        let state = { size: 'letter', finish: 'none', qty: 1 };
+        let state = { size: 'letter', orient: 'portrait', finish: 'none', qty: 1 };
+        let cart = [];
 
-        // File Handler
-        document.getElementById('file-input').addEventListener('change', function(e) {
+        // --- FILE ENGINE ---
+        document.getElementById('file-input').addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
             const file = e.target.files[0];
             const loader = document.getElementById('loader');
-            
             loader.style.display = 'flex';
 
-            // SAFETY: Use a timeout to ensure UI updates before heavy processing
-            setTimeout(async () => {
-                try {
-                    let src = '';
-                    
-                    // PDF Support (Check if library loaded)
-                    if(file.type === 'application/pdf') {
-                        if (typeof pdfjsLib === 'undefined') throw new Error("PDF Engine not ready. Wait 2s and try again.");
-                        
-                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                        const buff = await file.arrayBuffer();
-                        const pdf = await pdfjsLib.getDocument(buff).promise;
-                        const page = await pdf.getPage(1);
-                        const viewport = page.getViewport({ scale: 1.5 });
-                        const canvas = document.createElement('canvas');
-                        canvas.width = viewport.width; 
-                        canvas.height = viewport.height;
-                        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                        src = canvas.toDataURL('image/jpeg');
-                    } 
-                    // Standard Image
-                    else {
-                        src = URL.createObjectURL(file);
-                    }
-
-                    // Load Image to Editor
-                    const img = document.getElementById('image-target');
-                    img.onload = () => {
-                        loader.style.display = 'none';
-                        document.getElementById('view-upload').style.display = 'none';
-                        document.getElementById('view-editor').style.display = 'flex';
-                        document.getElementById('btn-add').disabled = false;
-                        
-                        initCropper();
-                    };
-                    img.onerror = () => { throw new Error("Failed to load image data."); };
-                    img.src = src;
-
-                } catch (err) {
-                    loader.style.display = 'none';
-                    alert("Upload Error: " + err.message);
+            try {
+                let src = '';
+                if(file.type === 'application/pdf') {
+                    if(typeof pdfjsLib === 'undefined') throw new Error("PDF Engine not ready");
+                    const buff = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument(buff).promise;
+                    const page = await pdf.getPage(1);
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width; canvas.height = viewport.height;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                    src = canvas.toDataURL('image/jpeg');
+                } else if(file.type.match(/image\/(jpeg|png|webp)/)) {
+                    src = URL.createObjectURL(file);
+                } else {
+                    throw new Error("Unsupported file");
                 }
-            }, 100);
+
+                const img = new Image();
+                img.onload = () => {
+                    // Auto-Detect Orientation
+                    state.orient = img.width > img.height ? 'landscape' : 'portrait';
+                    updateOrientUI();
+
+                    loader.style.display = 'none';
+                    document.getElementById('upload-screen').style.display = 'none';
+                    document.getElementById('editor-stage').classList.remove('hidden');
+                    document.getElementById('image-target').src = src;
+                    document.getElementById('btn-add').disabled = false;
+                    initCropper();
+                };
+                img.onerror = () => { throw new Error("Image corrupt"); }
+                img.src = src;
+
+            } catch(err) {
+                loader.style.display = 'none';
+                alert(err.message);
+            }
         });
 
+        // --- CROPPER & FIT ---
         function initCropper() {
             if(cropper) cropper.destroy();
-            const img = document.getElementById('image-target');
-            if (typeof Cropper === 'undefined') { alert("Cropper Library not loaded."); return; }
-            
-            cropper = new Cropper(img, {
-                aspectRatio: DIMS[state.size],
-                viewMode: 1, // Restrict to box
+            const el = document.getElementById('image-target');
+            const base = DIMS[state.size];
+            const ratio = state.orient === 'portrait' ? (base.w / base.h) : (base.h / base.w);
+
+            cropper = new Cropper(el, {
+                aspectRatio: ratio,
+                viewMode: 0, // Allow free movement
                 dragMode: 'move',
                 autoCropArea: 1,
-                background: false,
-                ready() { updateOverlays(); }
+                guides: false, center: false, background: false,
+                cropBoxMovable: false, cropBoxResizable: false,
+                toggleDragModeOnDblclick: false,
+                ready() { doFit('cover'); drawOverlays(); }
             });
         }
 
-        // Tools
-        window.rotate = (deg) => { if(cropper) cropper.rotate(deg); };
-        window.fit = (mode) => { if(cropper) cropper.reset(); }; // Simple reset for stability
-
-        window.setSize = (sz) => {
-            state.size = sz;
-            updateUI('sz', sz);
-            if(cropper) cropper.setAspectRatio(DIMS[sz]);
-            updatePrice();
-        };
-
-        window.setFinish = (f) => {
-            state.finish = f;
-            updateUI('fn', f);
-            updateOverlays();
-            updatePrice();
-        };
-
-        function updateUI(prefix, val) {
-            document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
-                if(el.id === `${prefix}-${val}`) el.classList.add('active');
-                else el.classList.remove('active');
-            });
-        }
-
-        function updateOverlays() {
-            const l = document.getElementById('finish-layer');
-            l.innerHTML = '';
+        function doFit(mode) {
             if(!cropper) return;
-            const box = cropper.getCropBoxData(); // Get positions relative to container
+            cropper.zoomTo(0);
+            const box = cropper.getCropBoxData();
+            const canvas = cropper.getCanvasData();
+            
+            // Calculate Ratios
+            const imgR = canvas.naturalWidth / canvas.naturalHeight;
+            const boxR = box.width / box.height;
+            let zoom = 0;
+
+            if (mode === 'cover') { // Fill Bleed
+                zoom = (imgR > boxR) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
+            } else { // Fit Inside
+                zoom = (imgR > boxR) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
+            }
+            
+            cropper.zoomTo(zoom);
+            
+            // Center
+            const newC = cropper.getCanvasData();
+            cropper.setCanvasData({ 
+                left: box.left + (box.width - newC.width) / 2, 
+                top: box.top + (box.height - newC.height) / 2 
+            });
+        }
+
+        function rotate(deg) { if(cropper) cropper.rotate(deg); }
+
+        // --- STATE & UI ---
+        function setOrient(o) {
+            state.orient = o; updateOrientUI(); initCropper();
+        }
+        function updateOrientUI() {
+            const p = document.getElementById('btn-port'); const l = document.getElementById('btn-land');
+            if(state.orient === 'portrait') {
+                p.className = 'flex-1 py-2 rounded text-xs font-bold bg-gray-800 text-white shadow border border-gray-600';
+                l.className = 'flex-1 py-2 rounded text-xs font-bold text-gray-500 hover:text-white transition-all';
+            } else {
+                l.className = 'flex-1 py-2 rounded text-xs font-bold bg-gray-800 text-white shadow border border-gray-600';
+                p.className = 'flex-1 py-2 rounded text-xs font-bold text-gray-500 hover:text-white transition-all';
+            }
+        }
+
+        function setSize(sz) {
+            state.size = sz;
+            document.querySelectorAll('[id^="sz-"]').forEach(b => b.classList.remove('active'));
+            document.getElementById('sz-'+sz).classList.add('active');
+            initCropper(); updatePrice();
+        }
+
+        function setFinish(f) {
+            state.finish = f;
+            document.querySelectorAll('[id^="fn-"]').forEach(b => b.classList.remove('active'));
+            document.getElementById('fn-'+f).classList.add('active');
+            drawOverlays(); updatePrice();
+        }
+
+        function drawOverlays() {
+            const l = document.getElementById('finish-layer'); l.innerHTML = '';
+            if(!cropper) return;
+            const box = cropper.getCropBoxData();
             
             if(state.finish === 'staple') {
-                const s = document.createElement('div'); s.className = 'mark-staple';
-                s.style.top = (box.top + 20) + 'px';
-                s.style.left = (box.left + 20) + 'px';
+                const s = document.createElement('div'); s.className = 'staple';
+                s.style.width = '24px'; s.style.height = '4px'; s.style.transform = 'rotate(-45deg)';
+                s.style.top = (box.top + 15) + 'px'; s.style.left = (box.left + 15) + 'px';
                 l.appendChild(s);
+            }
+            if(state.finish === 'dual') {
+                const s1 = document.createElement('div'); s1.className = 'staple';
+                s1.style.width = '4px'; s1.style.height = '24px';
+                s1.style.top = (box.top + (box.height*0.25)) + 'px'; s1.style.left = (box.left + 8) + 'px';
+                l.appendChild(s1);
+                const s2 = s1.cloneNode();
+                s2.style.top = (box.top + (box.height*0.75)) + 'px';
+                l.appendChild(s2);
             }
             if(state.finish === 'punch') {
                 for(let i=1; i<=3; i++) {
-                    const p = document.createElement('div'); p.className = 'mark-punch';
-                    p.style.left = (box.left + 10) + 'px';
-                    p.style.top = (box.top + (box.height * (i/4))) + 'px';
+                    const p = document.createElement('div'); p.className = 'punch';
+                    p.style.left = (box.left + 8) + 'px';
+                    p.style.top = (box.top + (box.height * (i/4)) - 6) + 'px';
                     l.appendChild(p);
                 }
             }
         }
 
-        window.adjQty = (n) => {
-            state.qty = Math.max(1, state.qty + n);
-            document.getElementById('qty-val').innerText = state.qty;
+        function qty(n) {
+            state.qty = Math.max(1, state.qty+n);
+            document.getElementById('qty-disp').innerText = state.qty;
             updatePrice();
-        };
-
+        }
         function updatePrice() {
-            const p = PRICES[state.size] + (state.finish === 'none' ? 0 : 0.05);
-            document.getElementById('price-disp').innerText = '$' + (p * state.qty).toFixed(2);
+            const t = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
+            document.getElementById('price-disp').innerText = '$' + t.toFixed(2);
         }
 
-        window.submitOrder = () => {
-            if(typeof Swal !== 'undefined') {
-                Swal.fire({ title: 'Success', text: 'Order Sent to Printer', icon: 'success' });
-            } else {
-                alert("Order Sent!");
-            }
-            setTimeout(() => location.reload(), 2000);
-        };
+        function toggleDrawer(id) {
+            document.getElementById('drawer-'+id).classList.toggle('active');
+        }
 
+        function addToCart() {
+            cart.push({ ...state, total: document.getElementById('price-disp').innerText });
+            updateCart();
+            Swal.fire({ icon: 'success', title: 'Added', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
+            toggleDrawer('cart');
+        }
+
+        function updateCart() {
+            document.getElementById('cart-badge').innerText = cart.length;
+            document.getElementById('cart-badge').classList.remove('hidden');
+            const el = document.getElementById('cart-items');
+            if(cart.length === 0) { el.innerHTML = '<div class="text-center text-gray-500 mt-10">Empty</div>'; return; }
+            
+            el.innerHTML = cart.map(c => `
+                <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center border border-gray-700">
+                    <div>
+                        <div class="font-bold text-white text-sm">${c.size.toUpperCase()}</div>
+                        <div class="text-xs text-gray-400">${c.orient} • ${c.finish}</div>
+                    </div>
+                    <div class="font-bold text-blue-400">${c.total}</div>
+                </div>
+            `).join('');
+            
+            let t = 0; cart.forEach(c => t += parseFloat(c.total.replace('$','')));
+            document.getElementById('cart-total').innerText = '$' + t.toFixed(2);
+        }
+
+        function checkout() {
+            Swal.fire({ title: 'Order Sent!', icon: 'success', confirmButtonColor: '#2563eb' });
+            cart = []; updateCart(); toggleDrawer('cart');
+        }
     </script>
 </body>
 </html>

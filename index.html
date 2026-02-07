@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | Gesture UI</title>
+    <title>Magic Printer | HUD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
@@ -15,9 +15,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        brand: { 950: '#0b0f19', 900: '#111827', 800: '#1f2937', 600: '#2563eb', 500: '#3b82f6' }
-                    },
+                    colors: { brand: { 900: '#111827', 800: '#1f2937', 600: '#2563eb', 500: '#3b82f6' } },
                     spacing: { 'safe-t': 'env(safe-area-inset-top)', 'safe-b': 'env(safe-area-inset-bottom)' }
                 }
             }
@@ -25,62 +23,63 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         
-        /* 1. APP SHELL */
-        html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background: #000; font-family: 'Inter', sans-serif; color: white; }
+        /* LAYOUT */
+        html, body { height: 100%; width: 100%; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; color: white; touch-action: none; }
         
-        /* 2. BACKGROUND LAYER (The Image) */
-        #editor-layer { position: absolute; inset: 0; z-index: 0; background: #111; }
-        .cropper-view-box { outline: 1px solid rgba(255,255,255,0.5); box-shadow: 0 0 0 9999px rgba(0,0,0,0.85); } 
-        .cropper-bg { background: #fff; } /* White Paper */
+        /* CANVAS LAYER */
+        #editor-layer { position: absolute; inset: 0; bottom: 220px; /* Leave room for HUD */ z-index: 0; background: #111; }
+        .cropper-view-box { outline: 1px solid rgba(255,255,255,0.8); box-shadow: 0 0 0 9999px rgba(0,0,0,0.9); } 
+        .cropper-bg { background: #e5e5e5; }
 
-        /* 3. BOTTOM SHEET (Gesture Controlled) */
-        #bottom-sheet {
-            position: absolute; left: 0; right: 0; bottom: 0;
-            height: 85vh; /* Max height */
-            background: #1f2937;
-            border-top-left-radius: 24px; border-top-right-radius: 24px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
-            z-index: 50;
-            touch-action: none; /* Crucial for custom drag */
-            transform: translateY(calc(100% - 100px)); /* Default Collapsed State */
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        /* HUD LAYER (Bottom Controls) */
+        #hud-layer { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 220px; 
+            background: #111827; border-top: 1px solid #374151; 
+            display: flex; flex-direction: column; z-index: 50;
+            padding-bottom: env(safe-area-inset-bottom);
         }
-        
-        /* When dragging, disable transition for 1:1 movement */
-        #bottom-sheet.dragging { transition: none; }
 
-        /* The Grab Handle Area */
-        .sheet-header { padding: 12px 0 0 0; cursor: grab; background: #1f2937; border-top-left-radius: 24px; border-top-right-radius: 24px; }
-        .sheet-handle { width: 48px; height: 5px; background: #4b5563; border-radius: 10px; margin: 0 auto 12px auto; }
-        
-        .sheet-content { height: 100%; overflow-y: auto; padding: 0 20px 120px 20px; -webkit-overflow-scrolling: touch; }
+        /* SCROLLABLE PILLS */
+        .scroll-pills { display: flex; gap: 8px; overflow-x: auto; padding: 0 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .scroll-pills::-webkit-scrollbar { display: none; }
+        .pill-btn { 
+            white-space: nowrap; padding: 8px 16px; border-radius: 99px; font-size: 11px; font-weight: bold; 
+            background: #1f2937; color: #9ca3af; border: 1px solid #374151; transition: all 0.2s;
+        }
+        .pill-btn.active { background: #2563eb; color: white; border-color: #3b82f6; }
 
-        /* 4. OVERLAYS */
+        /* OVERLAYS */
         .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 10; }
-        .staple { position: absolute; width: 24px; height: 5px; background: linear-gradient(90deg, #999, #fff, #999); transform: rotate(-45deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-        .punch { position: absolute; width: 12px; height: 12px; background: #111; border: 1px solid #444; border-radius: 50%; }
+        .staple { position: absolute; width: 24px; height: 5px; background: linear-gradient(90deg, #999, #fff, #999); transform: rotate(-45deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        .punch { position: absolute; width: 12px; height: 12px; background: #111; border: 1px solid #666; border-radius: 50%; }
+
+        /* HEADER */
+        header { position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 50; padding-top: env(safe-area-inset-top); background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); pointer-events: none; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; height: 100%; pointer-events: auto; }
     </style>
 </head>
 <body>
 
-    <header class="absolute top-0 left-0 w-full h-16 flex items-center justify-between px-4 pt-safe-t z-50 pointer-events-none">
-        <button onclick="toggleProfile()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white">
-            <i class="fa-solid fa-user"></i>
-        </button>
-        <button onclick="toggleCart()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white relative">
-            <i class="fa-solid fa-shopping-bag"></i>
-            <span id="cart-badge" class="absolute -top-1 -right-1 bg-blue-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
-        </button>
+    <header>
+        <div class="header-content">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow"><i class="fa-solid fa-print text-white text-xs"></i></div>
+                <h1 class="font-bold text-sm tracking-wide text-gray-200">MAGIC<span class="text-blue-500">PRINTER</span></h1>
+            </div>
+            <button onclick="toggleCart()" class="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center relative">
+                <i class="fa-solid fa-shopping-bag text-gray-400 text-sm"></i>
+                <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-[9px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+            </button>
+        </div>
     </header>
 
     <div id="editor-layer">
         <div id="upload-prompt" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-            <div onclick="document.getElementById('file-input').click()" class="w-64 h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
-                <i class="fa-solid fa-plus text-4xl text-gray-500 mb-4"></i>
-                <span class="font-bold text-lg text-gray-300">New Project</span>
-                <span class="text-sm text-gray-500 mt-1">Tap to Upload</span>
+            <div onclick="document.getElementById('file-input').click()" class="w-64 h-48 border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-500 mb-3"></i>
+                <span class="font-bold text-gray-300">Tap to Upload</span>
             </div>
             <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
         </div>
@@ -91,176 +90,93 @@
         </div>
     </div>
 
-    <div id="bottom-sheet">
-        <div class="sheet-header" id="sheet-drag-zone">
-            <div class="sheet-handle"></div>
-            <div class="flex justify-between items-center px-6 pb-4">
-                <div>
-                    <h3 class="font-bold text-white text-base">Print Options</h3>
-                    <p class="text-xs text-brand-500 font-mono mt-0.5" id="summary-text">Letter • Portrait</p>
-                </div>
-                <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-400">
-                    <i class="fa-solid fa-chevron-up text-xs"></i>
-                </div>
+    <div id="hud-layer" class="hidden">
+        
+        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-800">
+            <div class="flex gap-4">
+                <button onclick="rotate(-90)" class="text-gray-300 hover:text-white flex flex-col items-center gap-1 w-12">
+                    <i class="fa-solid fa-rotate-left text-lg"></i>
+                    <span class="text-[9px] font-bold uppercase text-gray-500">Rotate</span>
+                </button>
+                <button onclick="toggleFit()" id="btn-fit" class="text-gray-300 hover:text-white flex flex-col items-center gap-1 w-12">
+                    <i class="fa-solid fa-expand text-lg" id="icon-fit"></i>
+                    <span class="text-[9px] font-bold uppercase text-gray-500" id="text-fit">Fill</span>
+                </button>
+            </div>
+            
+            <div class="h-8 w-px bg-gray-700 mx-2"></div>
+
+            <div class="flex bg-gray-800 rounded-lg p-1">
+                <button onclick="setOrient('portrait')" id="t-port" class="px-3 py-1.5 rounded text-[10px] font-bold bg-gray-700 text-white shadow">Port</button>
+                <button onclick="setOrient('landscape')" id="t-land" class="px-3 py-1.5 rounded text-[10px] font-bold text-gray-400">Land</button>
             </div>
         </div>
 
-        <div class="sheet-content">
-            
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <button onclick="rotate(-90)" class="bg-gray-800 py-3 rounded-xl text-gray-300 text-xs font-bold flex flex-col items-center gap-1 active:bg-gray-700"><i class="fa-solid fa-rotate-left text-sm"></i>Rotate</button>
-                <button onclick="fit('cover')" class="bg-gray-800 py-3 rounded-xl text-gray-300 text-xs font-bold flex flex-col items-center gap-1 active:bg-gray-700"><i class="fa-solid fa-maximize text-sm"></i>Fill</button>
-                <button onclick="fit('contain')" class="bg-gray-800 py-3 rounded-xl text-gray-300 text-xs font-bold flex flex-col items-center gap-1 active:bg-gray-700"><i class="fa-solid fa-compress text-sm"></i>Fit</button>
+        <div class="py-3">
+            <div class="px-4 mb-1 text-[9px] font-bold text-gray-500 uppercase">Paper Size</div>
+            <div class="scroll-pills">
+                <button onclick="setSize('letter')" id="sz-letter" class="pill-btn active">Letter (8.5x11)</button>
+                <button onclick="setSize('legal')" id="sz-legal" class="pill-btn">Legal (8.5x14)</button>
+                <button onclick="setSize('tabloid')" id="sz-tabloid" class="pill-btn">Tabloid (11x17)</button>
             </div>
+        </div>
 
-            <div class="space-y-3 mb-6">
-                <label class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Paper Size</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button onclick="setSize('letter')" id="btn-letter" class="p-3 rounded-xl border border-blue-500 bg-blue-600/20 text-xs font-bold text-white transition-all">Letter</button>
-                    <button onclick="setSize('legal')" id="btn-legal" class="p-3 rounded-xl border border-gray-700 bg-gray-800 text-xs font-bold text-gray-400 transition-all">Legal</button>
-                    <button onclick="setSize('tabloid')" id="btn-tabloid" class="p-3 rounded-xl border border-gray-700 bg-gray-800 text-xs font-bold text-gray-400 transition-all">Tabloid</button>
-                </div>
+        <div class="py-1 pb-2">
+            <div class="px-4 mb-1 text-[9px] font-bold text-gray-500 uppercase">Finishing</div>
+            <div class="scroll-pills">
+                <button onclick="setFinish('none')" id="fn-none" class="pill-btn active">None</button>
+                <button onclick="setFinish('staple-tl')" id="fn-staple-tl" class="pill-btn">Staple</button>
+                <button onclick="setFinish('punch-3')" id="fn-punch-3" class="pill-btn">Hole Punch</button>
+                <button onclick="setFinish('booklet')" id="fn-booklet" class="pill-btn">Booklet</button>
             </div>
+        </div>
 
-            <div class="space-y-3 mb-8">
-                <label class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Finishing</label>
-                <div class="relative">
-                    <select id="finish-opt" onchange="updateFinish()" class="w-full bg-gray-800 border border-gray-700 rounded-xl h-14 px-4 text-sm text-white appearance-none outline-none font-medium">
-                        <option value="none">None</option>
-                        <option value="staple-tl">Staple: Top-Left</option>
-                        <option value="punch-3">Hole Punch: 3-Hole</option>
-                    </select>
-                    <div class="absolute right-4 top-4 text-gray-400 pointer-events-none"><i class="fa-solid fa-chevron-down"></i></div>
-                </div>
+        <div class="mt-auto p-3 bg-gray-900 border-t border-gray-800 flex gap-3">
+            <div class="flex items-center bg-gray-800 rounded-lg px-3">
+                <button onclick="qty(-1)" class="text-gray-400 p-2"><i class="fa-solid fa-minus text-xs"></i></button>
+                <span id="qty-disp" class="text-sm font-bold text-white w-8 text-center">1</span>
+                <button onclick="qty(1)" class="text-gray-400 p-2"><i class="fa-solid fa-plus text-xs"></i></button>
             </div>
-
-            <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 flex items-center justify-between mb-4">
-                <button onclick="adjQty(-1)" class="w-10 h-10 rounded-lg bg-gray-700 text-white flex items-center justify-center active:bg-gray-600"><i class="fa-solid fa-minus"></i></button>
-                <span class="font-bold text-lg" id="qty-disp">1 Copy</span>
-                <button onclick="adjQty(1)" class="w-10 h-10 rounded-lg bg-gray-700 text-white flex items-center justify-center active:bg-gray-600"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            
-            <button onclick="addToCart()" id="btn-add" disabled class="w-full h-14 bg-white text-black font-bold text-lg rounded-2xl shadow-lg flex items-center justify-between px-6 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
+            <button onclick="addToCart()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-sm flex items-center justify-between px-4">
                 <span>Add to Order</span>
                 <span id="price-disp">$0.10</span>
             </button>
         </div>
     </div>
 
-    <div id="profile-drawer" class="fixed inset-y-0 left-0 w-80 bg-gray-900 shadow-2xl transform -translate-x-full transition-transform duration-300 z-[60] border-r border-gray-800 flex flex-col">
-        <div class="p-6 pt-safe-t bg-gray-950 border-b border-gray-800">
-            <h2 class="text-xl font-bold text-white" id="profile-name">Guest</h2>
-            <p class="text-xs text-gray-500 mt-1">Kyocera Direct Print</p>
-        </div>
-        <div class="p-4 space-y-2 flex-1">
-            <div class="p-3 rounded-lg hover:bg-gray-800 cursor-pointer text-sm text-gray-300 flex gap-3 items-center"><i class="fa-solid fa-clock-rotate-left w-5"></i> History</div>
-            <div class="p-3 rounded-lg hover:bg-gray-800 cursor-pointer text-sm text-gray-300 flex gap-3 items-center"><i class="fa-solid fa-credit-card w-5"></i> Billing</div>
-        </div>
-        <div class="p-4 border-t border-gray-800 pb-safe-b">
-            <button onclick="toggleProfile()" class="w-full py-3 text-center text-sm text-gray-400 font-bold hover:text-white">Close Menu</button>
-        </div>
-    </div>
-
     <script>
-        // --- GESTURE ENGINE (The Magic Part) ---
-        const sheet = document.getElementById('bottom-sheet');
-        const handle = document.getElementById('sheet-drag-zone');
-        let startY = 0;
-        let currentY = 0;
-        let isDragging = false;
-        
-        // Define Snap Points (pixels from top of screen)
-        const SNAP_OPEN = window.innerHeight * 0.15; // 15% from top
-        const SNAP_CLOSED = window.innerHeight - 100; // 100px visible at bottom
-
-        handle.addEventListener('touchstart', (e) => {
-            startY = e.touches[0].clientY;
-            // Get current transform value (roughly) or assume state
-            sheet.classList.add('dragging');
-            isDragging = true;
-        }, { passive: true });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const y = e.touches[0].clientY;
-            const delta = y - startY;
-            
-            // Calculate new position based on previous state
-            // Simplified logic: Just track the drag relative to screen
-            // In a real app we'd track current Offset, but for this demo:
-            
-            // Just move it with finger
-            // Note: This logic assumes we started from a snap point. 
-            // For robustness in this single-file demo, we will use a simpler CSS class toggle on end,
-            // but while dragging, we can translate.
-            
-            // Let's rely on simple swipe detection for v10 efficiency
-        }, { passive: true });
-
-        handle.addEventListener('touchend', (e) => {
-            sheet.classList.remove('dragging');
-            isDragging = false;
-            const endY = e.changedTouches[0].clientY;
-            const dist = endY - startY;
-
-            // If dragged UP significantly, Open
-            if (dist < -50) {
-                openSheet();
-            } 
-            // If dragged DOWN significantly, Close
-            else if (dist > 50) {
-                closeSheet();
-            }
-            // Tap detection (minimal movement)
-            else if (Math.abs(dist) < 10) {
-                toggleSheet();
-            }
-        });
-
-        function openSheet() {
-            sheet.style.transform = `translateY(0)`; // Shows full height (85vh)
-        }
-        function closeSheet() {
-            sheet.style.transform = `translateY(calc(100% - 110px))`; // Shows just header
-        }
-        function toggleSheet() {
-            const current = sheet.style.transform;
-            if (current.includes('0') && !current.includes('100%')) closeSheet();
-            else openSheet();
-        }
-
-        // --- STANDARD LOGIC ---
-        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
+        // --- CONSTANTS ---
         const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
+        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
+        
         let cropper = null;
-        let state = { size: 'letter', orient: 'portrait', finish: 'none', qty: 1 };
-        let user = JSON.parse(localStorage.getItem('mp_user')) || { name: 'Ali Chitsaz' };
-
-        document.getElementById('profile-name').innerText = user.name;
-
-        // Init
-        closeSheet(); // Start closed
-
+        let state = { size: 'letter', orient: 'portrait', finish: 'none', fit: 'cover', qty: 1 };
+        
+        // --- UPLOAD ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
             const file = e.target.files[0];
             let src = URL.createObjectURL(file);
-
+            
+            // Simple Image Load
             const img = new Image();
             img.onload = () => {
+                // Auto-detect Orientation
                 state.orient = img.width > img.height ? 'landscape' : 'portrait';
+                updateOrientUI();
+
+                // Show Editor
                 document.getElementById('upload-prompt').classList.add('hidden');
                 document.getElementById('editor-stage').classList.remove('hidden');
+                document.getElementById('hud-layer').classList.remove('hidden');
                 document.getElementById('image-target').src = src;
-                document.getElementById('btn-add').disabled = false;
-                
-                // Show user the options, then they can drag down
-                openSheet();
+
                 initCropper();
             };
             img.src = src;
         });
 
+        // --- CROPPER ---
         function initCropper() {
             if(cropper) cropper.destroy();
             const el = document.getElementById('image-target');
@@ -269,21 +185,46 @@
 
             cropper = new Cropper(el, {
                 aspectRatio: ratio,
-                viewMode: 0, dragMode: 'move', autoCropArea: 1,
+                viewMode: 0, // Free move
+                dragMode: 'move',
+                autoCropArea: 1,
                 guides: false, center: false, background: false,
                 cropBoxMovable: false, cropBoxResizable: false,
-                ready() { fit('cover'); drawOverlays(); updateSummary(); }
+                toggleDragModeOnDblclick: false,
+                ready() { applyFit(); drawOverlays(); }
             });
         }
 
-        function fit(mode) {
+        // --- ACTIONS ---
+        function rotate(deg) { if(cropper) cropper.rotate(deg); }
+
+        function toggleFit() {
+            state.fit = state.fit === 'cover' ? 'contain' : 'cover';
+            // Update Icon
+            const icon = document.getElementById('icon-fit');
+            const text = document.getElementById('text-fit');
+            if(state.fit === 'cover') {
+                icon.className = 'fa-solid fa-expand text-lg';
+                text.innerText = 'Fill';
+            } else {
+                icon.className = 'fa-solid fa-compress text-lg';
+                text.innerText = 'Fit';
+            }
+            applyFit();
+        }
+
+        function applyFit() {
             if(!cropper) return;
             cropper.zoomTo(0);
             const box = cropper.getCropBoxData();
             const canvas = cropper.getCanvasData();
-            const z = mode === 'cover' 
-                ? Math.max(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight)
-                : Math.min(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight);
+            let z = 0;
+            const imgR = canvas.naturalWidth / canvas.naturalHeight;
+            const boxR = box.width / box.height;
+
+            if (state.fit === 'cover') z = (imgR > boxR) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
+            else z = (imgR > boxR) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
+            
             cropper.zoomTo(z);
             const newC = cropper.getCanvasData();
             cropper.setCanvasData({ left: box.left+(box.width-newC.width)/2, top: box.top+(box.height-newC.height)/2 });
@@ -291,22 +232,41 @@
 
         function setSize(sz) {
             state.size = sz;
-            document.querySelectorAll('#btn-letter, #btn-legal, #btn-tabloid').forEach(b => {
-                b.className = 'p-3 rounded-xl border border-gray-700 bg-gray-800 text-xs font-bold text-gray-400 transition-all';
-            });
-            document.getElementById('btn-'+sz).className = 'p-3 rounded-xl border border-blue-500 bg-blue-600/20 text-xs font-bold text-white transition-all';
+            document.querySelectorAll('[id^="sz-"]').forEach(b => b.classList.remove('active'));
+            document.getElementById('sz-'+sz).classList.add('active');
             initCropper(); updatePrice();
         }
 
-        function updateFinish() {
-            state.finish = document.getElementById('finish-opt').value;
-            drawOverlays(); updateSummary(); updatePrice();
+        function setOrient(o) {
+            state.orient = o;
+            updateOrientUI();
+            initCropper();
+        }
+
+        function updateOrientUI() {
+            const p = document.getElementById('t-port');
+            const l = document.getElementById('t-land');
+            if(state.orient === 'portrait') {
+                p.className = 'px-3 py-1.5 rounded text-[10px] font-bold bg-gray-600 text-white shadow transition-all';
+                l.className = 'px-3 py-1.5 rounded text-[10px] font-bold text-gray-500 transition-all';
+            } else {
+                l.className = 'px-3 py-1.5 rounded text-[10px] font-bold bg-gray-600 text-white shadow transition-all';
+                p.className = 'px-3 py-1.5 rounded text-[10px] font-bold text-gray-500 transition-all';
+            }
+        }
+
+        function setFinish(f) {
+            state.finish = f;
+            document.querySelectorAll('[id^="fn-"]').forEach(b => b.classList.remove('active'));
+            document.getElementById('fn-'+f).classList.add('active');
+            drawOverlays(); updatePrice();
         }
 
         function drawOverlays() {
             const l = document.getElementById('finish-layer'); l.innerHTML = '';
             if(!cropper) return;
             const b = cropper.getCropBoxData();
+            
             if(state.finish === 'staple-tl') {
                 const s = document.createElement('div'); s.className = 'staple';
                 s.style.top = (b.top+15)+'px'; s.style.left = (b.left+15)+'px';
@@ -321,22 +281,28 @@
             }
         }
 
-        function updateSummary() {
-            document.getElementById('summary-text').innerText = `${state.size.toUpperCase()} • ${state.orient.toUpperCase()}`;
+        function qty(n) {
+            state.qty = Math.max(1, state.qty + n);
+            document.getElementById('qty-disp').innerText = state.qty;
+            updatePrice();
         }
-        function rotate(d) { if(cropper) cropper.rotate(d); }
-        function adjQty(n) { state.qty = Math.max(1, state.qty+n); document.getElementById('qty-disp').innerText = state.qty + ' Copy'; updatePrice(); }
-        function updatePrice() { document.getElementById('price-disp').innerText = '$' + ((PRICES[state.size]+(state.finish==='none'?0:0.05))*state.qty).toFixed(2); }
-        
+
+        function updatePrice() {
+            const t = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
+            document.getElementById('price-disp').innerText = '$' + t.toFixed(2);
+        }
+
         function addToCart() {
-            Swal.fire({icon: 'success', title: 'Added', timer: 1000, showConfirmButton: false});
-            closeSheet();
+            Swal.fire({
+                title: 'Added to Order',
+                text: `${state.size.toUpperCase()} • ${state.finish}`,
+                icon: 'success',
+                toast: true, position: 'top', showConfirmButton: false, timer: 1500
+            });
             document.getElementById('cart-badge').classList.remove('hidden');
             document.getElementById('cart-badge').innerText = '1';
         }
-
-        function toggleProfile() { document.getElementById('profile-drawer').classList.toggle('-translate-x-full'); }
-        function toggleCart() { alert("Cart View Placeholder"); }
+        function toggleCart() { alert("Cart Placeholder"); }
     </script>
 </body>
 </html>

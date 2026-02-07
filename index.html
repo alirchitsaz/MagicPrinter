@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | v14 Stable</title>
+    <title>Magic Printer | v15 Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -20,8 +25,6 @@
                 }
             }
         }
-        // Initialize PDF Worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -37,12 +40,12 @@
         /* 3. SLIDING DRAWER */
         #bottom-sheet {
             position: absolute; left: 0; right: 0; bottom: 0;
-            height: 75vh;
+            height: 80vh;
             background: #1f2937;
             border-top-left-radius: 24px; border-top-right-radius: 24px;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
             z-index: 50;
-            transform: translateY(calc(100% - 160px)); /* Peek Height */
+            transform: translateY(calc(100% - 150px)); /* Peek Height */
             transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             will-change: transform;
         }
@@ -77,8 +80,8 @@
         }
         .orient-btn.active { background: #2563eb; color: white; box-shadow: 0 2px 10px rgba(37,99,235,0.3); }
         
-        /* 6. LOADING SPINNER */
-        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        /* 6. LOADER */
+        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -87,7 +90,8 @@
 
     <div id="loader" class="hidden">
         <div class="spinner mb-4"></div>
-        <div class="text-sm font-bold text-gray-300">Processing File...</div>
+        <div class="text-sm font-bold text-gray-300 mb-4">Processing...</div>
+        <button onclick="cancelLoad()" class="text-xs text-red-400 font-bold border border-red-900 bg-red-900/20 px-4 py-2 rounded-full">Cancel</button>
     </div>
 
     <div class="top-island">
@@ -117,7 +121,7 @@
                 <span class="font-bold text-lg text-gray-300">New Project</span>
                 <span class="text-sm text-gray-500 mt-1">PDF, JPG, PNG</span>
             </div>
-            <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+            <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onclick="this.value=null">
         </div>
 
         <div id="editor-stage" class="hidden w-full h-full relative">
@@ -207,70 +211,94 @@
         let cropper = null;
         let state = { size: 'letter', orient: 'portrait', finish: 'none', fit: 'cover', qty: 1 };
         
-        // --- IMPROVED FILE HANDLING (PDF & ERROR CHECK) ---
-        document.getElementById('file-input').addEventListener('change', async (e) => {
+        // --- FILE ENGINE (ROBUST) ---
+        const fileInput = document.getElementById('file-input');
+        const loader = document.getElementById('loader');
+
+        fileInput.addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
             const file = e.target.files[0];
-            const loader = document.getElementById('loader');
             
-            loader.classList.remove('hidden'); // Show loading spinner
+            // Show Loader
+            loader.classList.remove('hidden');
+            
+            // Watchdog Timer (kills spinner if stuck > 5s)
+            const watchdog = setTimeout(() => {
+                if(!loader.classList.contains('hidden')) {
+                    cancelLoad();
+                    Swal.fire('Timeout', 'File processing took too long.', 'warning');
+                }
+            }, 8000);
 
             try {
                 let src = '';
                 
-                if(file.type.includes('pdf')) {
-                    // PDF Processing Logic
+                // 1. Check if browser can handle it natively
+                if (file.type.match(/image\/(jpeg|png|webp)/)) {
+                    src = URL.createObjectURL(file);
+                } 
+                // 2. PDF Handling
+                else if(file.type === 'application/pdf') {
                     const buff = await file.arrayBuffer();
                     const pdf = await pdfjsLib.getDocument(buff).promise;
                     const page = await pdf.getPage(1);
                     const viewport = page.getViewport({ scale: 2 });
                     const canvas = document.createElement('canvas');
-                    canvas.width = viewport.width; canvas.height = viewport.height;
-                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width; 
+                    canvas.height = viewport.height;
+                    await page.render({ canvasContext: context, viewport }).promise;
                     src = canvas.toDataURL('image/jpeg');
-                } else {
-                    // Standard Image
-                    src = URL.createObjectURL(file);
+                } 
+                // 3. Unsupported (HEIC, TIFF, etc)
+                else {
+                    throw new Error('Unsupported format');
                 }
 
+                // 4. Load Image
                 const img = new Image();
                 img.onload = () => {
-                    loader.classList.add('hidden'); // Hide spinner
+                    clearTimeout(watchdog);
+                    loader.classList.add('hidden');
                     
-                    // Detect Orientation
+                    // Auto-Detect
                     state.orient = img.width > img.height ? 'landscape' : 'portrait';
                     updateOrientUI();
 
-                    // Switch View
+                    // Switch Screens
                     document.getElementById('upload-prompt').classList.add('hidden');
                     document.getElementById('editor-stage').classList.remove('hidden');
                     document.getElementById('image-target').src = src;
                     document.getElementById('btn-add').disabled = false;
-                    
-                    // Peek Drawer
-                    document.getElementById('bottom-sheet').classList.remove('open');
+                    document.getElementById('bottom-sheet').classList.remove('open'); // Ensure it peeks
                     
                     initCropper();
                 };
                 
                 img.onerror = () => {
-                    loader.classList.add('hidden');
-                    Swal.fire('Error', 'Could not load image. Please try a JPG or PNG.', 'error');
+                    clearTimeout(watchdog);
+                    cancelLoad();
+                    Swal.fire('Error', 'Image file is corrupt or unreadable.', 'error');
                 };
                 
                 img.src = src;
 
             } catch (err) {
-                console.error(err);
-                loader.classList.add('hidden');
-                Swal.fire('Error', 'Failed to process file. If using PDF, ensure it is valid.', 'error');
+                clearTimeout(watchdog);
+                cancelLoad();
+                let msg = 'An error occurred processing the file.';
+                if(err.message === 'Unsupported format') msg = 'File type not supported. Please use JPG, PNG, or PDF.';
+                Swal.fire('Error', msg, 'error');
             }
         });
 
-        // --- SHEET LOGIC ---
-        function toggleSheet() {
-            document.getElementById('bottom-sheet').classList.toggle('open');
+        function cancelLoad() {
+            loader.classList.add('hidden');
+            fileInput.value = ''; // Reset
         }
+
+        // --- SHEET ---
+        function toggleSheet() { document.getElementById('bottom-sheet').classList.toggle('open'); }
 
         // --- CROPPER ---
         function initCropper() {
@@ -290,24 +318,16 @@
         }
 
         // --- ACTIONS ---
-        function setOrient(o) {
-            state.orient = o;
-            updateOrientUI();
-            initCropper();
-        }
-
+        function setOrient(o) { state.orient = o; updateOrientUI(); initCropper(); }
         function updateOrientUI() {
-            const p = document.getElementById('btn-port');
-            const l = document.getElementById('btn-land');
-            if(state.orient === 'portrait') {
-                p.classList.add('active'); l.classList.remove('active');
-            } else {
-                l.classList.add('active'); p.classList.remove('active');
-            }
+            const p = document.getElementById('btn-port'); const l = document.getElementById('btn-land');
+            if(state.orient === 'portrait') { p.classList.add('active'); l.classList.remove('active'); } 
+            else { l.classList.add('active'); p.classList.remove('active'); }
         }
 
         function setSize(sz) {
             state.size = sz;
+            // Visual Update
             const mapping = { letter: 'sz-letter', legal: 'sz-legal', tabloid: 'sz-tabloid' };
             Object.values(mapping).forEach(id => {
                 const el = document.getElementById(id);
@@ -331,7 +351,6 @@
             drawOverlays(); updatePrice();
         }
 
-        // --- OVERLAYS ---
         function drawOverlays() {
             const l = document.getElementById('finish-layer'); l.innerHTML = '';
             if(!cropper) return;
@@ -394,11 +413,11 @@
             e.stopPropagation();
             Swal.fire({icon:'success', title:'Added', toast:true, position:'top', timer:1500, showConfirmButton:false});
             document.getElementById('bottom-sheet').classList.remove('open');
-            document.getElementById('cart-badge').classList.remove('hidden');
             document.getElementById('cart-badge').innerText = '1';
+            document.getElementById('cart-badge').classList.remove('hidden');
         }
-        function toggleProfile() { alert("Profile Placeholder"); }
-        function toggleCart() { alert("Cart Placeholder"); }
+        function toggleProfile() { Swal.fire('Profile', 'Logged in as Guest', 'info'); }
+        function toggleCart() { Swal.fire('Cart', '1 Item in Cart', 'info'); }
     </script>
 </body>
 </html>

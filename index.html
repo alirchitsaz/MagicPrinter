@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | Save 50% on Printing</title>
+    <title>Magic Printer | 50% Less Than Big Box</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -29,7 +29,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
 
-        /* GLOBAL RESET */
+        /* GLOBAL */
         body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
 
@@ -46,7 +46,7 @@
         .nav-btn { color: #94a3b8; font-size: 20px; cursor: pointer; position: relative; }
         .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* --- HOMEPAGE (Landing) --- */
+        /* --- HOMEPAGE --- */
         #homepage { 
             position: absolute; inset: 0; top: 60px; z-index: 50; background: #0f172a; 
             overflow-y: auto; transition: transform 0.3s ease-in-out;
@@ -54,17 +54,26 @@
         #homepage.hidden-page { transform: translateX(-100%); }
 
         .hero { padding: 40px 24px; text-align: center; border-bottom: 1px solid #1e293b; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); }
-        .hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 10px; color: white; line-height: 1.2; }
-        .hero p { color: #94a3b8; font-size: 14px; line-height: 1.5; max-width: 400px; margin: 0 auto; }
+        .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 12px; color: white; line-height: 1.1; }
+        .hero p { color: #94a3b8; font-size: 15px; line-height: 1.5; max-width: 400px; margin: 0 auto; }
         
         .hero-badge {
-            display: inline-block; background: rgba(37,99,235,0.2); color: #60a5fa; 
+            display: inline-block; background: rgba(16, 185, 129, 0.2); color: #34d399; 
             font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 99px; 
-            margin-bottom: 16px; border: 1px solid rgba(37,99,235,0.3);
+            margin-bottom: 16px; border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 24px; }
         .feature-card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+        
+        /* Price Comparison Table */
+        .price-comp { margin: 0 24px 24px; background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+        .pc-row { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #334155; font-size: 13px; }
+        .pc-row:last-child { border-bottom: none; }
+        .pc-head { background: #334155; color: white; font-weight: 700; }
+        .pc-them { color: #f87171; text-decoration: line-through; }
+        .pc-us { color: #34d399; font-weight: 700; }
+
         .cta-box { padding: 24px; display: flex; justify-content: center; }
         .btn-big { width: 100%; max-width: 300px; background: #2563eb; color: white; padding: 16px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(37,99,235,0.4); }
 
@@ -73,14 +82,13 @@
         .app-screen.active { display: flex; }
 
         /* PREVIEW AREA */
-        .workspace { flex: 1; position: relative; background: #0f172a; display: flex; justify-content: center; align-items: center; padding: 30px; overflow: hidden; }
+        .workspace { flex: 1; position: relative; background: #0f172a; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: hidden; }
         #paper-preview { 
             background: white; box-shadow: 0 30px 80px rgba(0,0,0,0.6); 
             transition: aspect-ratio 0.3s ease; position: relative; 
             width: auto; height: auto; max-width: 100%; max-height: 100%; 
             aspect-ratio: 8.5/11; display: flex; justify-content: center; align-items: center; 
         }
-        .dim-badge { position: absolute; bottom: 10px; right: 10px; background: rgba(15,23,42,0.8); color: #cbd5e1; font-size: 10px; padding: 4px 8px; border-radius: 6px; pointer-events: none; z-index: 30; border: 1px solid rgba(255,255,255,0.1); }
         
         .content-area { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .render-target { width: 100%; height: 100%; object-fit: contain; }
@@ -91,12 +99,8 @@
         /* DIMENSIONS (External) */
         .dim-line { position: absolute; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px; font-family: monospace; font-weight: bold; pointer-events: none; }
         .dim-top { top: -25px; left: 0; width: 100%; height: 20px; border-bottom: 1px solid #475569; }
-        .dim-top::before, .dim-top::after { content: ''; position: absolute; bottom: -3px; width: 1px; height: 7px; background: #475569; }
-        .dim-top::before { left: 0; } .dim-top::after { right: 0; }
         .dim-top span { background: #0f172a; padding: 0 8px; position: relative; top: 10px; }
         .dim-side { left: -35px; top: 0; height: 100%; width: 20px; border-right: 1px solid #475569; writing-mode: vertical-rl; transform: rotate(180deg); }
-        .dim-side::before, .dim-side::after { content: ''; position: absolute; right: -3px; width: 7px; height: 1px; background: #475569; }
-        .dim-side::before { top: 0; } .dim-side::after { bottom: 0; }
         .dim-side span { background: #0f172a; padding: 8px 0; position: relative; right: -10px; }
 
         /* CONTROLS */
@@ -118,7 +122,6 @@
             font-size: 13px; text-align: center; cursor: pointer; transition: all 0.1s; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
         }
-        .btn-toggle i { font-size: 16px; margin-bottom: 2px; }
         .btn-toggle.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 2px 5px rgba(37,99,235,0.3); }
 
         /* PROFILE DRAWER */
@@ -163,21 +166,26 @@
 
         <div id="homepage">
             <div class="hero">
-                <div class="hero-badge">BETTER THAN HOME PRINTING</div>
-                <h1>Stop Overpaying<br>for Ink.</h1>
-                <p>We provide professional high-quality prints for <strong>half the price</strong> of your home or office printer.</p>
+                <div class="hero-badge">HALF THE PRICE OF FEDEX & STAPLES</div>
+                <h1>Stop Overpaying at<br>the Copy Shop.</h1>
+                <p>Professional quality prints for less than it costs to buy ink for your home printer.</p>
             </div>
 
-            <div class="features">
-                <div class="feature-card">
-                    <i class="fa-solid fa-piggy-bank text-green-400 text-2xl mb-2"></i>
-                    <div class="font-bold text-sm text-white">Save 50%</div>
-                    <div class="text-xs text-slate-400">Cheaper per page than buying cartridges.</div>
+            <div class="price-comp">
+                <div class="pc-row pc-head">
+                    <div>Product (Color)</div>
+                    <div>Copy Shop</div>
+                    <div>Us</div>
                 </div>
-                <div class="feature-card">
-                    <i class="fa-solid fa-star text-yellow-400 text-2xl mb-2"></i>
-                    <div class="font-bold text-sm text-white">Pro Quality</div>
-                    <div class="text-xs text-slate-400">Vivid color & crisp text on premium paper.</div>
+                <div class="pc-row">
+                    <div class="text-slate-300">Letter (8.5x11)</div>
+                    <div class="pc-them">$0.79</div>
+                    <div class="pc-us">$0.35</div>
+                </div>
+                <div class="pc-row">
+                    <div class="text-slate-300">Tabloid (11x17)</div>
+                    <div class="pc-them">$2.49</div>
+                    <div class="pc-us">$0.75</div>
                 </div>
             </div>
 
@@ -189,28 +197,28 @@
                 </div>
                 <div class="feature-card">
                     <i class="fa-solid fa-plane-departure text-blue-500 text-2xl mb-2"></i>
-                    <div class="font-bold text-sm text-white">Nationwide</div>
-                    <div class="text-xs text-slate-400">We ship everywhere.</div>
+                    <div class="font-bold text-sm text-white">Nationwide Shipping</div>
+                    <div class="text-xs text-slate-400">Secure UPS & FedEx</div>
                 </div>
             </div>
 
             <div class="text-center mb-4 mt-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">We Serve</span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Trusted By</span>
             </div>
             <div class="flex justify-center gap-2 flex-wrap px-6 mb-8">
                 <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Families</span>
                 <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Schools</span>
                 <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Law Firms</span>
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Real Estate</span>
+                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Churches</span>
             </div>
 
             <div class="cta-box">
                 <button class="btn-big" onclick="startOrder()">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> <span id="home-btn-text">Start New Order</span>
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span id="home-btn-text">Upload & Save</span>
                 </button>
             </div>
             
-            <div class="text-center pb-8 text-[10px] text-slate-600">v45 Value • PDF, JPG, PNG</div>
+            <div class="text-center pb-8 text-[10px] text-slate-600">v46 Value • PDF, JPG, PNG</div>
         </div>
 
         <div id="screen-config" class="app-screen">
@@ -363,9 +371,12 @@
     <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
 
     <script>
-        // --- DATA ---
-        const DIMS={letter:{w:8.5,h:11,l:"8.5\" x 11\""},legal:{w:8.5,h:14,l:"8.5\" x 14\""},tabloid:{w:11,h:17,l:"11\" x 17\""}, '12x18':{w:12,h:18,l:"12\" x 18\""}, a4:{w:8.3,h:11.7,l:"A4"}, a3:{w:11.7,h:16.5,l:"A3"}};
-        const PRICES={letter:0.10,legal:0.15,tabloid:0.25, '12x18':0.35, a4:0.12, a3:0.28};
+        // --- COMPETITIVE PRICING LOGIC ---
+        // Letter B&W: $0.10 | Letter Color: $0.35 | Tabloid B&W: $0.25 | Tabloid Color: $0.75
+        const DIMS={letter:{w:8.5,h:11},legal:{w:8.5,h:14},tabloid:{w:11,h:17}, '12x18':{w:12,h:18}, a4:{w:8.3,h:11.7}, a3:{w:11.7,h:16.5}};
+        const BASE_PRICES={letter:0.10,legal:0.15,tabloid:0.25, '12x18':0.35, a4:0.12, a3:0.28};
+        const COLOR_ADD={letter:0.25,legal:0.30,tabloid:0.50, '12x18':0.75, a4:0.25, a3:0.50};
+        
         let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:'',delivery:'ship'};
         let cart=[];
 
@@ -502,7 +513,8 @@
         function toggle(id,active){ const el=document.getElementById(id); if(active){ el.classList.add('active'); el.classList.replace('text-gray-500','white'); } else { el.classList.remove('active'); el.classList.replace('white','text-gray-500'); } }
         
         function updatePrice(){
-            let base=PRICES[state.size]; if(state.color==='color') base+=0.25;
+            let base=BASE_PRICES[state.size]; 
+            if(state.color==='color') base += COLOR_ADD[state.size];
             state.qty=document.getElementById('qty-input').value;
             const pages=state.layout==='booklet'?Math.ceil(state.printList.length/4):state.printList.length;
             document.getElementById('price-disp').innerText='$'+(base*pages*state.qty).toFixed(2);

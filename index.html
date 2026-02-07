@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Print Portal | v36</title>
+    <title>Print Portal | v37</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -33,7 +33,7 @@
         body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app { display: flex; flex-direction: column; height: 100dvh; width: 100vw; }
 
-        /* HEADER (Agnostic) */
+        /* HEADER */
         .header { 
             height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
             padding: 0 16px; background: #1e293b; border-bottom: 1px solid #334155; z-index: 50; 
@@ -42,28 +42,26 @@
         .brand { font-size: 16px; font-weight: 700; color: white; display: flex; gap: 10px; align-items: center; }
         .brand-icon { width: 28px; height: 28px; background: #3b82f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
 
-        /* WORKSPACE (PREVIEW) */
+        /* WORKSPACE */
         .workspace { 
             flex: 1; position: relative; background: #0f172a; 
             display: flex; align-items: center; justify-content: center;
             overflow: hidden; padding: 20px;
         }
         
-        /* THE PAPER (Physical Aspect Ratio) */
+        /* PAPER PREVIEW */
         #paper-preview {
             background: white; 
             box-shadow: 0 30px 80px rgba(0,0,0,0.6);
             transition: aspect-ratio 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             position: relative; 
-            /* MAX SIZE LOGIC */
             width: auto; height: auto;
             max-width: 95%; max-height: 90%;
-            /* Default Letter */
             aspect-ratio: 8.5 / 11;
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* Dimension Badge (Internal) */
+        /* Dimension Badge */
         .dim-badge {
             position: absolute; bottom: 10px; right: 10px;
             background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px);
@@ -72,47 +70,49 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
+        /* NAVIGATION OVERLAY (New) */
+        .nav-overlay {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 12px; z-index: 40;
+            background: rgba(15, 23, 42, 0.9); padding: 6px 12px; border-radius: 99px;
+            border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none; /* Hidden by default */
+        }
+        .nav-btn {
+            width: 28px; height: 28px; border-radius: 50%; background: #334155; 
+            color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .nav-btn:active { background: #3b82f6; }
+        .nav-info { font-size: 11px; font-weight: 600; color: #cbd5e1; min-width: 60px; text-align: center; }
+
         /* CONTENT */
         .content-area { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-        .render-target { width: 100%; height: 100%; object-fit: contain; } /* Ensure fill without clip */
+        .render-target { width: 100%; height: 100%; object-fit: contain; } 
         .grayscale { filter: grayscale(100%) contrast(1.15); }
 
         /* Booklet Grid */
         .content-area.booklet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #cbd5e1; }
         .content-area.booklet-grid .page-slot { background: white; overflow: hidden; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 
-        /* FINISHING OVERLAYS (Relative Scaling) */
+        /* FINISHING */
         .finish-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
-        
-        .staple { 
-            position: absolute; 
-            width: 3%; height: 1.5%; /* Relative % size */
-            min-width: 12px; min-height: 3px;
-            background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); 
-            border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); 
-        }
-        
-        .punch { 
-            position: absolute; 
-            width: 2.5%; aspect-ratio: 1/1; /* Relative circle */
-            min-width: 6px;
-            background: #0f172a; border-radius: 50%; 
-            box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); 
-        }
+        .staple { position: absolute; width: 3%; height: 1.5%; min-width: 12px; min-height: 3px; background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
+        .punch { position: absolute; width: 2.5%; aspect-ratio: 1/1; min-width: 6px; background: #0f172a; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); }
 
         /* CONTROLS */
         .controls { height: 50vh; flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; flex-direction: column; z-index: 40; box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
         .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; -webkit-overflow-scrolling: touch; }
         .controls-footer { padding: 16px 20px; background: #1e293b; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; align-items: center; }
 
-        /* UI ELEMENTS */
+        /* INPUTS */
         .label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
         .control-group { margin-bottom: 20px; }
+        .input-text { width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; font-size: 13px; outline: none; }
+        .input-text:focus { border-color: #3b82f6; }
         
-        /* Select */
         .select-input { width: 100%; background: #0f172a; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 14px; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 10px; }
 
-        /* Toggles */
         .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .toggle-row.three { grid-template-columns: 1fr 1fr 1fr; }
         .btn-toggle { background: #0f172a; border: 1px solid #334155; color: #94a3b8; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 500; text-align: center; transition: all 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
@@ -149,12 +149,24 @@
                 <div id="content-area" class="content-area"></div>
 
                 <div class="finish-overlay" id="finish-layer"></div>
+                
+                <div id="nav-overlay" class="nav-overlay">
+                    <button class="nav-btn" onclick="prevPage()"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="nav-info" id="nav-info">1 / 1</div>
+                    <button class="nav-btn" onclick="nextPage()"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
             </div>
         </div>
 
         <div class="controls">
             <div class="controls-scroll">
                 
+                <div class="control-group" id="range-group" style="display:none;">
+                    <label class="label">Pages to Print</label>
+                    <input type="text" id="page-range" class="input-text" placeholder="e.g. 1, 3-5, 10" onchange="parsePageRange(this.value)">
+                    <div class="text-[10px] text-gray-500 mt-1">Leave empty to print all pages.</div>
+                </div>
+
                 <div class="control-group">
                     <label class="label">Paper Size</label>
                     <select id="size-sel" class="select-input" onchange="updateSize(this.value)">
@@ -265,14 +277,9 @@
         let state = {
             size: 'letter', orient: 'portrait', sides: '1', color: 'color', layout: 'standard',
             staple: false, punch: 'none', qty: 1, 
-            doc: null, type: 'none', pages: 1
+            doc: null, type: 'none', pages: 1,
+            printList: [], previewIdx: 0 // For navigation
         };
-
-        // --- SAFE DOM HELPER (PREVENTS CRASHES) ---
-        function safe(id, fn) {
-            const el = document.getElementById(id);
-            if(el) fn(el);
-        }
 
         // --- FILE HANDLING ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
@@ -287,13 +294,22 @@
                     state.doc = await pdfjsLib.getDocument(buff).promise;
                     state.type = 'pdf';
                     state.pages = state.doc.numPages;
+                    // Default to printing all
+                    state.printList = Array.from({length: state.pages}, (_, i) => i + 1);
+                    
+                    document.getElementById('range-group').style.display = 'block';
+                    document.getElementById('nav-overlay').style.display = 'flex';
                 } else {
                     state.doc = URL.createObjectURL(file);
                     state.type = 'img';
                     state.pages = 1;
+                    state.printList = [1];
+                    document.getElementById('range-group').style.display = 'none';
+                    document.getElementById('nav-overlay').style.display = 'none';
                 }
 
                 document.getElementById('portal').style.display = 'none';
+                state.previewIdx = 0; // Reset preview
                 renderPreview();
                 updatePrice();
                 loader.style.display = 'none';
@@ -304,55 +320,100 @@
             }
         });
 
-        // --- RENDER ENGINE v36 ---
+        // --- PAGE RANGE LOGIC ---
+        function parsePageRange(val) {
+            if (!val.trim()) {
+                state.printList = Array.from({length: state.pages}, (_, i) => i + 1);
+            } else {
+                const list = new Set();
+                const parts = val.split(',');
+                parts.forEach(part => {
+                    const p = part.trim();
+                    if (p.includes('-')) {
+                        const [start, end] = p.split('-').map(Number);
+                        for (let i = start; i <= end; i++) if(i <= state.pages) list.add(i);
+                    } else {
+                        const num = Number(p);
+                        if(num <= state.pages) list.add(num);
+                    }
+                });
+                state.printList = Array.from(list).sort((a,b)=>a-b);
+            }
+            state.previewIdx = 0; // Go to first selected page
+            renderPreview();
+            updatePrice();
+        }
+
+        // --- NAVIGATION ---
+        function prevPage() {
+            if (state.previewIdx > 0) {
+                state.previewIdx--;
+                renderPreview();
+            }
+        }
+        function nextPage() {
+            // Need to account for layout (booklet jumps 2)
+            const jump = state.layout === 'booklet' ? 2 : 1;
+            if (state.previewIdx + jump < state.printList.length) {
+                state.previewIdx += jump;
+                renderPreview();
+            }
+        }
+
+        // --- RENDER ENGINE v37 ---
         async function renderPreview() {
             const paper = document.getElementById('paper-preview');
             const dim = DIMS[state.size];
             
-            // 1. Calculate Ratio
+            // 1. Ratio
             const w = state.orient === 'portrait' ? dim.w : dim.h;
             const h = state.orient === 'portrait' ? dim.h : dim.w;
             paper.style.aspectRatio = `${w} / ${h}`;
-            
-            // 2. Update Badge
             document.getElementById('dim-label').innerText = `${dim.label} (${w}" x ${h}")`;
 
-            // 3. Layout Grid
+            // 2. Grid & Slots
             const area = document.getElementById('content-area');
             area.innerHTML = '';
             area.className = 'content-area'; 
 
             if (state.layout === 'booklet') {
                 area.classList.add('booklet-grid');
-                await renderSlot(area, 1);
-                await renderSlot(area, 2);
+                await renderSlot(area, state.printList[state.previewIdx]);
+                // Check if next page exists in print list
+                if (state.previewIdx + 1 < state.printList.length) {
+                    await renderSlot(area, state.printList[state.previewIdx + 1]);
+                } else {
+                    // Blank slot
+                    const div = document.createElement('div'); div.className = 'page-slot'; area.appendChild(div);
+                }
+                document.getElementById('nav-info').innerText = `${state.previewIdx+1}-${Math.min(state.previewIdx+2, state.printList.length)} of ${state.printList.length}`;
             } else {
-                await renderSlot(area, 1);
+                await renderSlot(area, state.printList[state.previewIdx]);
+                document.getElementById('nav-info').innerText = `${state.previewIdx+1} of ${state.printList.length}`;
             }
             
             updateFinishingOverlay();
         }
 
-        async function renderSlot(container, index) {
+        async function renderSlot(container, pageNum) {
             const slot = document.createElement('div');
             slot.className = 'page-slot';
+            slot.style.width = '100%'; slot.style.height = '100%';
             
             let content = null;
             if (state.type === 'img') {
                 content = document.createElement('img');
                 content.src = state.doc;
                 content.className = 'render-target';
-            } else if (state.type === 'pdf') {
-                if (index <= state.pages) {
-                    const page = await state.doc.getPage(index);
-                    const viewport = page.getViewport({ scale: 0.5 });
-                    content = document.createElement('canvas');
-                    content.className = 'render-target';
-                    content.width = viewport.width; content.height = viewport.height;
-                    const ctx = content.getContext('2d');
-                    if (state.color === 'bw') ctx.filter = 'grayscale(100%)';
-                    await page.render({ canvasContext: ctx, viewport }).promise;
-                }
+            } else if (state.type === 'pdf' && pageNum) {
+                const page = await state.doc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 0.5 }); // Preview quality
+                content = document.createElement('canvas');
+                content.className = 'render-target';
+                content.width = viewport.width; content.height = viewport.height;
+                const ctx = content.getContext('2d');
+                if (state.color === 'bw') ctx.filter = 'grayscale(100%)';
+                await page.render({ canvasContext: ctx, viewport }).promise;
             }
 
             if (content) {
@@ -364,17 +425,9 @@
 
         // --- CONTROLS ---
         function updateSize(v) { state.size = v; renderPreview(); updatePrice(); }
+        function setOrient(v) { state.orient = v; toggle('btn-port', v==='portrait'); toggle('btn-land', v==='landscape'); renderPreview(); }
+        function setSides(v) { state.sides = v; toggle('btn-1s', v==='1'); toggle('btn-2s', v==='2'); updatePrice(); }
         
-        function setOrient(v) { 
-            state.orient = v; 
-            toggle('btn-port', v==='portrait'); toggle('btn-land', v==='landscape');
-            renderPreview(); 
-        }
-        function setSides(v) {
-            state.sides = v;
-            toggle('btn-1s', v==='1'); toggle('btn-2s', v==='2');
-            updatePrice();
-        }
         function setLayout(v) {
             state.layout = v;
             toggle('btn-std', v==='standard'); toggle('btn-book', v==='booklet');
@@ -382,25 +435,12 @@
             else renderPreview();
             updatePrice();
         }
-        function toggleColor() {
-            state.color = state.color === 'color' ? 'bw' : 'color';
-            toggle('btn-bw', state.color === 'bw');
-            renderPreview(); updatePrice();
-        }
+        function toggleColor() { state.color = state.color==='color' ? 'bw' : 'color'; toggle('btn-bw', state.color==='bw'); renderPreview(); updatePrice(); }
 
-        // --- FINISHING LOGIC ---
-        function clearFinish() {
-            state.staple = false; state.punch = 'none';
-            updateFinishingUI();
-        }
-        function toggleStaple() {
-            state.staple = !state.staple;
-            updateFinishingUI();
-        }
-        function setPunch(v) {
-            state.punch = (state.punch === v) ? 'none' : v; 
-            updateFinishingUI();
-        }
+        // --- FINISHING ---
+        function clearFinish() { state.staple=false; state.punch='none'; updateFinishingUI(); }
+        function toggleStaple() { state.staple=!state.staple; updateFinishingUI(); }
+        function setPunch(v) { state.punch = (state.punch===v) ? 'none' : v; updateFinishingUI(); }
 
         function updateFinishingUI() {
             toggle('fn-none', !state.staple && state.punch==='none');
@@ -430,10 +470,9 @@
         }
 
         function toggle(id, active) {
-            safe(id, el => {
-                if(active) { el.classList.add('active'); el.classList.replace('text-gray-500', 'white'); }
-                else { el.classList.remove('active'); }
-            });
+            const el = document.getElementById(id);
+            if(active) { el.classList.add('active'); el.classList.replace('text-gray-500', 'white'); }
+            else { el.classList.remove('active'); }
         }
 
         function updatePrice() {
@@ -442,13 +481,16 @@
             if (state.sides === '2') base *= 1.6;
             
             const qty = document.getElementById('qty-input').value || 1;
-            const total = base * Math.ceil(state.pages / (state.layout==='booklet'?2:1)) * qty;
+            // Count sheets based on filtered print list
+            const pageCount = state.printList.length;
+            const sheets = state.layout === 'booklet' ? Math.ceil(pageCount / 4) : Math.ceil(pageCount / (state.sides==='2'?2:1));
             
-            safe('price-disp', el => el.innerText = '$' + total.toFixed(2));
+            const total = base * sheets * qty;
+            document.getElementById('price-disp').innerText = '$' + total.toFixed(2);
         }
 
         function submitOrder() {
-            Swal.fire({ title: 'Order Submitted', text: 'Sent to print queue.', icon: 'success', confirmButtonColor: '#2563eb' });
+            Swal.fire({ title: 'Job Sent', text: 'Printing...', icon: 'success' });
         }
     </script>
 </body>

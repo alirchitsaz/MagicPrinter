@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | v48 Logic</title>
+    <title>Magic Printer | For Everyone</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -33,7 +33,7 @@
         body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
 
-        /* --- HEADER --- */
+        /* --- GLOBAL HEADER --- */
         .global-header { 
             height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
             padding: 0 16px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px);
@@ -98,8 +98,12 @@
         /* DIMENSIONS */
         .dim-line { position: absolute; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px; font-family: monospace; font-weight: bold; pointer-events: none; }
         .dim-top { top: -25px; left: 0; width: 100%; height: 20px; border-bottom: 1px solid #475569; }
+        .dim-top::before, .dim-top::after { content: ''; position: absolute; bottom: -3px; width: 1px; height: 7px; background: #475569; }
+        .dim-top::before { left: 0; } .dim-top::after { right: 0; }
         .dim-top span { background: #0f172a; padding: 0 8px; position: relative; top: 10px; }
         .dim-side { left: -35px; top: 0; height: 100%; width: 20px; border-right: 1px solid #475569; writing-mode: vertical-rl; transform: rotate(180deg); }
+        .dim-side::before, .dim-side::after { content: ''; position: absolute; right: -3px; width: 7px; height: 1px; background: #475569; }
+        .dim-side::before { top: 0; } .dim-side::after { bottom: 0; }
         .dim-side span { background: #0f172a; padding: 8px 0; position: relative; right: -10px; }
 
         /* CONTROLS */
@@ -166,9 +170,9 @@
 
         <div id="homepage">
             <div class="hero">
-                <div class="hero-badge">50% CHEAPER THAN COPY SHOPS</div>
+                <div class="hero-badge">HALF THE PRICE OF FEDEX & STAPLES</div>
                 <h1>Stop Overpaying at<br>the Copy Shop.</h1>
-                <p>Professional quality prints for less than half the price of the big box stores.</p>
+                <p>Professional quality prints for everyone. From a single page to a thousand booklets.</p>
             </div>
 
             <div class="price-comp">
@@ -206,13 +210,14 @@
             </div>
 
             <div class="text-center mb-4 mt-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">We Serve</span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Printing Solutions For Everyone</span>
             </div>
             <div class="flex justify-center gap-2 flex-wrap px-6 mb-8">
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Families</span>
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Schools</span>
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Law Firms</span>
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Churches</span>
+                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Personal</span>
+                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Small Business</span>
+                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Enterprise</span>
+                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Education</span>
+                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Non-Profits</span>
             </div>
 
             <div class="cta-box">
@@ -221,7 +226,7 @@
                 </button>
             </div>
             
-            <div class="text-center pb-8 text-[10px] text-slate-600">v48 Logic • PDF, JPG, PNG</div>
+            <div class="text-center pb-8 text-[10px] text-slate-600">v49 Universal • PDF, JPG, PNG</div>
         </div>
 
         <div id="screen-config" class="app-screen">

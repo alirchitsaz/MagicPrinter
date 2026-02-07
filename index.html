@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | v21 Production</title>
+    <title>Magic Printer | v22 Production</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -16,8 +16,8 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { brand: { 950: '#0b0f19', 900: '#111827', 800: '#1f2937', 600: '#2563eb', 500: '#3b82f6' } },
-                    spacing: { 'safe-t': 'env(safe-area-inset-top)', 'safe-b': 'env(safe-area-inset-bottom)' }
+                    colors: { brand: { 950: '#020617', 900: '#0f172a', 800: '#1e293b', 600: '#2563eb', 500: '#3b82f6' } },
+                    spacing: { 'safe-b': 'env(safe-area-inset-bottom)' }
                 }
             }
         }
@@ -27,22 +27,18 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        /* 1. APP SHELL (The Foundation) */
-        html, body { height: 100%; width: 100%; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; color: white; touch-action: none; }
-        
-        #app { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
+        /* APP SHELL */
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
+        #app { display: flex; flex-direction: column; height: 100dvh; width: 100vw; }
 
-        /* 2. HEADER */
-        .header { 
-            height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 16px; background: #111827; border-bottom: 1px solid #1f2937; z-index: 50;
-            padding-top: env(safe-area-inset-top);
-        }
+        /* HEADER */
+        .header { height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #111827; border-bottom: 1px solid #1f2937; z-index: 50; padding-top: env(safe-area-inset-top); }
 
-        /* 3. WORKSPACE (The Editor) */
-        .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        /* WORKSPACE (Top Half) */
+        .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; flex-direction: column; }
+        #editor-stage { flex: 1; position: relative; background: #000; }
         
-        /* Cropper Customization - "The Paper" */
+        /* Cropper - Paper Simulation */
         .cropper-view-box { outline: 1px solid rgba(255,255,255,0.5); box-shadow: 0 0 0 9999px #0b0f19; } 
         .cropper-bg { background: #fff; } 
         .cropper-modal { opacity: 1; background: #0b0f19; }
@@ -52,49 +48,42 @@
         .staple { position: absolute; background: linear-gradient(90deg, #9ca3af, #f3f4f6, #9ca3af); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); z-index: 50; }
         .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 50%; z-index: 50; }
 
-        /* 4. CONTROLS (Scrollable Panel) */
-        .controls { 
-            height: 45vh; flex-shrink: 0; background: #111827; border-top: 1px solid #1f2937; 
-            display: flex; flex-direction: column; z-index: 40; box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
-        }
-        .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
-        .controls-footer { 
-            padding: 16px 20px; background: #111827; border-top: 1px solid #1f2937; 
-            padding-bottom: calc(16px + env(safe-area-inset-bottom));
-            display: flex; gap: 12px;
-        }
-
-        /* UI Components */
-        .btn-tool { background: #1f2937; border: 1px solid #374151; color: #9ca3af; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 60px; }
-        .btn-tool:active { background: #374151; color: white; }
+        /* CONTROLS (Bottom Scrollable) */
+        .controls { height: 50vh; flex-shrink: 0; background: #111827; border-top: 1px solid #1f2937; display: flex; flex-direction: column; z-index: 40; }
+        .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; -webkit-overflow-scrolling: touch; }
         
-        .opt-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-        .opt-btn { 
-            padding: 10px 16px; border-radius: 8px; background: #1f2937; border: 1px solid #374151; 
-            color: #94a3b8; font-size: 13px; font-weight: 500; white-space: nowrap; flex: 1; text-align: center;
+        /* Footer */
+        .controls-footer { padding: 16px 20px; background: #111827; border-top: 1px solid #1f2937; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; }
+
+        /* UI ELEMENTS */
+        .section-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        
+        .opt-grid { display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); margin-bottom: 24px; }
+        .opt-grid.three { grid-template-columns: repeat(3, 1fr); }
+        
+        .btn-opt { 
+            padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 10px; 
+            color: #94a3b8; font-size: 13px; font-weight: 500; text-align: center; transition: all 0.15s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
         }
-        .opt-btn.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; }
+        .btn-opt i { font-size: 16px; margin-bottom: 2px; }
+        .btn-opt.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
 
         /* Upload Screen */
         #upload-screen { position: absolute; inset: 0; background: #0b0f19; z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        
-        /* Overlays (Cart/Profile) */
-        .drawer { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; 
-            display: flex; justify-content: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-        }
-        .drawer.active { opacity: 1; pointer-events: auto; }
-        .drawer-content { 
-            width: 85%; max-width: 350px; background: #111827; height: 100%; 
-            transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            display: flex; flex-direction: column;
-        }
-        .drawer.active .drawer-content { transform: translateX(0); }
-
-        /* Loader */
         #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; }
         .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Floating Toolbar */
+        .floating-toolbar {
+            position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 8px; z-index: 30;
+        }
+        .tool-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -104,9 +93,9 @@
     <div id="app">
         
         <div class="header">
-            <button onclick="toggleDrawer('profile')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300"><i class="fa-solid fa-user"></i></button>
+            <button onclick="alert('Profile')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300"><i class="fa-solid fa-user"></i></button>
             <div class="font-bold text-sm tracking-wide">MAGIC<span class="text-blue-500">PRINTER</span></div>
-            <button onclick="toggleDrawer('cart')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300 relative">
+            <button onclick="alert('Cart')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300 relative">
                 <i class="fa-solid fa-shopping-bag"></i>
                 <span id="cart-badge" class="absolute -top-1 -right-1 bg-blue-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
             </button>
@@ -117,43 +106,59 @@
                 <img id="image-target" class="block max-w-full">
                 <div id="finish-layer" class="finish-layer"></div>
                 
-                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4 z-30">
-                    <button onclick="rotate(-90)" class="btn-tool bg-black/80 backdrop-blur rounded-xl border-white/10 text-white shadow-lg"><i class="fa-solid fa-rotate-left text-lg"></i></button>
-                    <button onclick="doFit('cover')" class="btn-tool bg-black/80 backdrop-blur rounded-xl border-white/10 text-white shadow-lg"><i class="fa-solid fa-expand text-lg"></i></button>
-                    <button onclick="doFit('contain')" class="btn-tool bg-black/80 backdrop-blur rounded-xl border-white/10 text-white shadow-lg"><i class="fa-solid fa-compress text-lg"></i></button>
+                <div class="floating-toolbar">
+                    <button onclick="rotate(-90)" class="tool-btn"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button onclick="doFit('cover')" class="tool-btn"><i class="fa-solid fa-expand"></i></button>
+                    <button onclick="doFit('contain')" class="tool-btn"><i class="fa-solid fa-compress"></i></button>
                 </div>
             </div>
         </div>
 
         <div class="controls">
-            <div class="controls-scroll space-y-6">
+            <div class="controls-scroll">
                 
-                <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Orientation</label>
-                    <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-800">
-                        <button onclick="setOrient('portrait')" id="btn-port" class="flex-1 py-2 rounded text-xs font-bold bg-gray-800 text-white shadow transition-all"><i class="fa-regular fa-file mr-2"></i>Portrait</button>
-                        <button onclick="setOrient('landscape')" id="btn-land" class="flex-1 py-2 rounded text-xs font-bold text-gray-500 hover:text-white transition-all"><i class="fa-regular fa-file fa-rotate-90 mr-2"></i>Landscape</button>
-                    </div>
+                <div class="section-title">Color Mode</div>
+                <div class="opt-grid">
+                    <button class="btn-opt active" id="col-color" onclick="setColor('color')">
+                        <i class="fa-solid fa-palette"></i> Full Color
+                    </button>
+                    <button class="btn-opt" id="col-bw" onclick="setColor('bw')">
+                        <i class="fa-solid fa-droplet-slash"></i> Black & White
+                    </button>
                 </div>
 
-                <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Paper Size</label>
-                    <div class="opt-row">
-                        <button onclick="setSize('letter')" id="sz-letter" class="opt-btn active">Letter</button>
-                        <button onclick="setSize('legal')" id="sz-legal" class="opt-btn">Legal</button>
-                        <button onclick="setSize('tabloid')" id="sz-tabloid" class="opt-btn">Tabloid</button>
-                    </div>
+                <div class="section-title">Sides (Duplex)</div>
+                <div class="opt-grid three">
+                    <button class="btn-opt active" id="side-1" onclick="setSides('1')">
+                        <i class="fa-regular fa-file"></i> 1-Sided
+                    </button>
+                    <button class="btn-opt" id="side-2long" onclick="setSides('2long')">
+                        <i class="fa-solid fa-book-open"></i> Book
+                    </button>
+                    <button class="btn-opt" id="side-2short" onclick="setSides('2short')">
+                        <i class="fa-solid fa-calendar"></i> Flip
+                    </button>
                 </div>
 
-                <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Finishing</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="setFinish('none')" id="fn-none" class="opt-btn active">None</button>
-                        <button onclick="setFinish('staple')" id="fn-staple" class="opt-btn">Staple</button>
-                        <button onclick="setFinish('punch')" id="fn-punch" class="opt-btn">Hole Punch</button>
-                        <button onclick="setFinish('booklet')" id="fn-booklet" class="opt-btn">Booklet</button>
-                        <button onclick="setFinish('dual')" id="fn-dual" class="opt-btn">Dual Staple</button>
-                    </div>
+                <div class="section-title">Paper Type</div>
+                <div class="opt-grid three">
+                    <button class="btn-opt active" id="type-plain" onclick="setType('plain')">Plain</button>
+                    <button class="btn-opt" id="type-glossy" onclick="setType('glossy')">Glossy</button>
+                    <button class="btn-opt" id="type-card" onclick="setType('card')">Cardstock</button>
+                </div>
+
+                <div class="section-title">Paper Size</div>
+                <div class="opt-grid three">
+                    <button class="btn-opt active" id="sz-letter" onclick="setSize('letter')">Letter</button>
+                    <button class="btn-opt" id="sz-legal" onclick="setSize('legal')">Legal</button>
+                    <button class="btn-opt" id="sz-tabloid" onclick="setSize('tabloid')">Tabloid</button>
+                </div>
+
+                <div class="section-title">Finishing</div>
+                <div class="opt-grid three">
+                    <button class="btn-opt active" id="fn-none" onclick="setFinish('none')">None</button>
+                    <button class="btn-opt" id="fn-staple" onclick="setFinish('staple')">Staple</button>
+                    <button class="btn-opt" id="fn-punch" onclick="setFinish('punch')">Hole Punch</button>
                 </div>
             </div>
 
@@ -180,48 +185,23 @@
         <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp">
     </div>
 
-    <div id="drawer-profile" class="drawer">
-        <div class="drawer-content">
-            <div class="p-6 border-b border-gray-800 bg-gray-900 pt-safe-t">
-                <h2 class="text-xl font-bold text-white">Profile</h2>
-                <p class="text-xs text-gray-500">Logged in as Guest</p>
-            </div>
-            <div class="p-4 space-y-2">
-                <button class="w-full text-left p-4 bg-gray-800 rounded-lg text-gray-300">Order History</button>
-                <button class="w-full text-left p-4 bg-gray-800 rounded-lg text-gray-300">Saved Files</button>
-                <button class="w-full text-left p-4 bg-gray-800 rounded-lg text-gray-300">Settings</button>
-            </div>
-            <div class="mt-auto p-6 pb-safe-b">
-                <button onclick="toggleDrawer('profile')" class="w-full py-3 bg-gray-800 text-white font-bold rounded-lg">Close</button>
-            </div>
-        </div>
-        <div class="flex-1" onclick="toggleDrawer('profile')"></div>
-    </div>
-
-    <div id="drawer-cart" class="drawer">
-        <div class="drawer-content">
-            <div class="p-6 border-b border-gray-800 bg-gray-900 pt-safe-t">
-                <h2 class="text-xl font-bold text-white">Your Cart</h2>
-            </div>
-            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3">
-                <div class="text-center text-gray-500 mt-10">Cart is empty</div>
-            </div>
-            <div class="p-6 border-t border-gray-800 bg-gray-900 pb-safe-b">
-                <div class="flex justify-between mb-4 text-lg font-bold"><span>Total</span><span id="cart-total">$0.00</span></div>
-                <button onclick="checkout()" class="w-full py-4 bg-blue-600 text-white font-bold rounded-lg">Checkout</button>
-            </div>
-        </div>
-        <div class="flex-1" onclick="toggleDrawer('cart')"></div>
-    </div>
-
     <script>
-        // --- CONFIG ---
-        const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
-        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
+        // --- PRICING MATRIX ---
+        const PRICES = {
+            letter: { bw: 0.10, color: 0.35 },
+            legal:  { bw: 0.15, color: 0.45 },
+            tabloid:{ bw: 0.25, color: 0.75 }
+        };
+        const EXTRAS = {
+            glossy: 0.15, card: 0.10, plain: 0,
+            staple: 0.02, punch: 0.01, none: 0
+        };
         
         let cropper = null;
-        let state = { size: 'letter', orient: 'portrait', finish: 'none', qty: 1 };
-        let cart = [];
+        let state = { 
+            size: 'letter', orient: 'portrait', finish: 'none', 
+            color: 'color', type: 'plain', sides: '1', qty: 1 
+        };
 
         // --- FILE ENGINE ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
@@ -252,13 +232,13 @@
                 img.onload = () => {
                     // Auto-Detect Orientation
                     state.orient = img.width > img.height ? 'landscape' : 'portrait';
-                    updateOrientUI();
-
+                    
                     loader.style.display = 'none';
                     document.getElementById('upload-screen').style.display = 'none';
                     document.getElementById('editor-stage').classList.remove('hidden');
                     document.getElementById('image-target').src = src;
                     document.getElementById('btn-add').disabled = false;
+                    
                     initCropper();
                 };
                 img.onerror = () => { throw new Error("Image corrupt"); }
@@ -267,21 +247,22 @@
             } catch(err) {
                 loader.style.display = 'none';
                 alert(err.message);
+                document.getElementById('file-input').value = '';
             }
         });
 
-        // --- CROPPER & FIT ---
+        // --- CROPPER ---
+        const DIMS = { letter: 8.5/11, legal: 8.5/14, tabloid: 11/17 };
+
         function initCropper() {
             if(cropper) cropper.destroy();
             const el = document.getElementById('image-target');
             const base = DIMS[state.size];
-            const ratio = state.orient === 'portrait' ? (base.w / base.h) : (base.h / base.w);
+            const ratio = state.orient === 'portrait' ? base : (1/base);
 
             cropper = new Cropper(el, {
                 aspectRatio: ratio,
-                viewMode: 0, // Allow free movement
-                dragMode: 'move',
-                autoCropArea: 1,
+                viewMode: 0, dragMode: 'move', autoCropArea: 1,
                 guides: false, center: false, background: false,
                 cropBoxMovable: false, cropBoxResizable: false,
                 toggleDragModeOnDblclick: false,
@@ -289,62 +270,42 @@
             });
         }
 
+        // --- ACTIONS ---
         function doFit(mode) {
             if(!cropper) return;
             cropper.zoomTo(0);
             const box = cropper.getCropBoxData();
             const canvas = cropper.getCanvasData();
-            
-            // Calculate Ratios
             const imgR = canvas.naturalWidth / canvas.naturalHeight;
             const boxR = box.width / box.height;
             let zoom = 0;
 
-            if (mode === 'cover') { // Fill Bleed
-                zoom = (imgR > boxR) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
-            } else { // Fit Inside
-                zoom = (imgR > boxR) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
-            }
+            if (mode === 'cover') zoom = (imgR > boxR) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
+            else zoom = (imgR > boxR) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
             
             cropper.zoomTo(zoom);
-            
-            // Center
             const newC = cropper.getCanvasData();
-            cropper.setCanvasData({ 
-                left: box.left + (box.width - newC.width) / 2, 
-                top: box.top + (box.height - newC.height) / 2 
-            });
+            cropper.setCanvasData({ left: box.left+(box.width-newC.width)/2, top: box.top+(box.height-newC.height)/2 });
         }
 
-        function rotate(deg) { if(cropper) cropper.rotate(deg); }
-
-        // --- STATE & UI ---
-        function setOrient(o) {
-            state.orient = o; updateOrientUI(); initCropper();
-        }
-        function updateOrientUI() {
-            const p = document.getElementById('btn-port'); const l = document.getElementById('btn-land');
-            if(state.orient === 'portrait') {
-                p.className = 'flex-1 py-2 rounded text-xs font-bold bg-gray-800 text-white shadow border border-gray-600';
-                l.className = 'flex-1 py-2 rounded text-xs font-bold text-gray-500 hover:text-white transition-all';
-            } else {
-                l.className = 'flex-1 py-2 rounded text-xs font-bold bg-gray-800 text-white shadow border border-gray-600';
-                p.className = 'flex-1 py-2 rounded text-xs font-bold text-gray-500 hover:text-white transition-all';
-            }
+        function rotate(deg) { 
+            if(cropper) cropper.rotate(deg);
+            // Toggle orientation state logic implies aspect ratio swap, typically user manually rotates image to fit.
+            // For this simplified v22, we keep paper static and rotate image inside.
         }
 
-        function setSize(sz) {
-            state.size = sz;
-            document.querySelectorAll('[id^="sz-"]').forEach(b => b.classList.remove('active'));
-            document.getElementById('sz-'+sz).classList.add('active');
-            initCropper(); updatePrice();
-        }
+        // --- UI UPDATERS ---
+        function setSize(sz) { updateState('size', 'sz', sz); initCropper(); }
+        function setFinish(f) { updateState('finish', 'fn', f); drawOverlays(); }
+        function setColor(c) { updateState('color', 'col', c); }
+        function setSides(s) { updateState('sides', 'side', s); }
+        function setType(t) { updateState('type', 'type', t); }
 
-        function setFinish(f) {
-            state.finish = f;
-            document.querySelectorAll('[id^="fn-"]').forEach(b => b.classList.remove('active'));
-            document.getElementById('fn-'+f).classList.add('active');
-            drawOverlays(); updatePrice();
+        function updateState(key, prefix, val) {
+            state[key] = val;
+            document.querySelectorAll(`[id^="${prefix}-"]`).forEach(b => b.classList.remove('active'));
+            document.getElementById(`${prefix}-${val}`).classList.add('active');
+            updatePrice();
         }
 
         function drawOverlays() {
@@ -357,15 +318,6 @@
                 s.style.width = '24px'; s.style.height = '4px'; s.style.transform = 'rotate(-45deg)';
                 s.style.top = (box.top + 15) + 'px'; s.style.left = (box.left + 15) + 'px';
                 l.appendChild(s);
-            }
-            if(state.finish === 'dual') {
-                const s1 = document.createElement('div'); s1.className = 'staple';
-                s1.style.width = '4px'; s1.style.height = '24px';
-                s1.style.top = (box.top + (box.height*0.25)) + 'px'; s1.style.left = (box.left + 8) + 'px';
-                l.appendChild(s1);
-                const s2 = s1.cloneNode();
-                s2.style.top = (box.top + (box.height*0.75)) + 'px';
-                l.appendChild(s2);
             }
             if(state.finish === 'punch') {
                 for(let i=1; i<=3; i++) {
@@ -382,45 +334,23 @@
             document.getElementById('qty-disp').innerText = state.qty;
             updatePrice();
         }
-        function updatePrice() {
-            const t = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
-            document.getElementById('price-disp').innerText = '$' + t.toFixed(2);
-        }
 
-        function toggleDrawer(id) {
-            document.getElementById('drawer-'+id).classList.toggle('active');
+        function updatePrice() {
+            // Base price by Size & Color
+            let base = PRICES[state.size][state.color];
+            // Extras
+            base += EXTRAS[state.type] + EXTRAS[state.finish];
+            // Sides (Duplex usually saves paper but costs clicks. We'll simplify: 1.8x for double sided)
+            if(state.sides !== '1') base = base * 1.8;
+            
+            const total = base * state.qty;
+            document.getElementById('price-disp').innerText = '$' + total.toFixed(2);
         }
 
         function addToCart() {
-            cart.push({ ...state, total: document.getElementById('price-disp').innerText });
-            updateCart();
-            Swal.fire({ icon: 'success', title: 'Added', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
-            toggleDrawer('cart');
-        }
-
-        function updateCart() {
-            document.getElementById('cart-badge').innerText = cart.length;
+            Swal.fire({ icon: 'success', title: 'Added to Cart', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
             document.getElementById('cart-badge').classList.remove('hidden');
-            const el = document.getElementById('cart-items');
-            if(cart.length === 0) { el.innerHTML = '<div class="text-center text-gray-500 mt-10">Empty</div>'; return; }
-            
-            el.innerHTML = cart.map(c => `
-                <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center border border-gray-700">
-                    <div>
-                        <div class="font-bold text-white text-sm">${c.size.toUpperCase()}</div>
-                        <div class="text-xs text-gray-400">${c.orient} • ${c.finish}</div>
-                    </div>
-                    <div class="font-bold text-blue-400">${c.total}</div>
-                </div>
-            `).join('');
-            
-            let t = 0; cart.forEach(c => t += parseFloat(c.total.replace('$','')));
-            document.getElementById('cart-total').innerText = '$' + t.toFixed(2);
-        }
-
-        function checkout() {
-            Swal.fire({ title: 'Order Sent!', icon: 'success', confirmButtonColor: '#2563eb' });
-            cart = []; updateCart(); toggleDrawer('cart');
+            document.getElementById('cart-badge').innerText = '1';
         }
     </script>
 </body>

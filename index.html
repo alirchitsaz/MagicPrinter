@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | Studio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Magic Printer | Mobile Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
@@ -17,6 +17,10 @@
                 extend: {
                     colors: {
                         brand: { 950: '#0b0f19', 900: '#111827', 800: '#1f2937', 600: '#2563eb', 500: '#3b82f6' }
+                    },
+                    spacing: {
+                        'safe-b': 'env(safe-area-inset-bottom)',
+                        'safe-t': 'env(safe-area-inset-top)'
                     }
                 }
             }
@@ -25,127 +29,135 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: white; -webkit-tap-highlight-color: transparent; }
         
-        /* Editor Polish - Paper Simulation */
-        .cropper-view-box { outline: 1px solid #999; box-shadow: 0 0 0 9999px rgba(11, 15, 25, 0.85); } /* Dim the outside */
-        .cropper-modal { opacity: 0; } /* Remove default dark overlay inside box */
-        .cropper-bg { background: #fff; } /* The "Paper" is white */
+        /* 1. APP SHELL RESET */
+        html, body { height: 100%; width: 100%; overflow: hidden; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: white; display: flex; flex-direction: column; }
+
+        /* 2. CROPPER CUSTOMIZATION */
+        .cropper-view-box { outline: 1px solid #666; box-shadow: 0 0 0 9999px #0b0f19; } 
+        .cropper-modal { opacity: 1; background: #0b0f19; } 
+        .cropper-bg { background: #fff; } /* Paper is White */
+
+        /* 3. KYOCERA FINISHING MARKS (ACCURATE) */
+        .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 50; overflow: hidden; }
         
-        /* Kyocera Overlays */
-        .overlay-layer { pointer-events: none; position: absolute; z-index: 50; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
-        .safety-zone { border: 1px dashed rgba(220, 38, 38, 0.4); position: absolute; }
-        .safety-label { position: absolute; font-size: 9px; color: rgba(220, 38, 38, 0.6); font-weight: bold; top: 2px; right: 2px; text-transform: uppercase; }
-        .staple { position: absolute; background: linear-gradient(90deg, #9ca3af, #f3f4f6, #9ca3af); box-shadow: 1px 1px 3px rgba(0,0,0,0.4); z-index: 60; }
-        .punch { position: absolute; background: #0b0f19; border: 1px solid #333; border-radius: 50%; z-index: 60; }
+        /* Staple: Angled 45deg at corner */
+        .staple-single { position: absolute; width: 24px; height: 4px; background: linear-gradient(to right, #999, #fff, #999); box-shadow: 1px 1px 2px rgba(0,0,0,0.5); transform: rotate(-45deg); transform-origin: center; }
+        
+        /* Dual Staple: Vertical on edge */
+        .staple-dual { position: absolute; width: 4px; height: 24px; background: linear-gradient(to bottom, #999, #fff, #999); box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+
+        /* Punch: Standard 3-Hole US */
+        .punch-hole { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #333; border-radius: 50%; }
+
+        /* Fold: Dashed Line */
+        .fold-line { position: absolute; border-left: 1px dashed rgba(255,0,0,0.3); height: 100%; left: 50%; }
+
+        /* 4. SCROLL UTILS */
+        .scroll-area { overflow-y: auto; -webkit-overflow-scrolling: touch; }
     </style>
 </head>
-<body class="h-[100dvh] flex flex-col overflow-hidden">
+<body>
 
-    <header class="h-14 bg-brand-900 border-b border-gray-800 flex items-center justify-between px-4 shrink-0 z-50">
+    <header class="h-14 bg-brand-900 border-b border-gray-800 flex items-center justify-between px-4 shrink-0 pt-safe-t z-50">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-brand-600 rounded flex items-center justify-center shadow-lg"><i class="fa-solid fa-wand-magic-sparkles text-white text-xs"></i></div>
-            <div class="leading-none">
-                <h1 class="font-bold tracking-tight text-sm">MAGIC<span class="text-brand-500">PRINTER</span></h1>
-                <span class="text-[9px] text-gray-500 uppercase tracking-widest font-bold">Studio</span>
-            </div>
+            <div class="w-8 h-8 bg-brand-600 rounded flex items-center justify-center shadow"><i class="fa-solid fa-print text-white text-xs"></i></div>
+            <h1 class="font-bold tracking-tight text-sm">MAGIC<span class="text-brand-500">PRINTER</span></h1>
         </div>
         <button onclick="toggleCart()" class="relative p-2">
-            <i class="fa-solid fa-print text-gray-400"></i>
-            <span id="cart-badge" class="absolute top-0 right-0 bg-brand-500 text-[9px] w-4 h-4 rounded-full flex items-center justify-center hidden border border-brand-900">0</span>
+            <i class="fa-solid fa-shopping-bag text-gray-400 text-lg"></i>
+            <span id="cart-badge" class="absolute top-0 right-0 bg-brand-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center hidden border border-brand-900">0</span>
         </button>
     </header>
 
-    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-
-        <div class="flex-1 bg-[#0b0f19] relative flex flex-col z-0">
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        
+        <div class="h-[45vh] lg:h-full lg:flex-1 bg-[#1a1d24] relative flex flex-col z-0">
             
-            <div id="editor-toolbar" class="h-12 bg-brand-900/90 border-b border-gray-800 flex items-center justify-center gap-4 px-2 hidden z-40 backdrop-blur-sm">
-                <button onclick="rotateImage(-90)" class="text-gray-400 hover:text-white px-2"><i class="fa-solid fa-arrow-rotate-left"></i></button>
-                
-                <div class="w-px h-4 bg-gray-700"></div>
-                
-                <button onclick="smartFit('cover')" id="btn-cover" class="px-3 py-1 rounded bg-brand-800 text-[10px] font-bold uppercase text-white hover:bg-brand-700 transition-colors border border-brand-500">
-                    Fill Page
-                </button>
-                <button onclick="smartFit('contain')" id="btn-contain" class="px-3 py-1 rounded bg-brand-950 text-[10px] font-bold uppercase text-gray-400 hover:text-white transition-colors border border-gray-700">
-                    Fit Inside
-                </button>
-                
-                <div class="w-px h-4 bg-gray-700"></div>
-
-                <button onclick="zoom(0.1)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
-                <button onclick="zoom(-0.1)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <div id="editor-toolbar" class="absolute top-4 left-1/2 -translate-x-1/2 bg-brand-900/90 backdrop-blur rounded-full px-4 py-2 border border-gray-700 flex gap-4 shadow-xl z-40 hidden">
+                 <button onclick="rotate(-90)" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-rotate-left"></i></button>
+                 <div class="w-px h-4 bg-gray-600 self-center"></div>
+                 <button onclick="fit('cover')" class="text-[10px] font-bold uppercase text-brand-400">Fill</button>
+                 <button onclick="fit('contain')" class="text-[10px] font-bold uppercase text-gray-400">Fit</button>
             </div>
 
-            <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-[#0b0f19]">
-                
-                <div id="upload-state" class="text-center w-full max-w-sm p-4">
-                    <div onclick="document.getElementById('file-input').click()" class="aspect-video border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 hover:bg-brand-900/20 transition-all group">
-                        <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-cloud-arrow-up text-2xl text-gray-400 group-hover:text-brand-400"></i>
-                        </div>
-                        <h3 class="font-bold text-gray-200">New Project</h3>
-                        <p class="text-xs text-gray-500 mt-2">Tap to Upload</p>
+            <div class="flex-1 relative w-full h-full bg-[#0b0f19]">
+                <div id="upload-prompt" class="absolute inset-0 flex flex-col items-center justify-center p-6 z-10">
+                    <div onclick="document.getElementById('file-input').click()" class="w-full max-w-xs aspect-video border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center bg-brand-900/20 active:bg-brand-900/40 transition-colors">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-500 mb-2"></i>
+                        <span class="font-bold text-gray-300">Tap to Upload</span>
+                        <span class="text-xs text-gray-500">PDF or Photo</span>
                     </div>
                     <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
                 </div>
 
-                <div id="editor-container" class="hidden w-full h-full relative">
-                    <img id="image-target" src="" class="block max-w-full">
-                    <div id="overlay-layer" class="overlay-layer hidden"></div>
+                <div id="editor-stage" class="hidden w-full h-full">
+                    <img id="image-target" class="block max-w-full">
+                    <div id="finish-overlay" class="finish-layer"></div>
                 </div>
             </div>
         </div>
 
-        <div class="h-[45vh] lg:h-auto lg:w-[350px] bg-brand-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col z-50 shadow-2xl">
+        <div class="flex-1 lg:w-[400px] lg:flex-none bg-brand-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-10">
             
-            <div class="flex-1 overflow-y-auto p-5 space-y-6">
+            <div class="w-full h-6 flex items-center justify-center lg:hidden shrink-0">
+                <div class="w-12 h-1 bg-gray-700 rounded-full"></div>
+            </div>
+
+            <div class="flex-1 scroll-area p-5 pb-24 lg:pb-5 space-y-6">
                 
-                <div class="bg-brand-950 p-1 rounded-lg border border-gray-800 flex">
-                    <button onclick="setOrient('portrait')" id="t-port" class="flex-1 py-2 rounded text-xs font-bold bg-brand-800 text-white shadow"><i class="fa-regular fa-file mr-2"></i>Portrait</button>
-                    <button onclick="setOrient('landscape')" id="t-land" class="flex-1 py-2 rounded text-xs font-bold text-gray-400 hover:text-white"><i class="fa-regular fa-file fa-rotate-90 mr-2"></i>Landscape</button>
+                <div class="space-y-2">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Orientation</label>
+                    <div class="grid grid-cols-2 gap-2 bg-brand-950 p-1 rounded-xl border border-gray-800">
+                        <button onclick="setOrient('portrait')" id="btn-port" class="py-3 rounded-lg text-xs font-bold bg-brand-800 text-white shadow"><i class="fa-regular fa-file mr-2"></i>Portrait</button>
+                        <button onclick="setOrient('landscape')" id="btn-land" class="py-3 rounded-lg text-xs font-bold text-gray-400"><i class="fa-regular fa-file fa-rotate-90 mr-2"></i>Landscape</button>
+                    </div>
                 </div>
 
                 <div class="space-y-2">
                     <label class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Paper Size</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="setPaper('letter')" id="p-letter" class="p-btn active p-2 rounded border border-brand-500 bg-brand-800 text-center">
-                            <div class="text-xs font-bold text-white">Letter</div>
-                            <div class="text-[9px] text-gray-400">8.5x11</div>
+                    <div class="flex gap-2 overflow-x-auto pb-2 hide-scroll">
+                        <button onclick="setSize('letter')" id="btn-letter" class="flex-1 min-w-[80px] py-3 rounded-xl border border-brand-500 bg-brand-800 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform">
+                            <span class="text-xs font-bold text-white">Letter</span>
+                            <span class="text-[9px] text-gray-400">8.5x11</span>
                         </button>
-                        <button onclick="setPaper('legal')" id="p-legal" class="p-btn p-2 rounded border border-gray-700 bg-brand-950 text-center">
-                            <div class="text-xs font-bold text-gray-400">Legal</div>
-                            <div class="text-[9px] text-gray-500">8.5x14</div>
+                        <button onclick="setSize('legal')" id="btn-legal" class="flex-1 min-w-[80px] py-3 rounded-xl border border-gray-700 bg-brand-950 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform">
+                            <span class="text-xs font-bold text-gray-400">Legal</span>
+                            <span class="text-[9px] text-gray-500">8.5x14</span>
                         </button>
-                        <button onclick="setPaper('tabloid')" id="p-tabloid" class="p-btn p-2 rounded border border-gray-700 bg-brand-950 text-center">
-                            <div class="text-xs font-bold text-gray-400">Tabloid</div>
-                            <div class="text-[9px] text-gray-500">11x17</div>
+                        <button onclick="setSize('tabloid')" id="btn-tabloid" class="flex-1 min-w-[80px] py-3 rounded-xl border border-gray-700 bg-brand-950 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform">
+                            <span class="text-xs font-bold text-gray-400">Tabloid</span>
+                            <span class="text-[9px] text-gray-500">11x17</span>
                         </button>
                     </div>
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Finishing</label>
-                    <select id="finish-opt" onchange="updateFinish()" class="w-full bg-brand-950 border border-gray-700 rounded-lg h-10 px-3 text-sm text-gray-200 outline-none focus:border-brand-500">
-                        <option value="none">None</option>
-                        <option value="staple-tl">Staple: Top Left</option>
-                        <option value="punch-3">3-Hole Punch</option>
-                        <option value="booklet">Booklet Fold</option>
-                    </select>
+                    <label class="text-[10px] uppercase font-bold text-brand-400 tracking-wider">Finishing (Kyocera DF-7100)</label>
+                    <div class="relative">
+                        <select id="finish-opt" onchange="updateFinish()" class="w-full bg-brand-950 border border-gray-700 rounded-xl h-12 px-4 text-sm text-white appearance-none focus:border-brand-500 outline-none">
+                            <option value="none">Collate Only</option>
+                            <option value="staple-tl">Staple: Top Left (Corner)</option>
+                            <option value="staple-dual">Staple: Left Edge (Dual)</option>
+                            <option value="punch-3">Hole Punch: 3-Hole (Left)</option>
+                            <option value="booklet">Booklet: Fold & Stitch</option>
+                        </select>
+                        <div class="absolute right-4 top-4 text-gray-500 pointer-events-none"><i class="fa-solid fa-chevron-down"></i></div>
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-between border-t border-gray-800 pt-4 mt-2">
-                    <span class="text-xs font-bold text-gray-400 uppercase">Copies</span>
-                    <div class="flex items-center gap-3">
-                        <button onclick="adjQty(-1)" class="w-8 h-8 rounded bg-brand-800 text-white hover:bg-brand-700">-</button>
-                        <span id="qty-disp" class="font-bold w-6 text-center">1</span>
-                        <button onclick="adjQty(1)" class="w-8 h-8 rounded bg-brand-800 text-white hover:bg-brand-700">+</button>
+                <div class="bg-brand-950 rounded-xl p-2 flex items-center justify-between border border-gray-800">
+                    <button onclick="adjQty(-1)" class="w-10 h-10 rounded-lg bg-brand-800 text-white flex items-center justify-center active:bg-brand-700"><i class="fa-solid fa-minus"></i></button>
+                    <div class="text-center">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold">Copies</div>
+                        <div class="font-bold text-lg" id="qty-disp">1</div>
                     </div>
+                    <button onclick="adjQty(1)" class="w-10 h-10 rounded-lg bg-brand-800 text-white flex items-center justify-center active:bg-brand-700"><i class="fa-solid fa-plus"></i></button>
                 </div>
             </div>
 
-            <div class="p-4 border-t border-gray-800 bg-brand-900 pb-safe">
+            <div class="absolute bottom-0 left-0 w-full p-4 bg-brand-900 border-t border-gray-800 pb-safe-b">
                 <button onclick="addToCart()" id="btn-add" disabled class="w-full h-12 bg-white text-brand-900 font-bold rounded-xl shadow-lg flex items-center justify-between px-6 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform">
                     <span>Add to Order</span>
                     <span id="price-disp">$0.10</span>
@@ -154,14 +166,17 @@
         </div>
     </main>
 
-    <div id="cart-drawer" class="fixed right-0 top-0 h-full w-full max-w-sm bg-brand-900 shadow-2xl z-[70] transform translate-x-full transition-transform duration-300 flex flex-col border-l border-gray-800">
-        <div class="p-5 border-b border-gray-800 flex justify-between items-center bg-brand-950">
-            <h2 class="font-bold text-lg">Order Summary</h2>
-            <button onclick="toggleCart()" class="text-gray-400"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="cart-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
-        <div class="p-5 border-t border-gray-800 bg-brand-950 mb-safe">
-            <button onclick="checkout()" class="w-full h-14 bg-brand-600 rounded-xl font-bold text-white shadow-lg">Submit Order</button>
+    <div id="cart-drawer" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hidden flex justify-end">
+        <div class="w-full max-w-sm h-full bg-brand-900 flex flex-col shadow-2xl animate-slide-in">
+            <div class="h-14 border-b border-gray-800 flex items-center justify-between px-4 bg-brand-950 pt-safe-t">
+                <h2 class="font-bold">Your Order</h2>
+                <button onclick="toggleCart()" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="cart-list" class="flex-1 scroll-area p-4 space-y-3"></div>
+            <div class="p-4 bg-brand-950 border-t border-gray-800 pb-safe-b">
+                <div class="flex justify-between font-bold mb-4 text-lg"><span>Total</span><span id="cart-total">$0.00</span></div>
+                <button onclick="checkout()" class="w-full h-14 bg-brand-600 rounded-xl font-bold text-white shadow-lg">Submit Order</button>
+            </div>
         </div>
     </div>
 
@@ -175,13 +190,13 @@
         let state = { size: 'letter', orient: 'portrait', finish: 'none', qty: 1 };
         let cart = [];
 
-        // --- UPLOAD ---
-        const fileInput = document.getElementById('file-input');
-        fileInput.addEventListener('change', (e) => { if(e.target.files[0]) processFile(e.target.files[0]); });
-
-        async function processFile(file) {
+        // --- UPLOAD HANDLER ---
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            if(!e.target.files[0]) return;
+            const file = e.target.files[0];
             let src = '';
-            // PDF vs Image
+            
+            // PDF vs Image Logic
             if(file.type.includes('pdf')) {
                 const buff = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument(buff).promise;
@@ -199,182 +214,157 @@
             const img = new Image();
             img.onload = () => {
                 state.orient = img.width > img.height ? 'landscape' : 'portrait';
-                updateOrientUI();
+                updateUI();
                 
-                // Init Editor
-                document.getElementById('image-target').src = src;
-                document.getElementById('upload-state').classList.add('hidden');
-                document.getElementById('editor-container').classList.remove('hidden');
+                document.getElementById('upload-prompt').classList.add('hidden');
+                document.getElementById('editor-stage').classList.remove('hidden');
                 document.getElementById('editor-toolbar').classList.remove('hidden');
                 document.getElementById('btn-add').disabled = false;
+                document.getElementById('image-target').src = src;
                 
                 initCropper();
             };
             img.src = src;
-        }
+        });
 
-        // --- CORE CROPPER LOGIC ---
+        // --- CROPPER ENGINE ---
         function initCropper() {
             if(cropper) cropper.destroy();
             const el = document.getElementById('image-target');
-            
-            // Calculate Aspect Ratio
             const base = DIMS[state.size];
             const ratio = state.orient === 'portrait' ? (base.w / base.h) : (base.h / base.w);
 
             cropper = new Cropper(el, {
                 aspectRatio: ratio,
-                viewMode: 0, // 0 = Free Move (Allows whitespace/borders)
+                viewMode: 0, // Free movement (Critical for "Fit Inside")
                 dragMode: 'move',
                 autoCropArea: 1,
-                guides: false,
-                center: false,
-                background: false, // Handled by CSS
-                cropBoxMovable: false, // The paper stays still
-                cropBoxResizable: false, // The paper stays fixed size
+                guides: false, center: false, background: false,
+                cropBoxMovable: false, cropBoxResizable: false,
                 toggleDragModeOnDblclick: false,
                 ready() {
-                    smartFit('cover'); // Default to fill
+                    fit('cover'); // Default fill
                     drawOverlays();
                 },
-                crop: drawOverlays
+                crop: drawOverlays // Re-draw markers on move
             });
         }
 
-        function smartFit(mode) {
+        // --- ACTIONS ---
+        function fit(mode) {
             if(!cropper) return;
-            
-            // Visual Button Toggle
-            const btnCover = document.getElementById('btn-cover');
-            const btnContain = document.getElementById('btn-contain');
-            
-            if(mode === 'cover') {
-                btnCover.className = 'px-3 py-1 rounded bg-brand-800 text-[10px] font-bold uppercase text-white border border-brand-500';
-                btnContain.className = 'px-3 py-1 rounded bg-brand-950 text-[10px] font-bold uppercase text-gray-400 hover:text-white border border-gray-700';
-            } else {
-                btnContain.className = 'px-3 py-1 rounded bg-brand-800 text-[10px] font-bold uppercase text-white border border-brand-500';
-                btnCover.className = 'px-3 py-1 rounded bg-brand-950 text-[10px] font-bold uppercase text-gray-400 hover:text-white border border-gray-700';
-            }
+            cropper.zoomTo(0); // Reset zoom
+            const container = cropper.getContainerData();
+            const canvas = cropper.getCanvasData(); // Image
+            const box = cropper.getCropBoxData(); // Paper
 
-            // --- THE MATH ---
-            const containerData = cropper.getContainerData(); // Viewport size
-            const canvasData = cropper.getCanvasData(); // Image size
-            const boxData = cropper.getCropBoxData(); // Paper size
-            
-            const imgAspect = canvasData.naturalWidth / canvasData.naturalHeight;
-            const paperAspect = boxData.width / boxData.height;
-            
-            // Reset to 0 zoom to start calculation clean
-            cropper.zoomTo(0); // This sets it to fit view, not 0 size
-            
-            // Re-get data after reset
-            const newCanvas = cropper.getCanvasData();
-            
+            // Math: Calculate ratios
+            const imgRatio = canvas.naturalWidth / canvas.naturalHeight;
+            const boxRatio = box.width / box.height;
+            let zoom = 0;
+
             if (mode === 'cover') {
-                // FILL PAGE: Zoom until smallest dimension matches box
-                if (imgAspect > paperAspect) {
-                    // Image is wider than paper -> Fit Height
-                    const zoomRatio = boxData.height / newCanvas.naturalHeight;
-                    cropper.zoomTo(zoomRatio);
-                } else {
-                    // Image is taller than paper -> Fit Width
-                    const zoomRatio = boxData.width / newCanvas.naturalWidth;
-                    cropper.zoomTo(zoomRatio);
-                }
+                // Fill Page
+                zoom = (imgRatio > boxRatio) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
             } else {
-                // FIT INSIDE: Zoom until largest dimension fits in box
-                if (imgAspect > paperAspect) {
-                     // Image is wider -> Fit Width
-                     const zoomRatio = boxData.width / newCanvas.naturalWidth;
-                     cropper.zoomTo(zoomRatio);
-                } else {
-                    // Image is taller -> Fit Height
-                    const zoomRatio = boxData.height / newCanvas.naturalHeight;
-                    cropper.zoomTo(zoomRatio);
-                }
+                // Fit Inside
+                zoom = (imgRatio > boxRatio) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
             }
             
-            // Center the image in the box
-            const finalCanvas = cropper.getCanvasData();
-            const centerX = boxData.left + (boxData.width/2) - (finalCanvas.width/2);
-            const centerY = boxData.top + (boxData.height/2) - (finalCanvas.height/2);
+            cropper.zoomTo(zoom);
             
-            cropper.setCanvasData({ left: centerX, top: centerY, width: finalCanvas.width, height: finalCanvas.height });
+            // Center it
+            const newCanvas = cropper.getCanvasData();
+            cropper.setCanvasData({
+                left: box.left + (box.width - newCanvas.width) / 2,
+                top: box.top + (box.height - newCanvas.height) / 2
+            });
         }
 
-        function zoom(ratio) { cropper.zoom(ratio); }
-        function rotateImage(deg) { cropper.rotate(deg); }
+        function rotate(deg) { if(cropper) cropper.rotate(deg); }
 
-        // --- OVERLAYS ---
+        // --- KYOCERA FINISHING LOGIC (ACCURATE) ---
         function drawOverlays() {
-            const layer = document.getElementById('overlay-layer');
-            layer.classList.remove('hidden');
+            const layer = document.getElementById('finish-overlay');
             layer.innerHTML = '';
             if(!cropper) return;
             
-            const data = cropper.getCropBoxData();
-            const { width, height, top, left } = data;
+            const box = cropper.getCropBoxData();
+            const { width, height, top, left } = box;
+            const opt = document.getElementById('finish-opt').value;
 
-            // Safety Zone (Red Dashed)
-            const safe = document.createElement('div');
-            safe.className = 'safety-zone';
-            safe.style.left = (left + 10) + 'px';
-            safe.style.top = (top + 10) + 'px';
-            safe.style.width = (width - 20) + 'px';
-            safe.style.height = (height - 20) + 'px';
-            safe.innerHTML = '<span class="safety-label">Safe Zone</span>';
-            layer.appendChild(safe);
-
-            // Finishing
-            const finish = document.getElementById('finish-opt').value;
-            if(finish.includes('staple')) {
+            // 1. STAPLE: TOP-LEFT (Angled)
+            if(opt === 'staple-tl') {
                 const s = document.createElement('div');
-                s.className = 'staple';
-                s.style.width = '25px'; s.style.height = '5px';
-                s.style.top = (top + 12) + 'px';
-                s.style.left = (left + 12) + 'px';
-                s.style.transform = 'rotate(-45deg)';
+                s.className = 'staple-single';
+                s.style.top = (top + 15) + 'px';
+                s.style.left = (left + 15) + 'px';
                 layer.appendChild(s);
             }
-            if(finish.includes('punch')) {
+
+            // 2. STAPLE: DUAL (Left Edge)
+            if(opt === 'staple-dual') {
+                // Top Staple
+                const s1 = document.createElement('div');
+                s1.className = 'staple-dual';
+                s1.style.top = (top + (height * 0.25)) + 'px';
+                s1.style.left = (left + 8) + 'px';
+                layer.appendChild(s1);
+                
+                // Bottom Staple
+                const s2 = document.createElement('div');
+                s2.className = 'staple-dual';
+                s2.style.top = (top + (height * 0.75)) + 'px';
+                s2.style.left = (left + 8) + 'px';
+                layer.appendChild(s2);
+            }
+
+            // 3. PUNCH: 3-HOLE (Left Edge)
+            if(opt === 'punch-3') {
                 for(let i=1; i<=3; i++) {
                     const p = document.createElement('div');
-                    p.className = 'punch';
-                    p.style.width = '10px'; p.style.height = '10px';
-                    p.style.left = (left + 6) + 'px';
-                    p.style.top = (top + (height * (i/4))) + 'px';
+                    p.className = 'punch-hole';
+                    p.style.left = (left + 8) + 'px';
+                    p.style.top = (top + (height * (i/4)) - 6) + 'px';
                     layer.appendChild(p);
+                }
+            }
+
+            // 4. BOOKLET (Fold Center)
+            if(opt === 'booklet') {
+                const f = document.createElement('div');
+                f.className = 'fold-line';
+                f.style.left = (left + (width/2)) + 'px';
+                f.style.top = top + 'px';
+                f.style.height = height + 'px';
+                layer.appendChild(f);
+                
+                // Add Saddle Staples
+                for(let i=1; i<=2; i++) {
+                     const s = document.createElement('div');
+                     s.className = 'staple-dual';
+                     s.style.left = (left + (width/2) - 2) + 'px';
+                     s.style.top = (top + (height * (i/3))) + 'px';
+                     layer.appendChild(s);
                 }
             }
         }
 
-        // --- UI UPDATES ---
+        // --- UI & DATA ---
+        function setSize(sz) {
+            state.size = sz;
+            updateUI();
+            initCropper();
+            updatePrice();
+        }
         function setOrient(o) {
             state.orient = o;
-            updateOrientUI();
+            updateUI();
             initCropper();
         }
-        function updateOrientUI() {
-            const p = document.getElementById('t-port');
-            const l = document.getElementById('t-land');
-            if(state.orient === 'portrait') {
-                p.className = 'flex-1 py-2 rounded text-xs font-bold bg-brand-800 text-white shadow ring-1 ring-brand-500';
-                l.className = 'flex-1 py-2 rounded text-xs font-bold text-gray-400 hover:text-white';
-            } else {
-                l.className = 'flex-1 py-2 rounded text-xs font-bold bg-brand-800 text-white shadow ring-1 ring-brand-500';
-                p.className = 'flex-1 py-2 rounded text-xs font-bold text-gray-400 hover:text-white';
-            }
-        }
-        function setPaper(sz) {
-            state.size = sz;
-            document.querySelectorAll('.p-btn').forEach(b => {
-                b.className = 'p-btn p-2 rounded border border-gray-700 bg-brand-950 text-center';
-                b.querySelector('div:first-child').className = 'text-xs font-bold text-gray-400';
-            });
-            const active = document.getElementById('p-'+sz);
-            active.className = 'p-btn active p-2 rounded border border-brand-500 bg-brand-800 text-center';
-            active.querySelector('div:first-child').className = 'text-xs font-bold text-white';
-            initCropper();
+        function updateFinish() {
+            state.finish = document.getElementById('finish-opt').value;
+            drawOverlays();
             updatePrice();
         }
         function adjQty(n) {
@@ -382,11 +372,29 @@
             document.getElementById('qty-disp').innerText = state.qty;
             updatePrice();
         }
-        function updateFinish() {
-            state.finish = document.getElementById('finish-opt').value;
-            drawOverlays();
-            updatePrice();
+        
+        function updateUI() {
+            // Paper Buttons
+            document.querySelectorAll('#btn-letter, #btn-legal, #btn-tabloid').forEach(b => {
+                b.className = 'flex-1 min-w-[80px] py-3 rounded-xl border border-gray-700 bg-brand-950 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform';
+                b.children[0].className = 'text-xs font-bold text-gray-400';
+            });
+            const activeSize = document.getElementById('btn-'+state.size);
+            activeSize.className = 'flex-1 min-w-[80px] py-3 rounded-xl border border-brand-500 bg-brand-800 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow';
+            activeSize.children[0].className = 'text-xs font-bold text-white';
+
+            // Orient Buttons
+            const p = document.getElementById('btn-port');
+            const l = document.getElementById('btn-land');
+            if(state.orient === 'portrait') {
+                p.className = 'py-3 rounded-lg text-xs font-bold bg-brand-800 text-white shadow transition-all';
+                l.className = 'py-3 rounded-lg text-xs font-bold text-gray-400 transition-all';
+            } else {
+                l.className = 'py-3 rounded-lg text-xs font-bold bg-brand-800 text-white shadow transition-all';
+                p.className = 'py-3 rounded-lg text-xs font-bold text-gray-400 transition-all';
+            }
         }
+
         function updatePrice() {
             const total = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
             document.getElementById('price-disp').innerText = '$' + total.toFixed(2);
@@ -394,28 +402,30 @@
 
         // --- CART ---
         function addToCart() {
-            cart.push({...state, total: document.getElementById('price-disp').innerText});
+            cart.push({ ...state, total: document.getElementById('price-disp').innerText });
             updateCart();
             toggleCart();
         }
         function updateCart() {
-            document.getElementById('cart-badge').innerText = cart.length;
-            document.getElementById('cart-badge').classList.remove('hidden');
-            document.getElementById('cart-list').innerHTML = cart.map(c => `
-                <div class="bg-brand-800 p-3 rounded flex justify-between">
-                    <div class="text-sm">
-                        <span class="font-bold text-white">${c.size.toUpperCase()}</span>
-                        <span class="text-xs text-gray-400 block">${c.orient} • ${c.finish}</span>
+             document.getElementById('cart-badge').innerText = cart.length;
+             document.getElementById('cart-badge').classList.remove('hidden');
+             document.getElementById('cart-list').innerHTML = cart.map(c => `
+                <div class="bg-brand-800 p-4 rounded-xl flex justify-between items-center shadow-sm">
+                    <div>
+                        <div class="font-bold text-white">${c.size.toUpperCase()}</div>
+                        <div class="text-xs text-gray-400 mt-1">${c.orient} • ${c.finish} • x${c.qty}</div>
                     </div>
-                    <span class="font-bold text-brand-400">${c.total}</span>
+                    <div class="font-bold text-brand-400">${c.total}</div>
                 </div>
-            `).join('');
+             `).join('');
+             let t = 0; cart.forEach(c => t += parseFloat(c.total.replace('$','')));
+             document.getElementById('cart-total').innerText = '$' + t.toFixed(2);
         }
         function toggleCart() {
-            document.getElementById('cart-drawer').classList.toggle('translate-x-full');
+            document.getElementById('cart-drawer').classList.toggle('hidden');
         }
         function checkout() {
-            Swal.fire({ title: 'Submitted', icon: 'success', confirmButtonColor: '#2563eb' });
+            Swal.fire({ title: 'Order Sent!', icon: 'success', confirmButtonColor: '#2563eb' });
             cart = []; updateCart(); toggleCart();
         }
     </script>

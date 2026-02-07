@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | v30 True Scale</title>
+    <title>Magic Printer | v31 True Dimensions</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -27,58 +27,60 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        /* SHELL */
+        /* APP SHELL */
         body { background: #020617; color: white; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app { display: flex; flex-direction: column; height: 100dvh; width: 100vw; }
 
         /* HEADER */
         .header { height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #111827; border-bottom: 1px solid #1f2937; z-index: 50; padding-top: env(safe-area-inset-top); }
 
-        /* WORKSPACE */
-        .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; flex-direction: column; }
+        /* WORKSPACE (The Stage) */
+        .workspace { flex: 1; position: relative; background: #0b0f19; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
-        /* MODE: PHOTO EDITOR */
-        #editor-photo { display: none; width: 100%; height: 100%; position: relative; }
-        
-        /* MODE: DOC PREVIEW */
-        #editor-doc { 
-            display: none; width: 100%; height: 100%; flex-direction: column; 
-            align-items: center; justify-content: center; background: #0f172a; 
-            position: relative; overflow: hidden;
+        /* THE PAPER (Physical Aspect Ratio) */
+        #paper-stage {
+            background: white; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            /* Default Letter Portrait */
+            aspect-ratio: 8.5 / 11; 
+            height: 70%; /* Max height relative to workspace */
+            max-width: 90%;
+            display: flex; align-items: center; justify-content: center;
         }
         
-        /* THE PAPER SHEET (True Scale Engine) */
-        .paper-viewport {
-            width: 100%; height: 100%; 
-            display: flex; align-items: center; justify-content: center; 
-            padding: 40px; /* Breathing room */
+        /* Rulers */
+        .ruler-w { 
+            position: absolute; top: -25px; left: 0; width: 100%; text-align: center; 
+            border-bottom: 1px solid #64748b; color: #94a3b8; font-size: 11px; font-family: monospace; 
         }
-        .paper-sheet {
-            background: white; box-shadow: 0 30px 60px rgba(0,0,0,0.6); 
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy scaling */
-            position: relative; overflow: hidden; display: flex; flex-wrap: wrap;
-            border: 1px solid #ccc;
-        }
-        
-        /* Dimension Label Overlay */
-        .paper-label {
-            position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
-            font-size: 11px; font-weight: 600; color: #64748b; background: #1e293b;
-            padding: 4px 10px; border-radius: 99px; border: 1px solid #334155;
-            white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.3s;
-        }
-        .paper-viewport:hover .paper-label, .paper-label.visible { opacity: 1; bottom: 10px; } /* Show on hover or active */
+        .ruler-w::before, .ruler-w::after { content: ''; position: absolute; bottom: -3px; width: 1px; height: 7px; background: #64748b; }
+        .ruler-w::before { left: 0; } .ruler-w::after { right: 0; }
 
-        .page-slot {
-            position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
-            border: 1px dashed rgba(0,0,0,0.05);
+        .ruler-h { 
+            position: absolute; left: -25px; top: 0; height: 100%; 
+            display: flex; align-items: center; justify-content: center;
+            border-right: 1px solid #64748b; color: #94a3b8; font-size: 11px; font-family: monospace;
+            writing-mode: vertical-rl; transform: rotate(180deg);
         }
-        .page-render { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .ruler-h::before, .ruler-h::after { content: ''; position: absolute; right: -3px; width: 7px; height: 1px; background: #64748b; }
+        .ruler-h::before { top: 0; } .ruler-h::after { bottom: 0; }
 
-        /* OVERLAYS */
-        .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 20; overflow: hidden; }
-        .staple { position: absolute; background: linear-gradient(90deg, #9ca3af, #f3f4f6, #9ca3af); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); z-index: 50; }
-        .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 50%; z-index: 50; }
+        /* Content inside the paper */
+        .paper-content { width: 100%; height: 100%; overflow: hidden; position: relative; }
+        #image-preview { width: 100%; height: 100%; object-fit: contain; } /* Default FIT */
+        .paper-content.fill #image-preview { object-fit: cover; } /* FILL MODE */
+
+        /* 2-Up Grid */
+        .nup-grid { 
+            display: grid; width: 100%; height: 100%; 
+            grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; /* Default Portrait Split */
+        }
+        .nup-grid.landscape { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; } /* Landscape Split */
+        
+        .nup-cell { border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .nup-cell img { max-width: 100%; max-height: 100%; }
 
         /* CONTROLS */
         .controls { height: 50vh; flex-shrink: 0; background: #111827; border-top: 1px solid #1f2937; display: flex; flex-direction: column; z-index: 40; }
@@ -103,24 +105,13 @@
         #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* Floating Toolbar */
-        .floating-toolbar {
-            position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-            display: none; gap: 8px; z-index: 30;
-        }
-        .tool-btn {
-            width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: center;
-        }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div class="spinner mb-4"></div><div class="text-sm font-bold text-gray-400">Processing...</div></div>
+    <div id="loader"><div class="spinner mb-4"></div><div class="text-sm font-bold text-gray-400">Loading...</div></div>
 
     <div id="app">
-        
         <div class="header">
             <button onclick="alert('Profile')" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-300"><i class="fa-solid fa-user"></i></button>
             <div class="font-bold text-sm tracking-wide">MAGIC<span class="text-blue-500">PRINTER</span></div>
@@ -131,27 +122,14 @@
         </div>
 
         <div class="workspace">
-            
-            <div id="editor-photo">
-                <img id="image-target" class="block max-w-full">
-                <div id="finish-layer-photo" class="finish-layer"></div>
-                <div class="floating-toolbar" id="photo-tools">
-                    <button onclick="rotate(-90)" class="tool-btn"><i class="fa-solid fa-rotate-left"></i></button>
-                    <button onclick="doFit('cover')" class="tool-btn"><i class="fa-solid fa-expand"></i></button>
-                    <button onclick="doFit('contain')" class="tool-btn"><i class="fa-solid fa-compress"></i></button>
+            <div id="paper-stage">
+                <div class="ruler-w" id="lbl-w">8.5"</div>
+                <div class="ruler-h" id="lbl-h">11"</div>
+                
+                <div id="paper-content" class="paper-content">
+                    <img id="image-preview" src="" alt="Preview">
                 </div>
             </div>
-
-            <div id="editor-doc">
-                <div class="paper-viewport" id="doc-viewport">
-                    <div id="paper-sheet" class="paper-sheet">
-                        <div id="finish-layer-doc" class="finish-layer"></div>
-                        <div id="paper-dims" class="paper-label visible">8.5" x 11"</div>
-                    </div>
-                </div>
-                <div class="absolute top-4 bg-black/60 px-3 py-1 rounded-full text-xs text-white backdrop-blur" id="doc-meta">Doc.pdf • 1 Page</div>
-            </div>
-
         </div>
 
         <div class="controls">
@@ -181,8 +159,16 @@
                     <button class="btn-opt" id="sz-tabloid" onclick="setSize('tabloid')">Tabloid</button>
                 </div>
 
+                <div id="group-photo" class="context-group active">
+                    <div class="section-title">Photo Fit</div>
+                    <div class="opt-grid">
+                        <button class="btn-opt active" id="fit-contain" onclick="setFit('contain')">Fit to Page</button>
+                        <button class="btn-opt" id="fit-cover" onclick="setFit('cover')">Fill Page</button>
+                    </div>
+                </div>
+
                 <div id="group-doc" class="context-group">
-                    <div class="section-title">Layout & N-Up</div>
+                    <div class="section-title">Layout</div>
                     <div class="opt-grid three">
                         <button class="btn-opt active" id="nup-1" onclick="setNup('1')">1-Up</button>
                         <button class="btn-opt" id="nup-2" onclick="setNup('2')">2-Up</button>
@@ -195,8 +181,6 @@
                     <button class="btn-opt active" id="fn-none" onclick="setFinish('none')">None</button>
                     <button class="btn-opt" id="fn-staple" onclick="setFinish('staple')">Staple</button>
                     <button class="btn-opt" id="fn-punch" onclick="setFinish('punch')">Hole Punch</button>
-                    <button class="btn-opt" id="fn-slip" onclick="setFinish('slip')">Slip Sheet</button>
-                    <button class="btn-opt" id="fn-sort" onclick="setFinish('sort')">Collate</button>
                 </div>
             </div>
 
@@ -218,26 +202,32 @@
         <div onclick="document.getElementById('file-input').click()" class="w-full max-w-xs h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
             <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-600 mb-6"></i>
             <span class="font-bold text-xl text-gray-200">Start Project</span>
-            <span class="text-sm text-gray-500 mt-2">Upload File</span>
+            <span class="text-sm text-gray-500 mt-2">Tap to Upload</span>
         </div>
         <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp">
     </div>
 
     <script>
-        // CONFIG
-        const PRICES = { letter: { bw: 0.10, color: 0.35 }, legal: { bw: 0.15, color: 0.45 }, tabloid: { bw: 0.25, color: 0.75 } };
+        // --- DATA & STATE ---
         const DIMS = { 
-            letter: {w:8.5, h:11, lbl:"8.5\" x 11\""}, 
-            legal: {w:8.5, h:14, lbl:"8.5\" x 14\""}, 
-            tabloid: {w:11, h:17, lbl:"11\" x 17\""} 
+            letter: { w: 8.5, h: 11, lbl: "8.5\" x 11\"" }, 
+            legal: { w: 8.5, h: 14, lbl: "8.5\" x 14\"" }, 
+            tabloid: { w: 11, h: 17, lbl: "11\" x 17\"" } 
         };
-        const EXTRAS = { staple: 0.02, punch: 0.01, none: 0, slip: 0.05, sort: 0 };
+        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
         
-        let cropper = null;
-        let state = { 
-            mode: 'none', pages: 1, size: 'letter', orient: 'portrait', 
-            finish: 'none', color: 'color', nup: '1', qty: 1 
+        let state = {
+            mode: 'photo', // 'photo' or 'doc'
+            size: 'letter', orient: 'portrait', finish: 'none', color: 'color', 
+            fit: 'contain', nup: '1', qty: 1,
+            pdfDoc: null, pages: 1, imageSrc: null
         };
+
+        // --- SAFE DOM HELPER (Fixes Crashes) ---
+        function safe(id, fn) {
+            const el = document.getElementById(id);
+            if (el) fn(el);
+        }
 
         // --- FILE ENGINE ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
@@ -247,39 +237,37 @@
             loader.style.display = 'flex';
 
             try {
-                // PDF HANDLING
                 if(file.type === 'application/pdf') {
                     if(typeof pdfjsLib === 'undefined') throw new Error("PDF Engine Missing");
                     const buff = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument(buff).promise;
+                    state.pdfDoc = await pdfjsLib.getDocument(buff).promise;
+                    state.pages = state.pdfDoc.numPages;
+                    state.mode = (state.pages > 1) ? 'doc' : 'photo';
                     
-                    state.pages = pdf.numPages;
-                    state.pdfDoc = pdf;
-                    
-                    if (state.pages > 1) {
-                        switchMode('doc');
-                        document.getElementById('doc-meta').innerText = `${file.name} • ${state.pages} Pages`;
-                        renderDocPreview();
-                    } else {
-                        switchMode('photo');
-                        const page = await pdf.getPage(1);
+                    if (state.mode === 'photo') {
+                        // Render single page PDF as image
+                        const page = await state.pdfDoc.getPage(1);
                         const viewport = page.getViewport({ scale: 2 });
                         const canvas = document.createElement('canvas');
                         canvas.width = viewport.width; canvas.height = viewport.height;
                         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                        initPhotoEditor(canvas.toDataURL('image/jpeg'));
+                        state.imageSrc = canvas.toDataURL('image/jpeg');
                     }
-                } 
-                // IMAGE HANDLING
-                else {
+                } else {
                     state.mode = 'photo';
                     state.pages = 1;
-                    switchMode('photo');
-                    initPhotoEditor(URL.createObjectURL(file));
+                    state.imageSrc = URL.createObjectURL(file);
                 }
 
+                // Switch UI
                 document.getElementById('upload-screen').style.display = 'none';
                 document.getElementById('btn-add').disabled = false;
+                
+                // Toggle Context Controls
+                safe('group-photo', el => el.classList.toggle('active', state.mode === 'photo'));
+                safe('group-doc', el => el.classList.toggle('active', state.mode === 'doc'));
+
+                refreshPreview();
                 loader.style.display = 'none';
                 updatePrice();
 
@@ -289,233 +277,146 @@
             }
         });
 
-        function switchMode(mode) {
-            state.mode = mode;
-            // Safely toggle display
-            const photoView = document.getElementById('editor-photo');
-            const docView = document.getElementById('editor-doc');
-            if(photoView) photoView.style.display = mode === 'photo' ? 'block' : 'none';
-            if(docView) docView.style.display = mode === 'doc' ? 'flex' : 'none';
+        // --- THE RENDER ENGINE (TRUE DIMENSIONS) ---
+        function refreshPreview() {
+            const stage = document.getElementById('paper-stage');
+            const content = document.getElementById('paper-content');
             
-            // Toggle Context Controls
-            const groupDoc = document.getElementById('group-doc');
-            const groupPhoto = document.getElementById('group-photo');
-            if(groupDoc) groupDoc.classList.toggle('active', mode === 'doc');
-            if(groupPhoto) groupPhoto.classList.toggle('active', mode === 'photo');
-        }
-
-        function initPhotoEditor(src) {
-            const img = document.getElementById('image-target');
-            if(!img) return;
-            img.onload = () => {
-                state.orient = img.naturalWidth > img.naturalHeight ? 'landscape' : 'portrait';
-                updateOrientUI();
-                initCropper();
-            };
-            img.src = src;
-        }
-
-        // --- PRECISION DOC RENDERER (TRUE SCALE) ---
-        async function renderDocPreview() {
-            if (!state.pdfDoc) return;
-            const sheet = document.getElementById('paper-sheet');
-            if(!sheet) return;
-            
-            // 1. CLEAR SLOTS (Keep finish layer and label)
-            Array.from(sheet.children).forEach(c => {
-                if (!c.classList.contains('finish-layer') && !c.classList.contains('paper-label')) c.remove(); 
-            });
-
-            // 2. SET PAPER DIMENSIONS & LABEL
+            // 1. Calculate Aspect Ratio
             const dim = DIMS[state.size];
-            const isPort = state.orient === 'portrait';
-            const w = isPort ? dim.w : dim.h;
-            const h = isPort ? dim.h : dim.w;
-            const lbl = dim.lbl;
+            const w = state.orient === 'portrait' ? dim.w : dim.h;
+            const h = state.orient === 'portrait' ? dim.h : dim.w;
             
-            // Update Label text
-            const lblEl = document.getElementById('paper-dims');
-            if(lblEl) lblEl.innerText = isPort ? lbl : lbl.split(' x ').reverse().join(' x ');
+            // Apply Physical Ratio
+            stage.style.aspectRatio = `${w} / ${h}`;
+            
+            // Update Rulers
+            document.getElementById('lbl-w').innerText = w + '"';
+            document.getElementById('lbl-h').innerText = h + '"';
 
-            // Calculate Base Scale relative to viewport width (e.g. 350px max width)
-            // 8.5in -> 300px => 1in = 35px
-            const baseScale = 35; 
-            sheet.style.width = (w * baseScale) + 'px';
-            sheet.style.height = (h * baseScale) + 'px';
+            // 2. Render Content based on Mode
+            content.innerHTML = ''; // Clear previous
+            
+            if (state.mode === 'photo') {
+                const img = document.createElement('img');
+                img.src = state.imageSrc;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = state.fit; // Cover vs Contain
+                // Apply Grayscale
+                if (state.color === 'bw') img.style.filter = 'grayscale(100%)';
+                content.appendChild(img);
+            } 
+            else if (state.mode === 'doc') {
+                renderNupLayout(content, w, h);
+            }
+        }
 
-            // 3. CONFIGURE GRID
-            let slots = 1;
-            if (state.nup === '2' || state.nup === 'booklet') slots = 2;
+        async function renderNupLayout(container, paperW, paperH) {
+            container.className = 'nup-grid';
+            // Configure Grid
+            if (state.nup === '2' || state.nup === 'booklet') {
+                if (paperH > paperW) container.classList.remove('landscape'); // Portrait (Top/Bottom)
+                else container.classList.add('landscape'); // Landscape (Side/Side)
+            } else {
+                container.style.gridTemplateColumns = '1fr';
+                container.style.gridTemplateRows = '1fr';
+            }
 
-            // 4. RENDER SLOTS
-            for (let i = 1; i <= Math.min(slots, state.pdfDoc.numPages); i++) {
-                const slot = document.createElement('div');
-                slot.className = 'page-slot';
-                // Adjust slot size based on N-up
-                slot.style.width = slots === 2 ? (isPort ? '100%' : '50%') : '100%';
-                slot.style.height = slots === 2 ? (isPort ? '50%' : '100%') : '100%';
+            const slots = (state.nup === '2' || state.nup === 'booklet') ? 2 : 1;
+            
+            for (let i = 1; i <= Math.min(slots, state.pages); i++) {
+                const cell = document.createElement('div');
+                cell.className = 'nup-cell';
                 
-                const page = await state.pdfDoc.getPage(i);
-                const viewport = page.getViewport({ scale: 0.5 });
                 const canvas = document.createElement('canvas');
-                canvas.className = 'page-render';
+                const page = await state.pdfDoc.getPage(i);
+                const viewport = page.getViewport({ scale: 0.5 }); // Low res preview
                 canvas.width = viewport.width; canvas.height = viewport.height;
                 
                 const ctx = canvas.getContext('2d');
                 if (state.color === 'bw') ctx.filter = 'grayscale(100%)';
                 
                 await page.render({ canvasContext: ctx, viewport }).promise;
-                slot.appendChild(canvas);
-                sheet.appendChild(slot);
+                cell.appendChild(canvas);
+                container.appendChild(cell);
             }
-            
-            drawOverlaysDoc();
         }
 
-        // --- CROPPER ---
-        function initCropper() {
-            if(cropper) cropper.destroy();
-            const el = document.getElementById('image-target');
-            if(!el) return;
-            const dim = DIMS[state.size];
-            const ratio = state.orient === 'portrait' ? (dim.w/dim.h) : (dim.h/dim.w);
+        // --- CONTROLS ---
+        function setSize(sz) { 
+            state.size = sz; 
+            updateBtn('sz', sz); 
+            refreshPreview(); 
+            updatePrice();
+        }
+        function setOrient(o) { 
+            state.orient = o; 
+            safeToggle('btn-port', o === 'portrait'); 
+            safeToggle('btn-land', o === 'landscape');
+            refreshPreview(); 
+        }
+        function setColor(c) { 
+            state.color = c; 
+            safeToggle('col-color', c === 'color'); 
+            safeToggle('col-bw', c === 'bw'); 
+            refreshPreview(); 
+            updatePrice();
+        }
+        function setFit(f) { 
+            state.fit = f; 
+            safeToggle('fit-contain', f === 'contain'); 
+            safeToggle('fit-cover', f === 'cover'); 
+            refreshPreview(); 
+        }
+        function setNup(n) { 
+            state.nup = n; 
+            updateBtn('nup', n); 
+            if(n === 'booklet') { setSize('tabloid'); setOrient('landscape'); }
+            else refreshPreview(); 
+            updatePrice();
+        }
+        function setFinish(f) { 
+            state.finish = f; 
+            updateBtn('fn', f); 
+            updatePrice(); 
+        }
 
-            cropper = new Cropper(el, {
-                aspectRatio: ratio,
-                viewMode: 0, dragMode: 'move', autoCropArea: 1,
-                background: false,
-                ready() { doFit('cover'); drawOverlaysPhoto(); }
+        function updateBtn(prefix, val) {
+            document.querySelectorAll(`[id^="${prefix}-"]`).forEach(b => {
+                if(b.id === `${prefix}-${val}`) {
+                    b.classList.add('active'); 
+                    b.classList.replace('bg-brand-800', 'bg-brand-800'); // Hack to force redraw
+                } else {
+                    b.classList.remove('active');
+                }
             });
         }
 
-        function doFit(mode) {
-            if(!cropper) return;
-            cropper.zoomTo(0);
-            const box = cropper.getCropBoxData();
-            const canvas = cropper.getCanvasData();
-            let z = mode === 'cover' 
-                ? Math.max(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight)
-                : Math.min(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight);
-            cropper.zoomTo(z);
-            const newC = cropper.getCanvasData();
-            cropper.setCanvasData({ left: box.left+(box.width-newC.width)/2, top: box.top+(box.height-newC.height)/2 });
-        }
-        function rotate(deg) { if(cropper) cropper.rotate(deg); }
-
-        // --- UI UTILS ---
-        function safeToggle(id, isActive) {
-            const el = document.getElementById(id);
-            if(el) {
-                if(isActive) {
-                    el.classList.add('active');
-                    el.classList.replace('text-gray-500', 'text-white');
-                    el.classList.replace('bg-brand-800', 'bg-brand-800'); // Ensure visible
-                } else {
-                    el.classList.remove('active');
-                    el.classList.replace('text-white', 'text-gray-500');
-                }
-            }
-        }
-
-        // --- UPDATES ---
-        function updateState(key, prefix, val) {
-            state[key] = val;
-            const options = document.querySelectorAll(`[id^="${prefix}-"]`);
-            options.forEach(b => safeToggle(b.id, b.id === `${prefix}-${val}`));
-            updatePrice();
-        }
-
-        function setColor(c) { 
-            updateState('color', 'col', c); 
-            if(state.mode === 'photo') {
-                const el = document.getElementById('editor-photo');
-                if(el) el.style.filter = c === 'bw' ? 'grayscale(100%)' : 'none';
-            } else {
-                renderDocPreview();
-            }
-        }
-        
-        function setOrient(o) { 
-            state.orient = o; updateOrientUI(); 
-            if(state.mode === 'photo') initCropper(); 
-            else renderDocPreview();
-        }
-        
-        function updateOrientUI() {
-            safeToggle('btn-port', state.orient === 'portrait');
-            safeToggle('btn-land', state.orient === 'landscape');
-        }
-
-        function setSize(sz) { updateState('size', 'sz', sz); if(state.mode==='photo') initCropper(); else renderDocPreview(); }
-        
-        function setNup(n) { 
-            state.nup = n; 
-            updateState('nup', 'nup', n);
-            if(n === 'booklet') {
-                if(state.size !== 'tabloid') setSize('tabloid');
-                if(state.orient !== 'landscape') setOrient('landscape');
-            }
-            if(state.mode === 'doc') renderDocPreview();
-        }
-        
-        function setFinish(f) { updateState('finish', 'fn', f); if(state.mode==='photo') drawOverlaysPhoto(); else drawOverlaysDoc(); }
-
-        // --- OVERLAYS ---
-        function drawOverlaysPhoto() {
-            const l = document.getElementById('finish-layer-photo'); 
-            if(!l || !cropper) return;
-            l.innerHTML = '';
-            const b = cropper.getCropBoxData();
-            addMarks(l, b.top, b.left, b.height);
-        }
-
-        function drawOverlaysDoc() {
-            const l = document.getElementById('finish-layer-doc');
-            const sheet = document.getElementById('paper-sheet');
-            if(!l || !sheet) return;
-            l.innerHTML = '';
-            addMarks(l, 0, 0, sheet.clientHeight);
-        }
-
-        function addMarks(layer, top, left, height) {
-            if(state.finish === 'staple') {
-                const s = document.createElement('div'); s.className = 'staple';
-                s.style.width = '24px'; s.style.height = '4px'; s.style.transform = 'rotate(-45deg)';
-                s.style.top = (top + 15) + 'px'; s.style.left = (left + 15) + 'px';
-                layer.appendChild(s);
-            }
-            if(state.finish === 'punch') {
-                for(let i=1; i<=3; i++) {
-                    const p = document.createElement('div'); p.className = 'punch';
-                    p.style.left = (left + 8) + 'px';
-                    p.style.top = (top + (height * (i/4)) - 6) + 'px';
-                    layer.appendChild(p);
-                }
-            }
+        function safeToggle(id, active) {
+            safe(id, el => {
+                if(active) { el.classList.add('active'); el.classList.replace('text-gray-500', 'text-white'); }
+                else { el.classList.remove('active'); el.classList.replace('text-white', 'text-gray-500'); }
+            });
         }
 
         function adjQty(n) {
             state.qty = Math.max(1, state.qty + n);
-            document.getElementById('qty-disp').innerText = state.qty;
+            safe('qty-disp', el => el.innerText = state.qty);
             updatePrice();
         }
 
         function updatePrice() {
-            let base = PRICES[state.size][state.color];
-            base += EXTRAS[state.finish] || 0;
+            let base = PRICES[state.size] || 0.10;
+            if (state.color === 'color') base += 0.25;
             
-            // Page Calc
-            let printSide = state.pages;
-            if (state.nup === '2' || state.nup === 'booklet') printSide = Math.ceil(state.pages / 2);
-            
-            const total = base * printSide * state.qty;
-            document.getElementById('price-disp').innerText = '$' + total.toFixed(2);
+            const total = base * state.qty;
+            safe('price-disp', el => el.innerText = '$' + total.toFixed(2));
         }
 
         function addToCart() {
             Swal.fire({ icon: 'success', title: 'Added', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
-            document.getElementById('cart-badge').innerText = '1';
-            document.getElementById('cart-badge').classList.remove('hidden');
+            safe('cart-badge', el => { el.innerText = '1'; el.classList.remove('hidden'); });
         }
     </script>
 </body>

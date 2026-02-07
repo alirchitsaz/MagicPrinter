@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | Professional Printing for Everyone</title>
+    <title>Magic Printer | v41 Loyalty</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -30,14 +30,14 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
 
         /* GLOBAL */
-        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; overflow: hidden; }
+        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; }
+        #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
 
-        /* --- HOMEPAGE STYLES --- */
+        /* --- HOMEPAGE (Landing) --- */
         #homepage { 
             position: absolute; inset: 0; z-index: 100; background: #0f172a; 
             overflow-y: auto; display: flex; flex-direction: column;
-            transition: transform 0.4s ease-in-out;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #homepage.hidden-page { transform: translateY(-100%); pointer-events: none; }
 
@@ -46,7 +46,7 @@
             background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
             border-bottom: 1px solid #334155;
         }
-        .logo-main { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; display: inline-flex; align-items: center; gap: 10px; }
+        .logo-main { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; display: inline-flex; align-items: center; gap: 10px; color: white; }
         .logo-icon { width: 40px; height: 40px; background: #2563eb; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
         
         .value-prop { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 24px; max-width: 600px; margin: 0 auto; }
@@ -59,8 +59,8 @@
         .client-tag { background: #334155; color: #cbd5e1; padding: 6px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 
         .cta-bar { 
-            position: sticky; bottom: 0; padding: 20px; background: #0f172a; border-top: 1px solid #334155;
-            display: flex; justify-content: center; backdrop-filter: blur(10px); background: rgba(15,23,42,0.9);
+            position: sticky; bottom: 0; padding: 20px; background: rgba(15,23,42,0.95); 
+            border-top: 1px solid #334155; display: flex; justify-content: center; backdrop-filter: blur(10px);
         }
         .btn-primary { 
             background: #2563eb; color: white; font-weight: 700; font-size: 16px; 
@@ -70,47 +70,58 @@
         }
         .btn-primary:active { transform: scale(0.98); }
 
-        /* --- APP STYLES (v39 Logic) --- */
+        /* --- APP HEADER --- */
+        .app-header { height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #1e293b; border-bottom: 1px solid #334155; }
+        .brand-link { cursor: pointer; transition: opacity 0.2s; }
+        .brand-link:hover { opacity: 0.8; }
+
+        /* --- SCREENS --- */
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; background: #0f172a; position: absolute; inset: 0; z-index: 10; }
         .screen.active { display: flex; z-index: 20; }
 
-        /* Header (App Mode) */
-        .app-header { height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #1e293b; border-bottom: 1px solid #334155; }
+        /* --- PROFILE SCREEN --- */
+        #screen-profile { background: #0f172a; z-index: 50; }
+        .profile-header { padding: 30px 20px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); text-align: center; border-bottom: 1px solid #334155; }
+        .avatar { width: 80px; height: 80px; background: #3b82f6; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: white; border: 4px solid #0f172a; }
+        .profile-name { font-size: 20px; font-weight: 700; color: white; }
+        .profile-role { font-size: 12px; color: #94a3b8; }
         
-        /* Workspace */
-        .workspace { flex: 1; position: relative; background: #0f172a; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        #paper-preview { background: white; box-shadow: 0 20px 60px rgba(0,0,0,0.6); transition: aspect-ratio 0.3s; position: relative; width: auto; height: auto; max-width: 95%; max-height: 90%; aspect-ratio: 8.5/11; display: flex; justify-content: center; align-items: center; }
-        
-        /* Badges & Content */
+        .history-list { padding: 20px; }
+        .history-item { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+        .history-info { flex: 1; }
+        .history-title { font-weight: 700; font-size: 14px; color: white; }
+        .history-date { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .btn-reorder { padding: 8px 16px; background: #334155; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; }
+
+        /* --- WORKSPACE (PREVIEW) --- */
+        .workspace { flex: 1; position: relative; background: #0f172a; display: flex; justify-content: center; align-items: center; padding: 20px; overflow: hidden; }
+        #paper-preview { background: white; box-shadow: 0 30px 80px rgba(0,0,0,0.6); transition: aspect-ratio 0.3s; position: relative; width: auto; height: auto; max-width: 95%; max-height: 90%; aspect-ratio: 8.5/11; display: flex; justify-content: center; align-items: center; }
         .dim-badge { position: absolute; bottom: 10px; right: 10px; background: rgba(15,23,42,0.8); color: #cbd5e1; font-size: 10px; padding: 4px 8px; border-radius: 6px; pointer-events: none; z-index: 30; }
         .content-area { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .render-target { width: 100%; height: 100%; object-fit: contain; }
-        .grayscale { filter: grayscale(100%) contrast(1.15); }
         .booklet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #cbd5e1; }
         .booklet-grid .page-slot { background: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .grayscale { filter: grayscale(100%) contrast(1.15); }
 
-        /* Controls */
-        .controls { height: 50vh; flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; flex-direction: column; box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
+        /* FINISHING */
+        .finish-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
+        .staple { position: absolute; width: 3%; height: 1.5%; background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
+        .punch { position: absolute; width: 2.5%; aspect-ratio: 1/1; background: #0f172a; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); }
+
+        /* CONTROLS */
+        .controls { height: 50vh; flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; flex-direction: column; }
         .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; }
         .controls-footer { padding: 16px 20px; background: #1e293b; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; }
-
-        /* Inputs */
         .label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block; }
         .select-input { width: 100%; background: #0f172a; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 14px; outline: none; }
-        .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .btn-toggle { background: #0f172a; border: 1px solid #334155; color: #94a3b8; padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; cursor: pointer; }
+        .btn-toggle { background: #0f172a; border: 1px solid #334155; color: #94a3b8; padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; cursor: pointer; flex: 1; }
         .btn-toggle.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; }
 
-        /* Cart */
+        /* CART */
         .cart-item { background: #2a3546; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; gap: 12px; border: 1px solid #334155; }
         .section-box { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
-        
-        /* Overlays */
-        .finish-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
-        .staple { position: absolute; width: 3%; height: 1.5%; min-width: 12px; min-height: 3px; background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
-        .punch { position: absolute; width: 2.5%; aspect-ratio: 1/1; min-width: 6px; background: #0f172a; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); }
 
-        /* Loader */
+        /* LOADER */
         #loader { position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 200; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 32px; height: 32px; border: 3px solid #1e293b; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -128,51 +139,55 @@
                     <div class="logo-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <span>Magic Printer</span>
                 </div>
-                <h2 class="text-xl font-medium text-slate-300 mb-2">High Quality. Low Cost. Delivered.</h2>
-                <p class="text-sm text-slate-500 max-w-xs mx-auto">From family photos to legal briefs, we make professional printing magic for everyone.</p>
+                <h2 class="text-xl font-medium text-slate-300 mb-2">Printing for the Modern Era.</h2>
+                <p class="text-sm text-slate-500 max-w-xs mx-auto">High quality. Low cost. Local delivery in Temecula & Nationwide shipping.</p>
             </div>
 
             <div class="value-prop">
                 <div class="value-card">
                     <div class="value-icon"><i class="fa-solid fa-truck-fast"></i></div>
                     <div class="value-title">Local Delivery</div>
-                    <div class="value-desc">Fast delivery within 50 miles of Temecula, CA.</div>
+                    <div class="value-desc">Same-day options within 50 miles of Temecula.</div>
                 </div>
                 <div class="value-card">
-                    <div class="value-icon"><i class="fa-solid fa-box-open"></i></div>
-                    <div class="value-title">Nationwide Ship</div>
-                    <div class="value-desc">Secure shipping via UPS/FedEx for everywhere else.</div>
+                    <div class="value-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="value-title">Secure & Private</div>
+                    <div class="value-desc">Enterprise-grade security for law & real estate.</div>
                 </div>
             </div>
 
             <div class="text-center mb-4">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Serving Everyone</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Trusted By</span>
             </div>
             <div class="client-grid">
-                <div class="client-tag"><i class="fa-solid fa-house-chimney"></i> Families</div>
-                <div class="client-tag"><i class="fa-solid fa-graduation-cap"></i> Schools</div>
-                <div class="client-tag"><i class="fa-solid fa-shop"></i> Small Business</div>
                 <div class="client-tag"><i class="fa-solid fa-scale-balanced"></i> Law Firms</div>
                 <div class="client-tag"><i class="fa-solid fa-sign-hanging"></i> Real Estate</div>
+                <div class="client-tag"><i class="fa-solid fa-graduation-cap"></i> Schools</div>
                 <div class="client-tag"><i class="fa-solid fa-church"></i> Churches</div>
+                <div class="client-tag"><i class="fa-solid fa-shop"></i> Small Biz</div>
             </div>
 
-            <div class="flex-1"></div> <div class="cta-bar">
-                <button class="btn-primary" onclick="document.getElementById('file-input').click()">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Start Your Order
+            <div class="flex-1"></div>
+            <div class="cta-bar">
+                <button class="btn-primary" onclick="startOrder()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-home-text">Start New Order</span>
                 </button>
             </div>
-            <div class="text-center pb-6 text-[10px] text-slate-600">Supports PDF, JPG, PNG • Max 50MB</div>
+            <div class="text-center pb-6 text-[10px] text-slate-600">v41 Loyalty • PDF, JPG, PNG</div>
         </div>
 
         <div id="app-header" class="app-header" style="display:none;">
-            <div class="logo-main" style="font-size:18px;">
-                <div class="logo-icon" style="width:28px; height:28px; font-size:14px;"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                <span>Magic Printer</span>
+            <div class="brand-link flex items-center gap-2 text-white" onclick="goHome()">
+                <div class="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i></div>
+                <span class="font-bold text-lg tracking-tight">Magic Printer</span>
             </div>
-            <div onclick="gotoCart()" class="relative w-10 h-10 flex items-center justify-center text-white cursor-pointer">
-                <i class="fa-solid fa-shopping-cart"></i>
-                <div id="cart-badge" class="absolute top-1 right-1 bg-red-500 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center hidden">0</div>
+            
+            <div class="flex gap-4">
+                <button onclick="toggleProfile()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-user"></i></button>
+                <div onclick="gotoCart()" class="relative w-6 h-6 flex items-center justify-center text-white cursor-pointer mt-1">
+                    <i class="fa-solid fa-shopping-cart"></i>
+                    <div id="cart-badge" class="absolute -top-2 -right-2 bg-red-500 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center hidden">0</div>
+                </div>
             </div>
         </div>
 
@@ -194,12 +209,12 @@
                 <div class="controls-scroll">
                     <div class="mb-4" id="range-group" style="display:none;">
                         <label class="label">Pages</label>
-                        <input type="text" id="page-range" class="select-input" placeholder="All (e.g. 1-5, 8)" onchange="parsePageRange(this.value)">
+                        <input type="text" id="page-range" class="select-input" placeholder="All (e.g. 1-5)" onchange="parsePageRange(this.value)">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div>
-                            <label class="label">Paper Size</label>
+                            <label class="label">Paper</label>
                             <select id="size-sel" class="select-input" onchange="updateSize(this.value)">
                                 <option value="letter">Letter</option>
                                 <option value="legal">Legal</option>
@@ -208,7 +223,7 @@
                         </div>
                         <div>
                             <label class="label">Layout</label>
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="flex gap-2">
                                 <button class="btn-toggle active" id="btn-std" onclick="setLayout('standard')">Std</button>
                                 <button class="btn-toggle" id="btn-book" onclick="setLayout('booklet')">Book</button>
                             </div>
@@ -218,14 +233,14 @@
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div>
                             <label class="label">Orientation</label>
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="flex gap-2">
                                 <button class="btn-toggle active" id="btn-port" onclick="setOrient('portrait')">Port</button>
                                 <button class="btn-toggle" id="btn-land" onclick="setOrient('landscape')">Land</button>
                             </div>
                         </div>
                         <div>
                             <label class="label">Color</label>
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="flex gap-2">
                                 <button class="btn-toggle active" id="btn-color" onclick="toggleColor()">Color</button>
                                 <button class="btn-toggle" id="btn-bw" onclick="toggleColor()">B&W</button>
                             </div>
@@ -235,10 +250,10 @@
                     <div>
                         <label class="label">Finishing</label>
                         <div class="flex gap-2 mb-2">
-                            <button class="btn-toggle flex-1" id="fn-staple" onclick="toggleStaple()">Staple</button>
-                            <button class="btn-toggle flex-1" id="fn-punch3" onclick="setPunch('3')">Hole Punch</button>
+                            <button class="btn-toggle" id="fn-staple" onclick="toggleStaple()">Staple</button>
+                            <button class="btn-toggle" id="fn-punch3" onclick="setPunch('3')">Hole Punch</button>
                         </div>
-                        <button class="btn-toggle active w-full" id="fn-none" onclick="clearFinish()">No Finishing</button>
+                        <button class="btn-toggle active" id="fn-none" onclick="clearFinish()">No Finishing</button>
                     </div>
                 </div>
 
@@ -255,44 +270,61 @@
             </div>
         </div>
 
-        <div id="screen-cart" class="screen">
-            <div class="flex-1 overflow-y-auto p-5">
-                <div class="text-sm font-bold text-white mb-3 uppercase tracking-wider">Your Cart</div>
-                <div id="cart-list"></div>
-                <button class="w-full py-3 border border-dashed border-slate-600 text-slate-400 rounded-lg mb-6 hover:bg-slate-800" onclick="addMoreFiles()">+ Add Another File</button>
-
-                <div class="section-box">
-                    <div class="text-sm font-bold text-white mb-3 pb-2 border-b border-slate-700">Delivery Method</div>
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <button class="btn-toggle active" id="del-ship" onclick="setDelivery('ship')">Shipping</button>
-                        <button class="btn-toggle" id="del-local" onclick="setDelivery('local')">Local Delivery</button>
+        <div id="screen-profile" class="screen">
+            <div class="profile-header">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="profile-name">Ali Chitsaz</div>
+                <div class="profile-role">Return Customer • Temecula, CA</div>
+                <button onclick="toggleProfile()" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-5">
+                    <div class="label mb-3">Saved Addresses</div>
+                    <div class="p-3 bg-slate-800 rounded-lg border border-slate-700 text-sm text-slate-300 mb-6 cursor-pointer hover:border-blue-500" onclick="useAddress()">
+                        <div class="font-bold text-white">Office</div>
+                        <div>123 Vineyard Way, Temecula CA</div>
                     </div>
-                    
-                    <div id="form-ship" class="grid gap-3">
-                        <input type="text" class="select-input" placeholder="Full Name">
-                        <input type="text" class="select-input" placeholder="Street Address">
-                        <div class="flex gap-3">
-                            <input type="text" class="select-input" placeholder="City">
-                            <input type="text" class="select-input w-24" placeholder="Zip">
+
+                    <div class="label mb-3">Recent Orders</div>
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div class="history-title">Legal Contract.pdf</div>
+                            <div class="history-date">Oct 24 • 12 Copies</div>
                         </div>
+                        <button class="btn-reorder" onclick="reorder('Legal Contract.pdf')">Reorder</button>
                     </div>
-                    
-                    <div id="info-local" class="hidden text-xs text-slate-400 bg-slate-800 p-3 rounded">
-                        <i class="fa-solid fa-map-pin mr-1 text-blue-400"></i> Available within 50 miles of Temecula, CA.
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div class="history-title">Flyer_V2.jpg</div>
+                            <div class="history-date">Oct 10 • 500 Copies</div>
+                        </div>
+                        <button class="btn-reorder" onclick="reorder('Flyer_V2.jpg')">Reorder</button>
                     </div>
-                </div>
-
-                <div class="section-box">
-                    <div class="flex justify-between text-xs text-slate-400 mb-2"><span>Subtotal</span><span id="sum-sub">$0.00</span></div>
-                    <div class="flex justify-between text-xs text-slate-400 mb-2"><span>Delivery</span><span id="sum-del">$0.00</span></div>
-                    <div class="flex justify-between text-base font-bold text-white mt-3 pt-3 border-t border-slate-700"><span>Total</span><span id="sum-total">$0.00</span></div>
                 </div>
             </div>
-            
+        </div>
+
+        <div id="screen-cart" class="screen">
+            <div class="app-header">
+                <div class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-arrow-left cursor-pointer" onclick="showScreen('config')"></i> Cart</div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5">
+                <div id="cart-list"></div>
+                <button class="w-full py-3 border border-dashed border-slate-600 text-slate-400 rounded-lg mb-6" onclick="addMoreFiles()">+ Add File</button>
+                <div class="section-box">
+                    <div class="label">Delivery</div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <button class="btn-toggle active" id="del-ship" onclick="setDelivery('ship')">Ship</button>
+                        <button class="btn-toggle" id="del-local" onclick="setDelivery('local')">Local</button>
+                    </div>
+                    <input type="text" id="ship-addr" class="select-input" placeholder="Address">
+                </div>
+                <div class="section-box">
+                    <div class="flex justify-between text-white font-bold text-lg"><span>Total</span><span id="sum-total">$0.00</span></div>
+                </div>
+            </div>
             <div class="controls-footer">
-                <button class="flex-1 h-12 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg shadow-lg" onclick="checkout()">
-                    Pay & Submit Order
-                </button>
+                <button class="w-full h-12 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg" onclick="checkout()">Checkout</button>
             </div>
         </div>
 
@@ -301,217 +333,178 @@
     <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
 
     <script>
-        // --- LOGIC ---
-        const DIMS = { letter: {w:8.5, h:11, l:"8.5\" x 11\""}, legal: {w:8.5, h:14, l:"8.5\" x 14\""}, tabloid: {w:11, h:17, l:"11\" x 17\""} };
-        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
+        // DATA
+        const DIMS={letter:{w:8.5,h:11,l:"8.5\" x 11\""},legal:{w:8.5,h:14,l:"8.5\" x 14\""},tabloid:{w:11,h:17,l:"11\" x 17\""}};
+        const PRICES={letter:0.10,legal:0.15,tabloid:0.25};
         
-        let cart = [];
-        let state = {
-            size: 'letter', orient: 'portrait', color: 'color', layout: 'standard',
-            staple: false, punch: 'none', qty: 1, 
-            doc: null, type: 'none', pages: 1, printList: [], previewIdx: 0,
-            fileName: '', delivery: 'ship'
-        };
-
-        // --- FILE HANDLING ---
-        document.getElementById('file-input').addEventListener('change', async (e) => {
-            if(!e.target.files[0]) return;
-            const file = e.target.files[0];
-            const loader = document.getElementById('loader');
-            loader.style.display = 'flex';
-
-            try {
-                state.fileName = file.name;
-                if (file.type === 'application/pdf') {
-                    const buff = await file.arrayBuffer();
-                    state.doc = await pdfjsLib.getDocument(buff).promise;
-                    state.type = 'pdf';
-                    state.pages = state.doc.numPages;
-                    state.printList = Array.from({length: state.pages}, (_, i) => i + 1);
-                    document.getElementById('range-group').style.display = 'block';
-                    document.getElementById('nav-overlay').style.display = 'flex';
-                } else {
-                    state.doc = URL.createObjectURL(file);
-                    state.type = 'img';
-                    state.pages = 1;
-                    state.printList = [1];
-                    document.getElementById('range-group').style.display = 'none';
-                    document.getElementById('nav-overlay').style.display = 'none';
-                }
-
-                // TRANSITION TO APP
-                document.getElementById('homepage').classList.add('hidden-page');
-                document.getElementById('app-header').style.display = 'flex';
-                showScreen('config');
-                
-                state.previewIdx = 0;
-                renderPreview();
-                updatePrice();
-                loader.style.display = 'none';
-
-            } catch (err) {
-                loader.style.display = 'none';
-                alert("Error: " + err.message);
-            }
-        });
-
-        // --- RENDER ENGINE ---
-        async function renderPreview() {
-            const paper = document.getElementById('paper-preview');
-            const dim = DIMS[state.size];
-            const w = state.orient === 'portrait' ? dim.w : dim.h;
-            const h = state.orient === 'portrait' ? dim.h : dim.w;
-            
-            paper.style.aspectRatio = `${w} / ${h}`;
-            document.getElementById('dim-label').innerText = dim.l;
-
-            const area = document.getElementById('content-area');
-            area.innerHTML = ''; area.className = 'content-area';
-
-            if (state.layout === 'booklet') {
-                area.classList.add('booklet-grid');
-                await renderSlot(area, state.printList[state.previewIdx]);
-                if (state.previewIdx + 1 < state.printList.length) await renderSlot(area, state.printList[state.previewIdx + 1]);
-                else area.appendChild(document.createElement('div'));
-                document.getElementById('nav-info').innerText = `${state.previewIdx+1}-${Math.min(state.previewIdx+2, state.printList.length)} / ${state.printList.length}`;
-            } else {
-                await renderSlot(area, state.printList[state.previewIdx]);
-                document.getElementById('nav-info').innerText = `${state.previewIdx+1} / ${state.printList.length}`;
-            }
-            updateFinishingOverlay();
-        }
-
-        async function renderSlot(container, pageNum) {
-            const slot = document.createElement('div'); slot.className = 'page-slot';
-            slot.style.width='100%'; slot.style.height='100%';
-            
-            let content = null;
-            if (state.type === 'img') {
-                content = document.createElement('img'); content.src = state.doc; content.className = 'render-target';
-            } else if (state.type === 'pdf' && pageNum) {
-                const page = await state.doc.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 0.5 });
-                content = document.createElement('canvas'); content.className = 'render-target';
-                content.width = viewport.width; content.height = viewport.height;
-                const ctx = content.getContext('2d');
-                if (state.color === 'bw') ctx.filter = 'grayscale(100%)';
-                await page.render({ canvasContext: ctx, viewport }).promise;
-            }
-            if (content) {
-                if (state.color === 'bw') content.style.filter = 'grayscale(100%)';
-                slot.appendChild(content);
-            }
-            container.appendChild(slot);
-        }
-
-        // --- CART & APP LOGIC ---
-        function addToCart() {
-            cart.push({
-                file: state.fileName,
-                desc: `${state.size.toUpperCase()} • ${state.color} • ${state.layout}`,
-                qty: state.qty,
-                price: parseFloat(document.getElementById('price-disp').innerText.replace('$',''))
-            });
-            updateCartUI();
-            gotoCart();
-        }
-
-        function updateCartUI() {
-            const list = document.getElementById('cart-list'); list.innerHTML = '';
-            let subtotal = 0;
-            cart.forEach((item, idx) => {
-                subtotal += item.price;
-                list.innerHTML += `<div class="cart-item"><div class="flex-1"><div class="text-sm font-bold text-white">${item.file}</div><div class="text-xs text-slate-400">${item.desc}</div><div class="flex justify-between mt-2"><div class="text-xs text-slate-300">Qty: ${item.qty}</div><div class="font-bold text-blue-400">$${item.price.toFixed(2)}</div></div></div><button onclick="cart.splice(${idx},1);updateCartUI()" class="text-red-500 px-2"><i class="fa-solid fa-trash"></i></button></div>`;
-            });
-            
-            document.getElementById('cart-badge').innerText = cart.length;
-            document.getElementById('cart-badge').style.display = cart.length ? 'flex' : 'none';
-            
-            let delivery = state.delivery === 'ship' ? 12.00 : 5.00; // Local delivery fee
-            let total = subtotal + delivery;
-            document.getElementById('sum-sub').innerText = '$' + subtotal.toFixed(2);
-            document.getElementById('sum-del').innerText = '$' + delivery.toFixed(2);
-            document.getElementById('sum-total').innerText = '$' + total.toFixed(2);
-        }
-
-        function setDelivery(mode) {
-            state.delivery = mode;
-            document.getElementById('del-ship').classList.toggle('active', mode==='ship');
-            document.getElementById('del-local').classList.toggle('active', mode==='local');
-            document.getElementById('form-ship').style.display = mode==='ship' ? 'grid' : 'none';
-            document.getElementById('info-local').style.display = mode==='local' ? 'block' : 'none';
-            updateCartUI();
-        }
+        let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:'',delivery:'ship'};
+        let cart=[];
 
         // --- NAVIGATION ---
+        function goHome() {
+            // Keep state, just show home
+            document.getElementById('homepage').classList.remove('hidden-page');
+            document.getElementById('app-header').style.display = 'none';
+            document.getElementById('btn-home-text').innerText = state.doc ? "Resume Order" : "Start New Order";
+        }
+
+        function startOrder() {
+            if (state.doc) {
+                // Resume
+                document.getElementById('homepage').classList.add('hidden-page');
+                document.getElementById('app-header').style.display = 'flex';
+            } else {
+                // New
+                document.getElementById('file-input').click();
+            }
+        }
+
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-'+id).classList.add('active');
         }
-        function gotoCart() { showScreen('cart'); }
+        function toggleProfile() { 
+            const p = document.getElementById('screen-profile');
+            p.classList.toggle('active');
+        }
+        function gotoCart() { showScreen('cart'); updateCartUI(); }
         function addMoreFiles() { document.getElementById('file-input').click(); }
 
-        // --- CONFIG UPDATES ---
-        function updateSize(v) { state.size = v; renderPreview(); updatePrice(); }
-        function setOrient(v) { state.orient = v; toggle('btn-port', v==='portrait'); toggle('btn-land', v==='landscape'); renderPreview(); }
-        function setLayout(v) {
-            state.layout = v;
-            toggle('btn-std', v==='standard'); toggle('btn-book', v==='booklet');
-            if(v==='booklet') { state.orient='landscape'; state.size='tabloid'; toggle('btn-land', true); toggle('btn-port', false); document.getElementById('size-sel').value='tabloid'; }
+        // --- PROFILE LOGIC ---
+        function useAddress() {
+            document.getElementById('ship-addr').value = "123 Vineyard Way, Temecula CA";
+            toggleProfile();
+            Swal.fire({toast:true, position:'top', icon:'success', title:'Address Applied', timer:1500, showConfirmButton:false});
+        }
+        function reorder(name) {
+            cart.push({file:name, desc:"Letter • Color • Standard", qty:1, price:12.50});
+            document.getElementById('cart-badge').innerText = cart.length;
+            document.getElementById('cart-badge').classList.remove('hidden');
+            toggleProfile();
+            gotoCart();
+        }
+
+        // --- FILE ENGINE ---
+        document.getElementById('file-input').addEventListener('change', async (e)=>{
+            if(!e.target.files[0]) return;
+            const file=e.target.files[0];
+            const loader=document.getElementById('loader');
+            loader.style.display='flex';
+            try {
+                state.fileName=file.name;
+                if(file.type==='application/pdf'){
+                    const b=await file.arrayBuffer();
+                    state.doc=await pdfjsLib.getDocument(b).promise;
+                    state.type='pdf'; state.pages=state.doc.numPages;
+                    state.printList=Array.from({length:state.pages},(_,i)=>i+1);
+                    document.getElementById('range-group').style.display='block';
+                    document.getElementById('nav-overlay').style.display='flex';
+                } else {
+                    state.doc=URL.createObjectURL(file);
+                    state.type='img'; state.pages=1; state.printList=[1];
+                    document.getElementById('range-group').style.display='none';
+                    document.getElementById('nav-overlay').style.display='none';
+                }
+                
+                // Hide home, show app
+                document.getElementById('homepage').classList.add('hidden-page');
+                document.getElementById('app-header').style.display = 'flex';
+                showScreen('config');
+                
+                state.previewIdx=0; renderPreview(); updatePrice();
+                loader.style.display='none';
+            } catch(err){ loader.style.display='none'; alert(err.message); }
+        });
+
+        // --- RENDER ENGINE ---
+        async function renderPreview(){
+            const paper=document.getElementById('paper-preview');
+            const dim=DIMS[state.size];
+            const w=state.orient==='portrait'?dim.w:dim.h;
+            const h=state.orient==='portrait'?dim.h:dim.w;
+            paper.style.aspectRatio=`${w}/${h}`;
+            document.getElementById('dim-label').innerText=dim.l;
+            
+            const area=document.getElementById('content-area');
+            area.innerHTML=''; area.className='content-area';
+            
+            if(state.layout==='booklet'){
+                area.classList.add('booklet-grid');
+                await renderSlot(area,state.printList[state.previewIdx]);
+                if(state.previewIdx+1<state.printList.length) await renderSlot(area,state.printList[state.previewIdx+1]);
+                else area.appendChild(document.createElement('div'));
+                document.getElementById('nav-info').innerText=`${state.previewIdx+1}-${Math.min(state.previewIdx+2,state.printList.length)}/${state.printList.length}`;
+            } else {
+                await renderSlot(area,state.printList[state.previewIdx]);
+                document.getElementById('nav-info').innerText=`${state.previewIdx+1}/${state.printList.length}`;
+            }
+            updateFinishOverlay();
+        }
+
+        async function renderSlot(container,pageNum){
+            const slot=document.createElement('div'); slot.className='page-slot'; slot.style.width='100%'; slot.style.height='100%';
+            let content=null;
+            if(state.type==='img'){ content=document.createElement('img'); content.src=state.doc; content.className='render-target'; }
+            else if(state.type==='pdf' && pageNum){
+                const page=await state.doc.getPage(pageNum);
+                const viewport=page.getViewport({scale:0.5});
+                content=document.createElement('canvas'); content.className='render-target';
+                content.width=viewport.width; content.height=viewport.height;
+                const ctx=content.getContext('2d');
+                if(state.color==='bw') ctx.filter='grayscale(100%)';
+                await page.render({canvasContext:ctx,viewport}).promise;
+            }
+            if(content){ if(state.color==='bw') content.style.filter='grayscale(100%)'; slot.appendChild(content); }
+            container.appendChild(slot);
+        }
+
+        // --- CONTROLS ---
+        function updateSize(v){ state.size=v; renderPreview(); updatePrice(); }
+        function setOrient(v){ state.orient=v; toggle('btn-port',v==='portrait'); toggle('btn-land',v==='landscape'); renderPreview(); }
+        function setLayout(v){ 
+            state.layout=v; toggle('btn-std',v==='standard'); toggle('btn-book',v==='booklet');
+            if(v==='booklet'){ state.orient='landscape'; state.size='tabloid'; toggle('btn-land',true); toggle('btn-port',false); document.getElementById('size-sel').value='tabloid'; }
             renderPreview(); updatePrice();
         }
-        function toggleColor() { state.color = state.color==='color'?'bw':'color'; toggle('btn-bw', state.color==='bw'); toggle('btn-color', state.color==='color'); renderPreview(); updatePrice(); }
+        function toggleColor(){ state.color=state.color==='color'?'bw':'color'; toggle('btn-bw',state.color==='bw'); toggle('btn-color',state.color==='color'); renderPreview(); updatePrice(); }
+        function clearFinish(){ state.staple=false; state.punch='none'; updateFinishUI(); }
+        function toggleStaple(){ state.staple=!state.staple; updateFinishUI(); }
+        function setPunch(v){ state.punch=(state.punch===v)?'none':v; updateFinishUI(); }
+        function updateFinishUI(){ 
+            toggle('fn-none',!state.staple && state.punch==='none'); toggle('fn-staple',state.staple); toggle('fn-punch3',state.punch==='3');
+            updateFinishOverlay(); updatePrice();
+        }
+        function updateFinishOverlay(){
+            const l=document.getElementById('finish-layer'); l.innerHTML='';
+            if(state.staple){ const s=document.createElement('div'); s.className='staple'; s.style.top='4%'; s.style.left='4%'; s.style.transform='rotate(-45deg)'; l.appendChild(s); }
+            if(state.punch!=='none'){ for(let i=1;i<=3;i++){ const p=document.createElement('div'); p.className='punch'; p.style.left='2%'; p.style.top=(i/4*100)+'%'; l.appendChild(p); } }
+        }
+        function toggle(id,active){ const el=document.getElementById(id); if(active){ el.classList.add('active'); el.classList.replace('text-gray-500','white'); } else { el.classList.remove('active'); } }
         
-        // --- FINISHING ---
-        function clearFinish() { state.staple=false; state.punch='none'; updateFinishUI(); }
-        function toggleStaple() { state.staple=!state.staple; updateFinishUI(); }
-        function setPunch(v) { state.punch=(state.punch===v)?'none':v; updateFinishUI(); }
+        function updatePrice(){
+            let base=PRICES[state.size]; if(state.color==='color') base+=0.25;
+            state.qty=document.getElementById('qty-input').value;
+            const pages=state.layout==='booklet'?Math.ceil(state.printList.length/4):state.printList.length;
+            document.getElementById('price-disp').innerText='$'+(base*pages*state.qty).toFixed(2);
+        }
+
+        // --- CART ---
+        function addToCart(){
+            cart.push({file:state.fileName, desc:`${state.size.toUpperCase()} • ${state.layout}`, qty:state.qty, price:parseFloat(document.getElementById('price-disp').innerText.replace('$',''))});
+            document.getElementById('cart-badge').innerText=cart.length; document.getElementById('cart-badge').classList.remove('hidden');
+            gotoCart();
+        }
+        function updateCartUI(){
+            const l=document.getElementById('cart-list'); l.innerHTML='';
+            let tot=0;
+            cart.forEach(i=>{ tot+=i.price; l.innerHTML+=`<div class="cart-item"><div class="flex-1 text-white font-bold text-sm">${i.file}</div><div class="text-white">$${i.price.toFixed(2)}</div></div>`; });
+            document.getElementById('sum-total').innerText='$'+tot.toFixed(2);
+        }
+        function setDelivery(v){ state.delivery=v; toggle('del-ship',v==='ship'); toggle('del-local',v==='local'); }
+        function checkout(){ Swal.fire({title:'Order Submitted',text:'Thank you for printing with Magic Printer!',icon:'success'}); cart=[]; updateCartUI(); goHome(); }
         
-        function updateFinishUI() {
-            toggle('fn-none', !state.staple && state.punch==='none');
-            toggle('fn-staple', state.staple);
-            toggle('fn-punch3', state.punch==='3');
-            updateFinishingOverlay(); updatePrice();
-        }
-
-        function updateFinishingOverlay() {
-            const l = document.getElementById('finish-layer'); l.innerHTML = '';
-            if (state.staple) { const s=document.createElement('div'); s.className='staple'; s.style.top='4%'; s.style.left='4%'; s.style.transform='rotate(-45deg)'; l.appendChild(s); }
-            if (state.punch !== 'none') {
-                for(let i=1; i<=3; i++) { const p=document.createElement('div'); p.className='punch'; p.style.left='2%'; p.style.top=(i/4*100)+'%'; l.appendChild(p); }
-            }
-        }
-
-        function toggle(id, active) {
-            const el = document.getElementById(id);
-            if(active) { el.classList.add('active'); el.classList.replace('text-gray-500','white'); }
-            else { el.classList.remove('active'); el.classList.replace('white','text-gray-500'); }
-        }
-
-        function updatePrice() {
-            let base = PRICES[state.size];
-            if (state.color === 'color') base += 0.25;
-            state.qty = document.getElementById('qty-input').value;
-            const pages = state.layout==='booklet' ? Math.ceil(state.printList.length/4) : state.printList.length;
-            document.getElementById('price-disp').innerText = '$' + (base * pages * state.qty).toFixed(2);
-        }
-
-        function parsePageRange(val) {
-            if (!val.trim()) state.printList = Array.from({length: state.pages}, (_, i) => i + 1);
-            else {
-                const list = new Set();
-                val.split(',').forEach(p => {
-                    if (p.includes('-')) { const [s,e]=p.split('-').map(Number); for(let i=s;i<=e;i++) if(i<=state.pages) list.add(i); }
-                    else { const n=Number(p); if(n<=state.pages) list.add(n); }
-                });
-                state.printList = Array.from(list).sort((a,b)=>a-b);
-            }
-            state.previewIdx = 0; renderPreview(); updatePrice();
-        }
-        function prevPage() { if(state.previewIdx>0) { state.previewIdx--; renderPreview(); } }
-        function nextPage() { const j=state.layout==='booklet'?2:1; if(state.previewIdx+j<state.printList.length) { state.previewIdx+=j; renderPreview(); } }
-
-        function checkout() { Swal.fire({ title: 'Order Submitted', text: 'Thank you for choosing Magic Printer!', icon: 'success' }); }
+        function prevPage(){ if(state.previewIdx>0){ state.previewIdx--; renderPreview(); } }
+        function nextPage(){ const j=state.layout==='booklet'?2:1; if(state.previewIdx+j<state.printList.length){ state.previewIdx+=j; renderPreview(); } }
     </script>
 </body>
 </html>

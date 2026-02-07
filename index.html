@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | v25 Brain</title>
+    <title>Magic Printer | v26 Stable</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -39,7 +39,7 @@
         /* MODE: PHOTO EDITOR */
         #editor-photo { display: none; width: 100%; height: 100%; position: relative; }
         
-        /* MODE: DOC PREVIEW (New) */
+        /* MODE: DOC PREVIEW */
         #editor-doc { 
             display: none; width: 100%; height: 100%; flex-direction: column; 
             align-items: center; justify-content: center; background: #0f172a; 
@@ -51,9 +51,8 @@
             position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
         .doc-badge {
-            position: absolute; top: -10px; right: -10px; background: #2563eb; color: white;
-            font-size: 10px; font-weight: bold; padding: 15px 10px 5px 10px; border-radius: 50%;
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            position: absolute; top: 10px; right: 10px; background: #2563eb; color: white;
+            font-size: 10px; font-weight: bold; padding: 6px 10px; border-radius: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 20;
         }
 
@@ -73,21 +72,20 @@
         }
         .btn-opt.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
         
-        /* Contextual Sections (Hidden by default) */
         .context-section { display: none; }
         .context-section.active { display: block; }
 
-        /* Finishing Overlays */
+        /* FINISHING OVERLAYS */
         .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 20; overflow: hidden; }
         .staple { position: absolute; background: linear-gradient(90deg, #9ca3af, #f3f4f6, #9ca3af); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); z-index: 50; }
         .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 50%; z-index: 50; }
 
-        /* Loader */
+        /* LOADER */
         #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 300; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* Floating Toolbar (Photo Mode Only) */
+        /* Floating Toolbar */
         .floating-toolbar {
             position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
             display: none; gap: 8px; z-index: 30;
@@ -102,7 +100,7 @@
 
     <div id="loader">
         <div class="spinner mb-4"></div>
-        <div class="text-sm font-bold text-gray-400" id="loader-msg">Analyzing File...</div>
+        <div class="text-sm font-bold text-gray-400" id="loader-msg">Processing...</div>
     </div>
 
     <div id="app">
@@ -129,12 +127,13 @@
             </div>
 
             <div id="editor-doc">
-                <div class="doc-preview-card" id="doc-canvas-container">
-                    <div class="doc-badge" id="page-count-badge">12</div>
-                    </div>
+                <div class="doc-preview-card" id="doc-card">
+                    <div class="doc-badge" id="page-count-badge">--</div>
+                    <div id="doc-canvas-wrapper" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+                </div>
                 <div class="mt-6 text-center">
-                    <h2 class="font-bold text-white text-lg" id="doc-name">Document.pdf</h2>
-                    <p class="text-xs text-gray-400 mt-1"><span id="doc-pages-text">12 Pages</span> • <span id="doc-size-text">8.5 x 11</span></p>
+                    <h2 class="font-bold text-white text-lg" id="doc-name">Doc.pdf</h2>
+                    <p class="text-xs text-gray-400 mt-1" id="doc-info">Loading...</p>
                 </div>
             </div>
 
@@ -145,16 +144,12 @@
                 
                 <div class="section-title">Color Mode</div>
                 <div class="opt-grid">
-                    <button class="btn-opt active" id="col-color" onclick="setColor('color')">
-                        <i class="fa-solid fa-palette"></i> Color
-                    </button>
-                    <button class="btn-opt" id="col-bw" onclick="setColor('bw')">
-                        <i class="fa-solid fa-droplet-slash"></i> B&W
-                    </button>
+                    <button class="btn-opt active" id="col-color" onclick="setColor('color')"><i class="fa-solid fa-palette"></i> Color</button>
+                    <button class="btn-opt" id="col-bw" onclick="setColor('bw')"><i class="fa-solid fa-droplet-slash"></i> B&W</button>
                 </div>
 
                 <div id="group-photo" class="context-section">
-                    <div class="section-title">Photo Orientation</div>
+                    <div class="section-title">Orientation</div>
                     <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700 h-10 mb-6">
                         <button onclick="setOrient('portrait')" id="btn-port" class="flex-1 rounded text-xs font-bold bg-brand-800 text-white shadow">Portrait</button>
                         <button onclick="setOrient('landscape')" id="btn-land" class="flex-1 rounded text-xs font-bold text-gray-500 hover:text-white">Landscape</button>
@@ -164,14 +159,8 @@
                 <div id="group-doc" class="context-section">
                     <div class="section-title">Layout (N-Up)</div>
                     <div class="opt-grid">
-                        <button class="btn-opt active" id="nup-1" onclick="setNup('1')">
-                            <div class="text-xs">Standard</div>
-                            <div class="font-bold">1 Page / Sheet</div>
-                        </button>
-                        <button class="btn-opt" id="nup-2" onclick="setNup('2')">
-                            <div class="text-xs">Save Paper</div>
-                            <div class="font-bold">2 Pages / Sheet</div>
-                        </button>
+                        <button class="btn-opt active" id="nup-1" onclick="setNup('1')">1 Page / Sheet</button>
+                        <button class="btn-opt" id="nup-2" onclick="setNup('2')">2 Pages / Sheet</button>
                     </div>
                 </div>
 
@@ -179,7 +168,7 @@
                 <div class="opt-grid three">
                     <button class="btn-opt active" id="side-1" onclick="setSides('1')">1-Sided</button>
                     <button class="btn-opt" id="side-2long" onclick="setSides('2long')">Book</button>
-                    <button class="btn-opt" id="side-2short" onclick="setSides('2short')">Calendar</button>
+                    <button class="btn-opt" id="side-2short" onclick="setSides('2short')">Flip</button>
                 </div>
 
                 <div class="section-title">Finishing</div>
@@ -193,11 +182,11 @@
 
             <div class="controls-footer">
                 <div class="flex items-center bg-gray-900 rounded-lg border border-gray-700 px-2 h-12">
-                    <button onclick="adjQty(-1)" class="w-10 h-full text-gray-400 active:text-white text-lg">-</button>
+                    <button onclick="adjQty(-1)" class="w-10 h-full text-gray-400 text-lg">-</button>
                     <div class="w-8 text-center font-bold text-white" id="qty-disp">1</div>
-                    <button onclick="adjQty(1)" class="w-10 h-full text-gray-400 active:text-white text-lg">+</button>
+                    <button onclick="adjQty(1)" class="w-10 h-full text-gray-400 text-lg">+</button>
                 </div>
-                <button onclick="addToCart()" id="btn-add" disabled class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg flex items-center justify-between px-6 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
+                <button onclick="addToCart()" id="btn-add" disabled class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg flex items-center justify-between px-6 disabled:opacity-50 disabled:grayscale">
                     <span>Add to Order</span>
                     <span id="price-disp">$0.00</span>
                 </button>
@@ -215,62 +204,63 @@
     </div>
 
     <script>
-        // --- CONSTANTS ---
+        // --- CONFIG ---
         const PRICES = { letter: { bw: 0.10, color: 0.35 }, legal: { bw: 0.15, color: 0.45 }, tabloid: { bw: 0.25, color: 0.75 } };
         const EXTRAS = { glossy: 0.15, card: 0.10, plain: 0, staple: 0.02, punch: 0.01, booklet: 0.25, none: 0 };
         const DIMS = { letter: 8.5/11, legal: 8.5/14, tabloid: 11/17 };
         
         let cropper = null;
         let state = { 
-            mode: 'none', // 'photo' | 'doc'
-            pages: 1,
-            size: 'letter', orient: 'portrait', finish: 'none', 
-            color: 'color', sides: '1', nup: '1', qty: 1 
+            mode: 'none', pages: 1, size: 'letter', orient: 'portrait', 
+            finish: 'none', color: 'color', sides: '1', nup: '1', qty: 1 
         };
 
-        // --- THE BRAIN: FILE ANALYZER ---
+        // --- FILE ENGINE ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
             const file = e.target.files[0];
             const loader = document.getElementById('loader');
-            
             loader.style.display = 'flex';
-            document.getElementById('loader-msg').innerText = "Analyzing Content...";
 
             try {
                 let src = '';
                 
-                // PATH A: PDF DOCUMENT
+                // PATH A: PDF
                 if(file.type === 'application/pdf') {
                     if(typeof pdfjsLib === 'undefined') throw new Error("PDF Engine Missing");
                     
                     const buff = await file.arrayBuffer();
                     const pdf = await pdfjsLib.getDocument(buff).promise;
                     
-                    // SMART SWITCH: Check Page Count
                     state.pages = pdf.numPages;
                     
+                    // MULTI-PAGE MODE
                     if (state.pages > 1) {
-                        // MULTI-PAGE MODE
                         state.mode = 'doc';
-                        document.getElementById('doc-name').innerText = file.name;
-                        document.getElementById('doc-pages-text').innerText = state.pages + " Pages";
-                        document.getElementById('page-count-badge').innerText = state.pages;
                         
-                        // Render 1st Page Preview
+                        // SAFER UPDATE: Check if elements exist before updating
+                        const badge = document.getElementById('page-count-badge');
+                        if (badge) badge.innerText = state.pages + " pgs";
+                        
+                        document.getElementById('doc-name').innerText = file.name;
+                        document.getElementById('doc-info').innerText = `${state.pages} Pages • PDF`;
+                        
                         const page = await pdf.getPage(1);
                         const viewport = page.getViewport({ scale: 0.5 });
                         const canvas = document.createElement('canvas');
                         canvas.width = viewport.width; canvas.height = viewport.height;
                         canvas.style.width = '100%'; canvas.style.height = '100%'; canvas.style.objectFit = 'contain';
-                        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
                         
-                        const container = document.getElementById('doc-canvas-container');
-                        container.innerHTML = ''; // Clear
-                        container.appendChild(document.getElementById('page-count-badge')); // Keep badge
-                        container.appendChild(canvas);
-                    } else {
-                        // SINGLE PAGE PDF -> Treat as Photo
+                        const context = canvas.getContext('2d');
+                        await page.render({ canvasContext: context, viewport }).promise;
+                        
+                        // CLEAR WRAPPER ONLY (Preserve badge)
+                        const wrapper = document.getElementById('doc-canvas-wrapper');
+                        wrapper.innerHTML = ''; 
+                        wrapper.appendChild(canvas);
+                    } 
+                    // SINGLE PAGE PDF -> Treat as Photo
+                    else {
                         state.mode = 'photo';
                         const page = await pdf.getPage(1);
                         const viewport = page.getViewport({ scale: 2 });
@@ -280,29 +270,26 @@
                         src = canvas.toDataURL('image/jpeg');
                     }
                 } 
-                // PATH B: IMAGE FILE
+                // PATH B: IMAGE
                 else {
                     state.mode = 'photo';
                     state.pages = 1;
                     src = URL.createObjectURL(file);
                 }
 
-                // UI SWITCHING LOGIC
+                // UI SWITCH
                 document.getElementById('upload-screen').style.display = 'none';
                 document.getElementById('btn-add').disabled = false;
                 
                 if (state.mode === 'photo') {
-                    // Activate Photo Tools
                     document.getElementById('editor-photo').style.display = 'block';
                     document.getElementById('photo-tools').style.display = 'flex';
                     document.getElementById('group-photo').classList.add('active');
                     document.getElementById('group-doc').classList.remove('active');
                     
-                    // Load Image
                     if (src) {
                         const img = document.getElementById('image-target');
                         img.onload = () => {
-                            // Smart Orient
                             state.orient = img.naturalWidth > img.naturalHeight ? 'landscape' : 'portrait';
                             updateOrientUI();
                             initCropper();
@@ -310,14 +297,9 @@
                         img.src = src;
                     }
                 } else {
-                    // Activate Doc Tools
                     document.getElementById('editor-doc').style.display = 'flex';
                     document.getElementById('group-doc').classList.add('active');
                     document.getElementById('group-photo').classList.remove('active');
-                    // Auto-suggest Booklet/Duplex for long docs
-                    if (state.pages > 4) {
-                        setSides('2long'); // Default to 2-sided for docs
-                    }
                 }
 
                 loader.style.display = 'none';
@@ -329,7 +311,7 @@
             }
         });
 
-        // --- CROPPER (PHOTO MODE) ---
+        // --- CROPPER ---
         function initCropper() {
             if(cropper) cropper.destroy();
             const el = document.getElementById('image-target');
@@ -345,7 +327,6 @@
             });
         }
 
-        // --- ACTIONS ---
         function doFit(mode) {
             if(!cropper) return;
             cropper.zoomTo(0);
@@ -354,10 +335,8 @@
             const imgR = canvas.naturalWidth / canvas.naturalHeight;
             const boxR = box.width / box.height;
             let zoom = 0;
-
             if (mode === 'cover') zoom = (imgR > boxR) ? (box.height / canvas.naturalHeight) : (box.width / canvas.naturalWidth);
             else zoom = (imgR > boxR) ? (box.width / canvas.naturalWidth) : (box.height / canvas.naturalHeight);
-            
             cropper.zoomTo(zoom);
             const newC = cropper.getCanvasData();
             cropper.setCanvasData({ left: box.left+(box.width-newC.width)/2, top: box.top+(box.height-newC.height)/2 });
@@ -365,7 +344,7 @@
 
         function rotate(deg) { if(cropper) cropper.rotate(deg); }
 
-        // --- STATE UPDATES ---
+        // --- UPDATERS ---
         function updateState(key, prefix, val) {
             state[key] = val;
             document.querySelectorAll(`[id^="${prefix}-"]`).forEach(b => {
@@ -377,19 +356,13 @@
 
         function setColor(c) { 
             updateState('color', 'col', c);
-            // Visual Intelligence: Grayscale Filter
             const target = state.mode === 'photo' ? document.getElementById('editor-photo') : document.getElementById('editor-doc');
-            if (c === 'bw') target.style.filter = "grayscale(100%)";
-            else target.style.filter = "none";
+            target.style.filter = c === 'bw' ? "grayscale(100%)" : "none";
         }
         
         function setSides(s) { updateState('sides', 'side', s); }
         function setNup(n) { updateState('nup', 'nup', n); }
-        
-        function setFinish(f) { 
-            updateState('finish', 'fn', f);
-            if (state.mode === 'photo') drawOverlays();
-        }
+        function setFinish(f) { updateState('finish', 'fn', f); if(state.mode==='photo') drawOverlays(); }
 
         function setOrient(o) {
             state.orient = o;
@@ -430,7 +403,7 @@
         }
 
         function adjQty(n) {
-            state.qty = Math.max(1, state.qty+n);
+            state.qty = Math.max(1, state.qty + n);
             document.getElementById('qty-disp').innerText = state.qty;
             updatePrice();
         }
@@ -439,9 +412,8 @@
             let base = PRICES[state.size][state.color];
             base += EXTRAS[state.finish];
             if(state.sides !== '1') base *= 1.6;
-            if(state.nup === '2') base *= 0.6; // Saving paper discount
+            if(state.nup === '2') base *= 0.6;
             
-            // For docs, multiply by pages
             const pages = state.nup === '2' ? Math.ceil(state.pages / 2) : state.pages;
             const total = base * pages * state.qty;
             
@@ -450,8 +422,8 @@
 
         function addToCart() {
             Swal.fire({ icon: 'success', title: 'Added to Cart', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
-            document.getElementById('cart-badge').classList.remove('hidden');
             document.getElementById('cart-badge').innerText = '1';
+            document.getElementById('cart-badge').classList.remove('hidden');
         }
     </script>
 </body>

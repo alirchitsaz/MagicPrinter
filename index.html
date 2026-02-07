@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | v15 Stable</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Magic Printer | v16 Safe</title>
     
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,44 +25,58 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        /* 1. APP SHELL */
-        html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background: #000; font-family: 'Inter', sans-serif; color: white; touch-action: none; }
+        /* 2. SAFE LAYOUT ENGINE */
+        html { height: 100%; width: 100%; -webkit-text-size-adjust: 100%; }
+        body { 
+            height: 100dvh; /* Dynamic height for mobile */
+            width: 100%; 
+            background: #000; 
+            font-family: 'Inter', sans-serif; 
+            color: white; 
+            overflow: hidden; /* Prevent bounce */
+            overscroll-behavior: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 3. LAYERS */
+        #app-container { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; }
         
-        /* 2. EDITOR CANVAS */
-        #editor-layer { position: absolute; inset: 0; padding-bottom: 140px; z-index: 0; background: #111; }
+        /* Editor Layer */
+        #editor-layer { position: absolute; inset: 0; padding-bottom: 140px; z-index: 10; background: #111; }
         .cropper-view-box { outline: 1px solid rgba(255,255,255,0.8); box-shadow: 0 0 0 9999px rgba(0,0,0,0.9); } 
         .cropper-bg { background: #fff; }
 
-        /* 3. SLIDING DRAWER */
+        /* Finish Marks */
+        .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 20; overflow: hidden; }
+        .staple-corner { position: absolute; width: 24px; height: 4px; background: linear-gradient(90deg, #aaa, #fff, #aaa); transform: rotate(-45deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
+        .staple-dual { position: absolute; width: 4px; height: 24px; background: linear-gradient(180deg, #aaa, #fff, #aaa); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
+        .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #555; border-radius: 50%; }
+
+        /* Bottom Sheet */
         #bottom-sheet {
             position: absolute; left: 0; right: 0; bottom: 0;
-            height: 80vh;
+            height: 75vh;
             background: #1f2937;
             border-top-left-radius: 24px; border-top-right-radius: 24px;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
             z-index: 50;
-            transform: translateY(calc(100% - 150px)); /* Peek Height */
+            transform: translateY(calc(100% - 150px)); /* Peek State */
             transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            will-change: transform;
+            display: flex; flex-direction: column;
         }
         #bottom-sheet.open { transform: translateY(0); }
         
-        .sheet-header { padding: 12px 0 16px 0; cursor: grab; background: #1f2937; border-radius: 24px 24px 0 0; }
+        .sheet-header { padding: 12px 0 16px 0; cursor: pointer; flex-shrink: 0; }
         .sheet-handle { width: 40px; height: 5px; background: #4b5563; border-radius: 10px; margin: 0 auto 12px auto; }
-        .sheet-content { height: 100%; overflow-y: auto; padding: 0 20px 150px 20px; -webkit-overflow-scrolling: touch; }
+        .sheet-content { flex: 1; overflow-y: auto; padding: 0 20px 40px 20px; -webkit-overflow-scrolling: touch; }
 
-        /* 4. OVERLAYS */
-        .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 10; overflow: hidden; }
-        .staple-corner { position: absolute; width: 24px; height: 4px; background: linear-gradient(90deg, #aaa, #fff, #aaa); transform: rotate(-45deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
-        .staple-dual { position: absolute; width: 4px; height: 24px; background: linear-gradient(180deg, #aaa, #fff, #aaa); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
-        .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #555; border-radius: 50%; box-shadow: inset 1px 1px 2px black; }
-
-        /* 5. TOP CONTROLS */
+        /* Top Controls */
         .top-island {
             position: absolute; top: 0; left: 0; width: 100%; 
             padding-top: calc(env(safe-area-inset-top) + 12px);
             padding-left: 16px; padding-right: 16px;
-            z-index: 40; pointer-events: none;
+            z-index: 60; pointer-events: none;
             display: flex; justify-content: space-between;
         }
         .orient-switch {
@@ -78,346 +88,345 @@
             padding: 8px 16px; border-radius: 99px; font-size: 11px; font-weight: bold; color: #9ca3af;
             display: flex; align-items: center; gap: 6px; transition: all 0.2s;
         }
-        .orient-btn.active { background: #2563eb; color: white; box-shadow: 0 2px 10px rgba(37,99,235,0.3); }
-        
-        /* 6. LOADER */
-        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .orient-btn.active { background: #2563eb; color: white; }
+
+        /* Loading & Error States */
+        #system-status { position: absolute; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="hidden">
+    <div id="system-status">
         <div class="spinner mb-4"></div>
-        <div class="text-sm font-bold text-gray-300 mb-4">Processing...</div>
-        <button onclick="cancelLoad()" class="text-xs text-red-400 font-bold border border-red-900 bg-red-900/20 px-4 py-2 rounded-full">Cancel</button>
+        <div class="text-xs text-gray-500 font-mono" id="status-text">System Init...</div>
     </div>
 
-    <div class="top-island">
-        <button onclick="toggleProfile()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white">
-            <i class="fa-solid fa-user"></i>
-        </button>
-
-        <div class="orient-switch">
-            <button onclick="setOrient('portrait')" id="btn-port" class="orient-btn active">
-                <i class="fa-regular fa-file"></i> Portrait
+    <div id="app-container">
+        
+        <div class="top-island">
+            <button onclick="toggleProfile()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white">
+                <i class="fa-solid fa-user"></i>
             </button>
-            <button onclick="setOrient('landscape')" id="btn-land" class="orient-btn">
-                <i class="fa-regular fa-file fa-rotate-90"></i> Landscape
+
+            <div class="orient-switch">
+                <button onclick="setOrient('portrait')" id="btn-port" class="orient-btn active"><i class="fa-regular fa-file"></i> Portrait</button>
+                <button onclick="setOrient('landscape')" id="btn-land" class="orient-btn"><i class="fa-regular fa-file fa-rotate-90"></i> Landscape</button>
+            </div>
+
+            <button onclick="toggleCart()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white relative">
+                <i class="fa-solid fa-shopping-bag"></i>
+                <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
             </button>
         </div>
 
-        <button onclick="toggleCart()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white relative">
-            <i class="fa-solid fa-shopping-bag"></i>
-            <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
-        </button>
-    </div>
-
-    <div id="editor-layer">
-        <div id="upload-prompt" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-            <div onclick="document.getElementById('file-input').click()" class="w-full max-w-xs h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
-                <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-500 mb-4"></i>
-                <span class="font-bold text-lg text-gray-300">New Project</span>
-                <span class="text-sm text-gray-500 mt-1">PDF, JPG, PNG</span>
-            </div>
-            <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onclick="this.value=null">
-        </div>
-
-        <div id="editor-stage" class="hidden w-full h-full relative">
-            <img id="image-target" class="block max-w-full">
-            <div id="finish-layer" class="finish-layer"></div>
-            
-            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-30 pointer-events-auto">
-                <button onclick="rotate(-90)" class="bg-black/60 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-bold border border-white/10 shadow-lg flex items-center gap-2">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </button>
-                <button onclick="toggleFit()" class="bg-black/60 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-bold border border-white/10 shadow-lg flex items-center gap-2">
-                    <i class="fa-solid fa-expand" id="icon-fit"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="bottom-sheet">
-        <div class="sheet-header" id="sheet-drag-zone" onclick="toggleSheet()">
-            <div class="sheet-handle"></div>
-            <div class="px-6 flex justify-between items-center">
-                <div>
-                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Total Estimate</div>
-                    <div class="text-2xl font-bold text-white flex items-baseline gap-1" id="price-disp">$0.10</div>
+        <div id="editor-layer">
+            <div id="upload-prompt" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20">
+                <div onclick="triggerUpload()" class="w-full max-w-xs h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-500 mb-4"></i>
+                    <span class="font-bold text-lg text-gray-300">Start Project</span>
+                    <span class="text-sm text-gray-500 mt-1">PDF, JPG, PNG</span>
                 </div>
-                <button onclick="addToCart(event)" id="btn-add" disabled class="bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 px-8 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
-                    Add to Order
-                </button>
+                <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp">
+            </div>
+
+            <div id="editor-stage" class="hidden w-full h-full relative">
+                <img id="image-target" class="block max-w-full">
+                <div id="finish-layer" class="finish-layer"></div>
+                
+                <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-30 pointer-events-auto">
+                    <button onclick="rotate(-90)" class="bg-black/60 backdrop-blur text-white px-4 py-3 rounded-full text-xs font-bold border border-white/10 shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button onclick="toggleFit()" class="bg-black/60 backdrop-blur text-white px-4 py-3 rounded-full text-xs font-bold border border-white/10 shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-expand" id="icon-fit"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="sheet-content">
-            
-            <div class="mb-6 mt-2">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Paper Size</label>
-                <div class="grid grid-cols-1 gap-2">
-                    <button onclick="setSize('letter')" id="sz-letter" class="flex items-center justify-between p-3 bg-gray-800 border-2 border-blue-600 rounded-xl active:scale-95 transition-transform">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-10 border border-gray-500 bg-white/10 rounded-sm"></div>
-                            <div class="text-left"><div class="text-sm font-bold text-white">Letter</div><div class="text-[10px] text-gray-400">8.5 x 11 inches</div></div>
-                        </div>
-                        <i class="fa-solid fa-check-circle text-blue-500 text-lg check-icon"></i>
-                    </button>
-                    <button onclick="setSize('legal')" id="sz-legal" class="flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-12 border border-gray-600 bg-gray-800 rounded-sm"></div>
-                            <div class="text-left"><div class="text-sm font-bold text-gray-300">Legal</div><div class="text-[10px] text-gray-500">8.5 x 14 inches</div></div>
-                        </div>
-                    </button>
-                    <button onclick="setSize('tabloid')" id="sz-tabloid" class="flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-14 border border-gray-600 bg-gray-800 rounded-sm"></div>
-                            <div class="text-left"><div class="text-sm font-bold text-gray-300">Tabloid</div><div class="text-[10px] text-gray-500">11 x 17 inches</div></div>
-                        </div>
+        <div id="bottom-sheet">
+            <div class="sheet-header" id="sheet-header" onclick="toggleSheet()">
+                <div class="sheet-handle"></div>
+                <div class="px-6 flex justify-between items-center">
+                    <div>
+                        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Total Estimate</div>
+                        <div class="text-2xl font-bold text-white flex items-baseline gap-1" id="price-disp">$0.10</div>
+                    </div>
+                    <button onclick="addToCart(event)" id="btn-add" disabled class="bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 px-8 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
+                        Add to Order
                     </button>
                 </div>
             </div>
 
-            <div class="mb-8">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Finishing Options</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="setFinish('none')" id="fn-none" class="p-3 bg-blue-900/30 border border-blue-500 rounded-xl text-xs font-bold text-blue-400">None</button>
-                    <button onclick="setFinish('staple-corn')" id="fn-staple-corn" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">Staple (Corner)</button>
-                    <button onclick="setFinish('staple-dual')" id="fn-staple-dual" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">Staple (Dual)</button>
-                    <button onclick="setFinish('punch-2')" id="fn-punch-2" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">2-Hole Punch</button>
-                    <button onclick="setFinish('punch-3')" id="fn-punch-3" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">3-Hole Punch</button>
-                    <button onclick="setFinish('booklet')" id="fn-booklet" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">Booklet Fold</button>
+            <div class="sheet-content">
+                <div class="mb-6 mt-2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Paper Size</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="setSize('letter')" id="sz-letter" class="flex items-center justify-between p-3 bg-gray-800 border-2 border-blue-600 rounded-xl active:scale-95 transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-10 border border-gray-500 bg-white/10 rounded-sm"></div>
+                                <div class="text-left"><div class="text-sm font-bold text-white">Letter</div><div class="text-[10px] text-gray-400">8.5 x 11</div></div>
+                            </div>
+                            <i class="fa-solid fa-check-circle text-blue-500 text-lg check-icon"></i>
+                        </button>
+                        <button onclick="setSize('legal')" id="sz-legal" class="flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-12 border border-gray-600 bg-gray-800 rounded-sm"></div>
+                                <div class="text-left"><div class="text-sm font-bold text-gray-300">Legal</div><div class="text-[10px] text-gray-500">8.5 x 14</div></div>
+                            </div>
+                        </button>
+                        <button onclick="setSize('tabloid')" id="sz-tabloid" class="flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-14 border border-gray-600 bg-gray-800 rounded-sm"></div>
+                                <div class="text-left"><div class="text-sm font-bold text-gray-300">Tabloid</div><div class="text-[10px] text-gray-500">11 x 17</div></div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="flex items-center justify-between bg-gray-900 p-2 rounded-xl border border-gray-800 mb-8">
-                <button onclick="qty(-1)" class="w-12 h-12 rounded-lg bg-gray-800 text-white flex items-center justify-center active:bg-gray-700"><i class="fa-solid fa-minus"></i></button>
-                <div class="text-center">
-                    <div class="text-[10px] text-gray-500 uppercase font-bold">Copies</div>
-                    <div class="font-bold text-xl" id="qty-disp">1</div>
+                <div class="mb-8">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Finishing</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setFinish('none')" id="fn-none" class="p-3 bg-blue-900/30 border border-blue-500 rounded-xl text-xs font-bold text-blue-400">None</button>
+                        <button onclick="setFinish('staple-corn')" id="fn-staple-corn" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">Staple Corner</button>
+                        <button onclick="setFinish('staple-dual')" id="fn-staple-dual" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">Staple Dual</button>
+                        <button onclick="setFinish('punch-2')" id="fn-punch-2" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">2-Hole</button>
+                        <button onclick="setFinish('punch-3')" id="fn-punch-3" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">3-Hole</button>
+                        <button onclick="setFinish('booklet')" id="fn-booklet" class="p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400">Booklet</button>
+                    </div>
                 </div>
-                <button onclick="qty(1)" class="w-12 h-12 rounded-lg bg-gray-800 text-white flex items-center justify-center active:bg-gray-700"><i class="fa-solid fa-plus"></i></button>
+
+                <div class="flex items-center justify-between bg-gray-900 p-2 rounded-xl border border-gray-800 mb-8">
+                    <button onclick="qty(-1)" class="w-12 h-12 rounded-lg bg-gray-800 text-white flex items-center justify-center active:bg-gray-700"><i class="fa-solid fa-minus"></i></button>
+                    <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Copies</div><div class="font-bold text-xl" id="qty-disp">1</div></div>
+                    <button onclick="qty(1)" class="w-12 h-12 rounded-lg bg-gray-800 text-white flex items-center justify-center active:bg-gray-700"><i class="fa-solid fa-plus"></i></button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONSTANTS ---
-        const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
-        const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
-        
-        let cropper = null;
-        let state = { size: 'letter', orient: 'portrait', finish: 'none', fit: 'cover', qty: 1 };
-        
-        // --- FILE ENGINE (ROBUST) ---
-        const fileInput = document.getElementById('file-input');
-        const loader = document.getElementById('loader');
-
-        fileInput.addEventListener('change', async (e) => {
-            if(!e.target.files[0]) return;
-            const file = e.target.files[0];
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- SYSTEM CHECK ---
+            const statusEl = document.getElementById('status-text');
+            const bootEl = document.getElementById('system-status');
             
-            // Show Loader
-            loader.classList.remove('hidden');
-            
-            // Watchdog Timer (kills spinner if stuck > 5s)
-            const watchdog = setTimeout(() => {
-                if(!loader.classList.contains('hidden')) {
-                    cancelLoad();
-                    Swal.fire('Timeout', 'File processing took too long.', 'warning');
-                }
-            }, 8000);
-
             try {
-                let src = '';
-                
-                // 1. Check if browser can handle it natively
-                if (file.type.match(/image\/(jpeg|png|webp)/)) {
-                    src = URL.createObjectURL(file);
-                } 
-                // 2. PDF Handling
-                else if(file.type === 'application/pdf') {
-                    const buff = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument(buff).promise;
-                    const page = await pdf.getPage(1);
-                    const viewport = page.getViewport({ scale: 2 });
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = viewport.width; 
-                    canvas.height = viewport.height;
-                    await page.render({ canvasContext: context, viewport }).promise;
-                    src = canvas.toDataURL('image/jpeg');
-                } 
-                // 3. Unsupported (HEIC, TIFF, etc)
-                else {
-                    throw new Error('Unsupported format');
+                if (typeof pdfjsLib !== 'undefined') {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    statusEl.innerText = "Ready";
+                    setTimeout(() => { bootEl.style.opacity = '0'; setTimeout(() => bootEl.style.display = 'none', 500); }, 500);
+                } else {
+                    throw new Error("PDF Engine Failed");
                 }
-
-                // 4. Load Image
-                const img = new Image();
-                img.onload = () => {
-                    clearTimeout(watchdog);
-                    loader.classList.add('hidden');
-                    
-                    // Auto-Detect
-                    state.orient = img.width > img.height ? 'landscape' : 'portrait';
-                    updateOrientUI();
-
-                    // Switch Screens
-                    document.getElementById('upload-prompt').classList.add('hidden');
-                    document.getElementById('editor-stage').classList.remove('hidden');
-                    document.getElementById('image-target').src = src;
-                    document.getElementById('btn-add').disabled = false;
-                    document.getElementById('bottom-sheet').classList.remove('open'); // Ensure it peeks
-                    
-                    initCropper();
-                };
-                
-                img.onerror = () => {
-                    clearTimeout(watchdog);
-                    cancelLoad();
-                    Swal.fire('Error', 'Image file is corrupt or unreadable.', 'error');
-                };
-                
-                img.src = src;
-
-            } catch (err) {
-                clearTimeout(watchdog);
-                cancelLoad();
-                let msg = 'An error occurred processing the file.';
-                if(err.message === 'Unsupported format') msg = 'File type not supported. Please use JPG, PNG, or PDF.';
-                Swal.fire('Error', msg, 'error');
+            } catch (e) {
+                statusEl.innerText = "Error: " + e.message;
+                statusEl.style.color = "red";
+                // Don't hide boot screen if error, so user knows.
             }
-        });
 
-        function cancelLoad() {
-            loader.classList.add('hidden');
-            fileInput.value = ''; // Reset
-        }
+            // --- STATE ---
+            const DIMS = { letter: {w:8.5, h:11}, legal: {w:8.5, h:14}, tabloid: {w:11, h:17} };
+            const PRICES = { letter: 0.10, legal: 0.15, tabloid: 0.25 };
+            let cropper = null;
+            let state = { size: 'letter', orient: 'portrait', finish: 'none', fit: 'cover', qty: 1 };
 
-        // --- SHEET ---
-        function toggleSheet() { document.getElementById('bottom-sheet').classList.toggle('open'); }
-
-        // --- CROPPER ---
-        function initCropper() {
-            if(cropper) cropper.destroy();
-            const el = document.getElementById('image-target');
-            const base = DIMS[state.size];
-            const ratio = state.orient === 'portrait' ? (base.w / base.h) : (base.h / base.w);
-
-            cropper = new Cropper(el, {
-                aspectRatio: ratio,
-                viewMode: 0, dragMode: 'move', autoCropArea: 1,
-                guides: false, center: false, background: false,
-                cropBoxMovable: false, cropBoxResizable: false,
-                toggleDragModeOnDblclick: false,
-                ready() { applyFit(); drawOverlays(); }
-            });
-        }
-
-        // --- ACTIONS ---
-        function setOrient(o) { state.orient = o; updateOrientUI(); initCropper(); }
-        function updateOrientUI() {
-            const p = document.getElementById('btn-port'); const l = document.getElementById('btn-land');
-            if(state.orient === 'portrait') { p.classList.add('active'); l.classList.remove('active'); } 
-            else { l.classList.add('active'); p.classList.remove('active'); }
-        }
-
-        function setSize(sz) {
-            state.size = sz;
-            // Visual Update
-            const mapping = { letter: 'sz-letter', legal: 'sz-legal', tabloid: 'sz-tabloid' };
-            Object.values(mapping).forEach(id => {
-                const el = document.getElementById(id);
-                el.className = 'flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform';
-                if(el.querySelector('.check-icon')) el.querySelector('.check-icon').remove();
-                el.querySelector('.text-sm').classList.replace('text-white', 'text-gray-300');
-            });
-            const active = document.getElementById(mapping[sz]);
-            active.className = 'flex items-center justify-between p-3 bg-gray-800 border-2 border-blue-600 rounded-xl active:scale-95 transition-transform';
-            active.querySelector('.text-sm').classList.replace('text-gray-300', 'text-white');
-            active.innerHTML += '<i class="fa-solid fa-check-circle text-blue-500 text-lg check-icon"></i>';
-            initCropper(); updatePrice();
-        }
-
-        function setFinish(f) {
-            state.finish = f;
-            document.querySelectorAll('[id^="fn-"]').forEach(b => {
-                b.className = 'p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400';
-            });
-            document.getElementById('fn-'+f).className = 'p-3 bg-blue-900/30 border border-blue-500 rounded-xl text-xs font-bold text-blue-400';
-            drawOverlays(); updatePrice();
-        }
-
-        function drawOverlays() {
-            const l = document.getElementById('finish-layer'); l.innerHTML = '';
-            if(!cropper) return;
-            const box = cropper.getCropBoxData();
+            // --- FILE UPLOAD ---
+            const fileInput = document.getElementById('file-input');
             
-            if(state.finish.includes('staple-corn')) {
-                const s = document.createElement('div'); s.className = 'staple-corner';
-                s.style.top = (box.top + 15) + 'px'; s.style.left = (box.left + 15) + 'px';
-                l.appendChild(s);
+            window.triggerUpload = function() {
+                fileInput.value = null; // Reset to allow re-selection
+                fileInput.click();
             }
-            if(state.finish.includes('staple-dual')) {
-                const s1 = document.createElement('div'); s1.className = 'staple-dual';
-                s1.style.top = (box.top + (box.height*0.25)) + 'px'; s1.style.left = (box.left + 8) + 'px';
-                l.appendChild(s1);
-                const s2 = document.createElement('div'); s2.className = 'staple-dual';
-                s2.style.top = (box.top + (box.height*0.75)) + 'px'; s2.style.left = (box.left + 8) + 'px';
-                l.appendChild(s2);
+
+            fileInput.addEventListener('change', async (e) => {
+                if(!e.target.files[0]) return;
+                const file = e.target.files[0];
+                
+                // Show busy state
+                bootEl.style.display = 'flex';
+                bootEl.style.opacity = '1';
+                statusEl.innerText = "Processing...";
+
+                try {
+                    let src = '';
+                    if(file.type === 'application/pdf') {
+                        const buff = await file.arrayBuffer();
+                        const pdf = await pdfjsLib.getDocument(buff).promise;
+                        const page = await pdf.getPage(1);
+                        const viewport = page.getViewport({ scale: 2 });
+                        const canvas = document.createElement('canvas');
+                        canvas.width = viewport.width; canvas.height = viewport.height;
+                        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                        src = canvas.toDataURL('image/jpeg');
+                    } else if (file.type.match(/image\/(jpeg|png|webp)/)) {
+                        src = URL.createObjectURL(file);
+                    } else {
+                        throw new Error("Format not supported. Use JPG/PNG/PDF.");
+                    }
+
+                    const img = new Image();
+                    img.onload = () => {
+                        state.orient = img.width > img.height ? 'landscape' : 'portrait';
+                        updateOrientUI();
+                        
+                        document.getElementById('upload-prompt').classList.add('hidden');
+                        document.getElementById('editor-stage').classList.remove('hidden');
+                        document.getElementById('image-target').src = src;
+                        document.getElementById('btn-add').disabled = false;
+                        
+                        // Hide boot
+                        bootEl.style.opacity = '0'; 
+                        setTimeout(() => bootEl.style.display = 'none', 300);
+                        
+                        initCropper();
+                    };
+                    img.onerror = () => { throw new Error("Image corrupt"); };
+                    img.src = src;
+
+                } catch (err) {
+                    statusEl.innerText = err.message;
+                    setTimeout(() => { 
+                        bootEl.style.opacity = '0'; 
+                        setTimeout(() => bootEl.style.display = 'none', 500); 
+                        Swal.fire("Error", err.message, "error");
+                    }, 1000);
+                }
+            });
+
+            // --- CROPPER ---
+            window.initCropper = function() {
+                if(cropper) cropper.destroy();
+                const el = document.getElementById('image-target');
+                const base = DIMS[state.size];
+                const ratio = state.orient === 'portrait' ? (base.w / base.h) : (base.h / base.w);
+
+                cropper = new Cropper(el, {
+                    aspectRatio: ratio,
+                    viewMode: 0, dragMode: 'move', autoCropArea: 1,
+                    guides: false, center: false, background: false,
+                    cropBoxMovable: false, cropBoxResizable: false,
+                    toggleDragModeOnDblclick: false,
+                    ready() { applyFit(); drawOverlays(); }
+                });
             }
-            if(state.finish.includes('punch')) {
-                const count = state.finish.includes('3') ? 3 : 2;
-                for(let i=1; i<=count; i++) {
-                    const p = document.createElement('div'); p.className = 'punch';
-                    p.style.left = (box.left + 8) + 'px';
-                    p.style.top = (box.top + (box.height * (i/(count+1))) - 6) + 'px';
-                    l.appendChild(p);
+
+            // --- ACTIONS ---
+            window.toggleSheet = function() { document.getElementById('bottom-sheet').classList.toggle('open'); }
+            
+            window.setOrient = function(o) { 
+                state.orient = o; updateOrientUI(); 
+                if(cropper) initCropper(); 
+            }
+            
+            window.updateOrientUI = function() {
+                if(state.orient === 'portrait') {
+                    document.getElementById('btn-port').classList.add('active');
+                    document.getElementById('btn-land').classList.remove('active');
+                } else {
+                    document.getElementById('btn-land').classList.add('active');
+                    document.getElementById('btn-port').classList.remove('active');
                 }
             }
-        }
 
-        function rotate(d) { if(cropper) cropper.rotate(d); }
-        function toggleFit() {
-            state.fit = state.fit === 'cover' ? 'contain' : 'cover';
-            document.getElementById('icon-fit').className = state.fit === 'cover' ? 'fa-solid fa-expand' : 'fa-solid fa-compress';
-            applyFit();
-        }
-        function applyFit() {
-            if(!cropper) return;
-            cropper.zoomTo(0);
-            const box = cropper.getCropBoxData();
-            const canvas = cropper.getCanvasData();
-            let z = state.fit === 'cover' 
-                ? Math.max(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight)
-                : Math.min(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight);
-            cropper.zoomTo(z);
-            const newC = cropper.getCanvasData();
-            cropper.setCanvasData({ left: box.left+(box.width-newC.width)/2, top: box.top+(box.height-newC.height)/2 });
-        }
+            window.rotate = function(d) { if(cropper) cropper.rotate(d); }
+            window.toggleFit = function() { 
+                state.fit = state.fit === 'cover' ? 'contain' : 'cover';
+                document.getElementById('icon-fit').className = state.fit === 'cover' ? 'fa-solid fa-expand' : 'fa-solid fa-compress';
+                applyFit(); 
+            }
+            
+            window.applyFit = function() {
+                if(!cropper) return;
+                cropper.zoomTo(0);
+                const box = cropper.getCropBoxData();
+                const canvas = cropper.getCanvasData();
+                let z = state.fit === 'cover' 
+                    ? Math.max(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight)
+                    : Math.min(box.width/canvas.naturalWidth, box.height/canvas.naturalHeight);
+                cropper.zoomTo(z);
+                const newC = cropper.getCanvasData();
+                cropper.setCanvasData({ left: box.left+(box.width-newC.width)/2, top: box.top+(box.height-newC.height)/2 });
+            }
 
-        function qty(n) {
-            state.qty = Math.max(1, state.qty+n);
-            document.getElementById('qty-disp').innerText = state.qty;
-            updatePrice();
-        }
-        function updatePrice() {
-            const t = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
-            document.getElementById('price-disp').innerText = '$' + t.toFixed(2);
-        }
-        
-        function addToCart(e) {
-            e.stopPropagation();
-            Swal.fire({icon:'success', title:'Added', toast:true, position:'top', timer:1500, showConfirmButton:false});
-            document.getElementById('bottom-sheet').classList.remove('open');
-            document.getElementById('cart-badge').innerText = '1';
-            document.getElementById('cart-badge').classList.remove('hidden');
-        }
-        function toggleProfile() { Swal.fire('Profile', 'Logged in as Guest', 'info'); }
-        function toggleCart() { Swal.fire('Cart', '1 Item in Cart', 'info'); }
+            // --- SIZING & FINISH ---
+            window.setSize = function(sz) {
+                state.size = sz;
+                const mapping = { letter: 'sz-letter', legal: 'sz-legal', tabloid: 'sz-tabloid' };
+                Object.values(mapping).forEach(id => {
+                    const el = document.getElementById(id);
+                    el.className = 'flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform';
+                    if(el.querySelector('.check-icon')) el.querySelector('.check-icon').remove();
+                    el.querySelector('.text-sm').classList.replace('text-white', 'text-gray-300');
+                });
+                const active = document.getElementById(mapping[sz]);
+                active.className = 'flex items-center justify-between p-3 bg-gray-800 border-2 border-blue-600 rounded-xl active:scale-95 transition-transform';
+                active.querySelector('.text-sm').classList.replace('text-gray-300', 'text-white');
+                active.innerHTML += '<i class="fa-solid fa-check-circle text-blue-500 text-lg check-icon"></i>';
+                if(cropper) { initCropper(); updatePrice(); }
+            }
+
+            window.setFinish = function(f) {
+                state.finish = f;
+                document.querySelectorAll('[id^="fn-"]').forEach(b => {
+                    b.className = 'p-3 bg-gray-800 border border-gray-700 rounded-xl text-xs font-bold text-gray-400';
+                });
+                document.getElementById('fn-'+f).className = 'p-3 bg-blue-900/30 border border-blue-500 rounded-xl text-xs font-bold text-blue-400';
+                drawOverlays(); updatePrice();
+            }
+
+            window.drawOverlays = function() {
+                const l = document.getElementById('finish-layer'); l.innerHTML = '';
+                if(!cropper) return;
+                const box = cropper.getCropBoxData();
+                
+                if(state.finish.includes('staple-corn')) {
+                    const s = document.createElement('div'); s.className = 'staple-corner';
+                    s.style.top = (box.top+15)+'px'; s.style.left = (box.left+15)+'px';
+                    l.appendChild(s);
+                }
+                if(state.finish.includes('staple-dual')) {
+                    const s1 = document.createElement('div'); s1.className = 'staple-dual';
+                    s1.style.top = (box.top + (box.height*0.25)) + 'px'; s1.style.left = (box.left + 8) + 'px';
+                    l.appendChild(s1);
+                    const s2 = document.createElement('div'); s2.className = 'staple-dual';
+                    s2.style.top = (box.top + (box.height*0.75)) + 'px'; s2.style.left = (box.left + 8) + 'px';
+                    l.appendChild(s2);
+                }
+                if(state.finish.includes('punch')) {
+                    const count = state.finish.includes('3') ? 3 : 2;
+                    for(let i=1; i<=count; i++) {
+                        const p = document.createElement('div'); p.className = 'punch';
+                        p.style.left = (box.left + 8) + 'px';
+                        p.style.top = (box.top + (box.height * (i/(count+1))) - 6) + 'px';
+                        l.appendChild(p);
+                    }
+                }
+            }
+
+            window.qty = function(n) {
+                state.qty = Math.max(1, state.qty+n);
+                document.getElementById('qty-disp').innerText = state.qty;
+                updatePrice();
+            }
+            window.updatePrice = function() {
+                const t = (PRICES[state.size] + (state.finish==='none'?0:0.05)) * state.qty;
+                document.getElementById('price-disp').innerText = '$' + t.toFixed(2);
+            }
+            
+            window.addToCart = function(e) {
+                e.stopPropagation();
+                Swal.fire({icon:'success', title:'Added', toast:true, position:'top', timer:1500, showConfirmButton:false});
+                document.getElementById('bottom-sheet').classList.remove('open');
+                document.getElementById('cart-badge').innerText = '1';
+                document.getElementById('cart-badge').classList.remove('hidden');
+            }
+            
+            window.toggleCart = function() { Swal.fire('Cart', 'Order Summary Here', 'info'); }
+            window.toggleProfile = function() { Swal.fire('Profile', 'User Settings Here', 'info'); }
+        });
     </script>
 </body>
 </html>

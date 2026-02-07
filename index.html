@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | v42 Unified</title>
+    <title>Magic Printer | Master Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -29,121 +29,94 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
 
-        /* GLOBAL */
-        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; }
+        /* GLOBAL RESET */
+        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
 
-        /* --- GLOBAL HEADER (Always Visible) --- */
+        /* --- GLOBAL HEADER --- */
         .global-header { 
             height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 20px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px);
+            padding: 0 16px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px);
             border-bottom: 1px solid #334155; z-index: 1000; position: relative;
         }
-        
-        .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; transition: opacity 0.2s; }
-        .logo-area:hover { opacity: 0.8; }
-        .logo-icon { 
-            width: 32px; height: 32px; background: #2563eb; color: white; border-radius: 8px; 
-            display: flex; align-items: center; justify-content: center; font-size: 16px; 
-            box-shadow: 0 2px 8px rgba(37,99,235,0.4); 
-        }
+        .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .logo-icon { width: 32px; height: 32px; background: #2563eb; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
         .logo-text { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.5px; }
-
         .nav-actions { display: flex; gap: 16px; align-items: center; }
-        .nav-btn { color: #94a3b8; font-size: 18px; cursor: pointer; transition: color 0.2s; position: relative; }
-        .nav-btn:hover { color: white; }
-        .badge { 
-            position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; 
-            font-size: 10px; font-weight: bold; width: 16px; height: 16px; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-        }
+        .nav-btn { color: #94a3b8; font-size: 20px; cursor: pointer; position: relative; }
+        .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* --- HOMEPAGE --- */
+        /* --- HOMEPAGE (Landing) --- */
         #homepage { 
-            position: absolute; inset: 0; top: 60px; /* Below header */
-            z-index: 50; background: #0f172a; overflow-y: auto; 
-            transition: transform 0.3s ease-in-out;
+            position: absolute; inset: 0; top: 60px; z-index: 50; background: #0f172a; 
+            overflow-y: auto; transition: transform 0.3s ease-in-out;
         }
         #homepage.hidden-page { transform: translateX(-100%); }
 
-        .hero { padding: 40px 24px; text-align: center; border-bottom: 1px solid #1e293b; }
+        .hero { padding: 40px 24px; text-align: center; border-bottom: 1px solid #1e293b; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); }
         .hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 10px; color: white; }
-        .hero p { color: #94a3b8; font-size: 14px; line-height: 1.5; max-width: 400px; margin: 0 auto; }
-
         .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 24px; }
         .feature-card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
-        .feature-icon { font-size: 24px; color: #3b82f6; margin-bottom: 12px; }
-        .feature-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
-        .feature-desc { font-size: 12px; color: #94a3b8; }
-
         .cta-box { padding: 24px; display: flex; justify-content: center; }
-        .btn-big { 
-            width: 100%; max-width: 300px; background: #2563eb; color: white; 
-            padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px; 
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 4px 12px rgba(37,99,235,0.3); transition: transform 0.1s;
-        }
-        .btn-big:active { transform: scale(0.98); }
+        .btn-big { width: 100%; max-width: 300px; background: #2563eb; color: white; padding: 16px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
         /* --- APP SCREENS --- */
-        .app-screen { 
-            position: absolute; inset: 0; top: 60px; /* Below header */
-            background: #0f172a; display: none; flex-direction: column; z-index: 10;
-        }
+        .app-screen { position: absolute; inset: 0; top: 60px; background: #0f172a; display: none; flex-direction: column; z-index: 10; }
         .app-screen.active { display: flex; }
 
         /* PREVIEW AREA */
-        .workspace { flex: 1; position: relative; background: #0f172a; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 20px; }
+        .workspace { flex: 1; position: relative; background: #0f172a; display: flex; justify-content: center; align-items: center; padding: 30px; overflow: hidden; }
         #paper-preview { 
             background: white; box-shadow: 0 30px 80px rgba(0,0,0,0.6); 
-            transition: aspect-ratio 0.3s; position: relative; 
-            width: auto; height: auto; max-width: 95%; max-height: 90%; 
+            transition: aspect-ratio 0.3s ease; position: relative; 
+            /* Automatic Scaling Logic */
+            width: auto; height: auto; max-width: 100%; max-height: 100%; 
             aspect-ratio: 8.5/11; display: flex; justify-content: center; align-items: center; 
         }
-        .dim-badge { position: absolute; bottom: 10px; right: 10px; background: rgba(15,23,42,0.8); color: #cbd5e1; font-size: 10px; padding: 4px 8px; border-radius: 6px; pointer-events: none; z-index: 30; }
+        .dim-badge { position: absolute; bottom: 10px; right: 10px; background: rgba(15,23,42,0.8); color: #cbd5e1; font-size: 10px; padding: 4px 8px; border-radius: 6px; pointer-events: none; z-index: 30; border: 1px solid rgba(255,255,255,0.1); }
         
         .content-area { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .render-target { width: 100%; height: 100%; object-fit: contain; }
+        .grayscale { filter: grayscale(100%) contrast(1.15); }
         .booklet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #cbd5e1; }
         .booklet-grid .page-slot { background: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .grayscale { filter: grayscale(100%) contrast(1.15); }
 
         /* CONTROLS */
-        .controls { height: 50vh; flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; flex-direction: column; }
+        .controls { height: 55vh; flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; flex-direction: column; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); }
         .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; }
         .controls-footer { padding: 16px 20px; background: #1e293b; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; }
-        
-        .label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .select-input { width: 100%; background: #0f172a; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 14px; outline: none; }
-        
-        .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .btn-toggle { background: #0f172a; border: 1px solid #334155; color: #94a3b8; padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; cursor: pointer; }
-        .btn-toggle.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; }
 
-        /* PROFILE OVERLAY */
-        #profile-overlay { 
-            position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); 
-            display: none; justify-content: flex-end; opacity: 0; transition: opacity 0.2s;
+        /* UI COMPONENTS */
+        .label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+        
+        /* The Dropdown You Wanted Back */
+        .select-input { 
+            width: 100%; background: #0f172a; color: white; border: 1px solid #334155; 
+            padding: 12px 16px; border-radius: 8px; font-size: 14px; outline: none; appearance: none; 
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); 
+            background-repeat: no-repeat; background-position: right 14px center; background-size: 10px;
         }
+
+        .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-toggle { background: #0f172a; border: 1px solid #334155; color: #94a3b8; padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.1s; }
+        .btn-toggle.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 2px 5px rgba(37,99,235,0.3); }
+
+        /* PROFILE DRAWER */
+        #profile-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); display: none; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
         #profile-overlay.open { display: flex; opacity: 1; }
-        .profile-drawer { 
-            width: 85%; max-width: 350px; height: 100%; background: #1e293b; 
-            border-left: 1px solid #334155; transform: translateX(100%); transition: transform 0.3s;
-            display: flex; flex-direction: column;
-        }
+        .profile-drawer { width: 85%; max-width: 350px; height: 100%; background: #1e293b; border-left: 1px solid #334155; transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
         #profile-overlay.open .profile-drawer { transform: translateX(0); }
 
-        .profile-header { padding: 30px; background: #0f172a; text-align: center; border-bottom: 1px solid #334155; }
-        .avatar { width: 64px; height: 64px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 12px; }
-        
         /* FINISHING */
         .finish-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
         .staple { position: absolute; width: 3%; height: 1.5%; background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
         .punch { position: absolute; width: 2.5%; aspect-ratio: 1/1; background: #0f172a; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); }
 
-        /* CART & LOADER */
+        /* CART LIST */
         .cart-item { background: #2a3546; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; gap: 12px; border: 1px solid #334155; }
-        #loader { position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 200; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        
+        /* LOADER */
+        #loader { position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 32px; height: 32px; border: 3px solid #1e293b; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -170,21 +143,31 @@
 
         <div id="homepage">
             <div class="hero">
-                <h1>Professional Printing Made Simple.</h1>
-                <p>From legal documents to family photos. High quality, low cost, and delivered locally in Temecula.</p>
+                <h1>Professional Printing.<br>Simplified.</h1>
+                <p>High quality prints, local Temecula delivery, and enterprise-grade security for everyone.</p>
             </div>
 
             <div class="features">
                 <div class="feature-card">
-                    <i class="fa-solid fa-truck-fast feature-icon"></i>
-                    <div class="feature-title">Local Delivery</div>
-                    <div class="feature-desc">Within 50 miles of Temecula, CA</div>
+                    <i class="fa-solid fa-truck-fast text-blue-500 text-2xl mb-2"></i>
+                    <div class="font-bold text-sm text-white">Local Delivery</div>
+                    <div class="text-xs text-slate-400">Temecula + 50 Miles</div>
                 </div>
                 <div class="feature-card">
-                    <i class="fa-solid fa-layer-group feature-icon"></i>
-                    <div class="feature-title">Bulk Orders</div>
-                    <div class="feature-desc">Perfect for Schools & Law Firms</div>
+                    <i class="fa-solid fa-shield-halved text-blue-500 text-2xl mb-2"></i>
+                    <div class="font-bold text-sm text-white">Secure & Private</div>
+                    <div class="text-xs text-slate-400">Legal & Medical Ready</div>
                 </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">We Serve</span>
+            </div>
+            <div class="client-grid">
+                <div class="client-tag"><i class="fa-solid fa-scale-balanced"></i> Law</div>
+                <div class="client-tag"><i class="fa-solid fa-graduation-cap"></i> Schools</div>
+                <div class="client-tag"><i class="fa-solid fa-house-chimney"></i> Families</div>
+                <div class="client-tag"><i class="fa-solid fa-shop"></i> Business</div>
             </div>
 
             <div class="cta-box">
@@ -193,9 +176,7 @@
                 </button>
             </div>
             
-            <div class="text-center text-xs text-slate-500 pb-10">
-                Trusted by 500+ Local Businesses
-            </div>
+            <div class="text-center pb-8 text-[10px] text-slate-600">v43 Master • PDF, JPG, PNG</div>
         </div>
 
         <div id="screen-config" class="app-screen">
@@ -214,35 +195,30 @@
 
             <div class="controls">
                 <div class="controls-scroll">
+                    
+                    <div class="mb-4">
+                        <label class="label">Paper Size</label>
+                        <select id="size-sel" class="select-input" onchange="updateSize(this.value)">
+                            <option value="letter">Letter (8.5 x 11)</option>
+                            <option value="legal">Legal (8.5 x 14)</option>
+                            <option value="tabloid">Tabloid (11 x 17)</option>
+                            <option value="12x18">Arch B (12 x 18)</option>
+                            <option value="a4">A4 (8.3 x 11.7)</option>
+                            <option value="a3">A3 (11.7 x 16.5)</option>
+                        </select>
+                    </div>
+
                     <div class="mb-4" id="range-group" style="display:none;">
                         <label class="label">Pages</label>
-                        <input type="text" id="page-range" class="select-input" placeholder="All (e.g. 1-5)" onchange="parsePageRange(this.value)">
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div>
-                            <label class="label">Paper</label>
-                            <select id="size-sel" class="select-input" onchange="updateSize(this.value)">
-                                <option value="letter">Letter</option>
-                                <option value="legal">Legal</option>
-                                <option value="tabloid">Tabloid</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="label">Layout</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button class="btn-toggle active" id="btn-std" onclick="setLayout('standard')">Std</button>
-                                <button class="btn-toggle" id="btn-book" onclick="setLayout('booklet')">Book</button>
-                            </div>
-                        </div>
+                        <input type="text" id="page-range" class="select-input" placeholder="All Pages (e.g. 1-5, 8)" onchange="parsePageRange(this.value)">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div>
                             <label class="label">Orientation</label>
                             <div class="grid grid-cols-2 gap-2">
-                                <button class="btn-toggle active" id="btn-port" onclick="setOrient('portrait')">Port</button>
-                                <button class="btn-toggle" id="btn-land" onclick="setOrient('landscape')">Land</button>
+                                <button class="btn-toggle active" id="btn-port" onclick="setOrient('portrait')">Portrait</button>
+                                <button class="btn-toggle" id="btn-land" onclick="setOrient('landscape')">Landscape</button>
                             </div>
                         </div>
                         <div>
@@ -251,6 +227,14 @@
                                 <button class="btn-toggle active" id="btn-color" onclick="toggleColor()">Color</button>
                                 <button class="btn-toggle" id="btn-bw" onclick="toggleColor()">B&W</button>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="label">Layout</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="btn-toggle active" id="btn-std" onclick="setLayout('standard')"><i class="fa-regular fa-file"></i> Standard</button>
+                            <button class="btn-toggle" id="btn-book" onclick="setLayout('booklet')"><i class="fa-solid fa-book-open"></i> Booklet</button>
                         </div>
                     </div>
 
@@ -279,12 +263,33 @@
 
         <div id="screen-cart" class="app-screen">
             <div class="flex-1 overflow-y-auto p-5">
-                <div class="text-sm font-bold text-white mb-3 uppercase tracking-wider">Your Cart</div>
+                <h2 class="text-lg font-bold text-white mb-4">Your Cart</h2>
                 <div id="cart-list"></div>
                 <button class="w-full py-3 border border-dashed border-slate-600 text-slate-400 rounded-lg mb-6 hover:bg-slate-800" onclick="addMoreFiles()">+ Add Another File</button>
+
+                <div class="section-box">
+                    <div class="label">Delivery Method</div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <button class="btn-toggle active" id="del-ship" onclick="setDelivery('ship')">Shipping</button>
+                        <button class="btn-toggle" id="del-local" onclick="setDelivery('local')">Local Delivery</button>
+                    </div>
+                    <div id="form-ship" class="grid gap-3">
+                        <input type="text" class="select-input" placeholder="Full Name">
+                        <input type="text" class="select-input" placeholder="Address">
+                    </div>
+                    <div id="info-local" class="hidden text-xs text-slate-400 bg-slate-800 p-3 rounded">
+                        <i class="fa-solid fa-map-pin mr-1 text-blue-400"></i> Free pickup or delivery within 50 miles of Temecula.
+                    </div>
+                </div>
+
+                <div class="section-box">
+                    <div class="flex justify-between text-sm text-slate-400 mb-2"><span>Subtotal</span><span id="sum-sub">$0.00</span></div>
+                    <div class="flex justify-between text-sm text-slate-400 mb-2"><span>Delivery</span><span id="sum-del">$0.00</span></div>
+                    <div class="flex justify-between text-lg font-bold text-white mt-3 pt-3 border-t border-slate-700"><span>Total</span><span id="sum-total">$0.00</span></div>
+                </div>
             </div>
             <div class="controls-footer">
-                <button class="flex-1 h-12 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg shadow-lg" onclick="checkout()">Checkout</button>
+                <button class="w-full h-12 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg shadow-lg" onclick="checkout()">Checkout</button>
             </div>
         </div>
 
@@ -297,13 +302,19 @@
                 <h3 class="text-lg font-bold text-white">Ali Chitsaz</h3>
                 <p class="text-xs text-slate-400">Temecula, CA</p>
             </div>
-            <div class="p-5">
+            <div class="p-5 flex-1 overflow-y-auto">
                 <div class="label mb-2">Saved Addresses</div>
-                <div class="p-3 bg-slate-800 rounded border border-slate-700 text-sm text-slate-300 mb-4 cursor-pointer hover:border-blue-500" onclick="alert('Address Auto-Filled!')">
+                <div class="p-3 bg-slate-800 rounded border border-slate-700 text-sm text-slate-300 mb-4 cursor-pointer hover:border-blue-500" onclick="useAddress()">
                     <b>Home</b><br>123 Vineyard Way
                 </div>
                 <div class="label mb-2">Order History</div>
-                <div class="text-sm text-slate-500">No recent orders</div>
+                <div class="history-item">
+                    <div class="flex-1">
+                        <div class="history-title">Contract.pdf</div>
+                        <div class="history-date">Oct 20 • 2 Copies</div>
+                    </div>
+                    <button class="btn-reorder" onclick="reorder('Contract.pdf')">Reorder</button>
+                </div>
             </div>
         </div>
     </div>
@@ -311,20 +322,20 @@
     <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
 
     <script>
-        // --- LOGIC ---
-        const DIMS={letter:{w:8.5,h:11,l:"8.5\" x 11\""},legal:{w:8.5,h:14,l:"8.5\" x 14\""},tabloid:{w:11,h:17,l:"11\" x 17\""}};
-        const PRICES={letter:0.10,legal:0.15,tabloid:0.25};
-        let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:''};
+        // --- DATA ---
+        const DIMS={letter:{w:8.5,h:11,l:"8.5\" x 11\""},legal:{w:8.5,h:14,l:"8.5\" x 14\""},tabloid:{w:11,h:17,l:"11\" x 17\""}, '12x18':{w:12,h:18,l:"12\" x 18\""}, a4:{w:8.3,h:11.7,l:"A4"}, a3:{w:11.7,h:16.5,l:"A3"}};
+        const PRICES={letter:0.10,legal:0.15,tabloid:0.25, '12x18':0.35, a4:0.12, a3:0.28};
+        let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:'',delivery:'ship'};
         let cart=[];
 
         // --- NAVIGATION ---
         function goHome() {
             if (state.doc) {
                 Swal.fire({
-                    title: 'Go Home?', text: "Your current file will be saved in 'Resume Order'.", icon: 'question',
-                    showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Yes, Go Home'
-                }).then((result) => {
-                    if (result.isConfirmed) {
+                    title: 'Go Home?', text: "Your current file will be saved.", icon: 'question',
+                    showCancelButton: true, confirmButtonText: 'Yes', confirmButtonColor: '#2563eb'
+                }).then((r) => {
+                    if (r.isConfirmed) {
                         document.getElementById('homepage').classList.remove('hidden-page');
                         document.getElementById('home-btn-text').innerText = "Resume Order";
                     }
@@ -343,10 +354,7 @@
             }
         }
 
-        function toggleProfile() {
-            document.getElementById('profile-overlay').classList.toggle('open');
-        }
-
+        function toggleProfile() { document.getElementById('profile-overlay').classList.toggle('open'); }
         function showScreen(id) {
             document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-'+id).classList.add('active');
@@ -434,6 +442,8 @@
             renderPreview(); updatePrice();
         }
         function toggleColor(){ state.color=state.color==='color'?'bw':'color'; toggle('btn-bw',state.color==='bw'); toggle('btn-color',state.color==='color'); renderPreview(); updatePrice(); }
+        
+        // --- FINISHING ---
         function clearFinish(){ state.staple=false; state.punch='none'; updateFinishUI(); }
         function toggleStaple(){ state.staple=!state.staple; updateFinishUI(); }
         function setPunch(v){ state.punch=(state.punch===v)?'none':v; updateFinishUI(); }
@@ -449,7 +459,7 @@
         function toggle(id,active){ const el=document.getElementById(id); if(active){ el.classList.add('active'); el.classList.replace('text-gray-500','white'); } else { el.classList.remove('active'); el.classList.replace('white','text-gray-500'); } }
         
         function updatePrice(){
-            let base=PRICES[state.size]; if(state.color==='color') base+=0.25;
+            let base=PRICES[state.size] || 0.15; if(state.color==='color') base+=0.25;
             state.qty=document.getElementById('qty-input').value;
             const pages=state.layout==='booklet'?Math.ceil(state.printList.length/4):state.printList.length;
             document.getElementById('price-disp').innerText='$'+(base*pages*state.qty).toFixed(2);
@@ -458,18 +468,27 @@
         // --- CART ---
         function addToCart(){
             cart.push({file:state.fileName, desc:`${state.size.toUpperCase()} • ${state.layout}`, qty:state.qty, price:parseFloat(document.getElementById('price-disp').innerText.replace('$',''))});
-            document.getElementById('cart-badge').innerText=cart.length; document.getElementById('cart-badge').classList.remove('hidden');
+            document.getElementById('cart-badge').innerText=cart.length; document.getElementById('cart-badge').style.display='flex';
             gotoCart();
         }
         function updateCartUI(){
             const l=document.getElementById('cart-list'); l.innerHTML='';
-            cart.forEach(i=>{ l.innerHTML+=`<div class="cart-item"><div class="flex-1 text-white font-bold text-sm">${i.file}</div><div class="text-white">$${i.price.toFixed(2)}</div></div>`; });
+            let tot=0;
+            cart.forEach((i, idx)=>{ tot+=i.price; l.innerHTML+=`<div class="cart-item"><div class="flex-1 text-white font-bold text-sm">${i.file}<div class="text-xs text-slate-400 font-normal">${i.desc} • Qty ${i.qty}</div></div><div class="text-white font-bold">$${i.price.toFixed(2)}</div><div class="text-red-500 ml-3 cursor-pointer" onclick="cart.splice(${idx},1);updateCartUI()"><i class="fa-solid fa-trash"></i></div></div>`; });
+            
+            let del=state.delivery==='ship'?12:5;
+            document.getElementById('sum-sub').innerText='$'+tot.toFixed(2);
+            document.getElementById('sum-del').innerText='$'+del.toFixed(2);
+            document.getElementById('sum-total').innerText='$'+(tot+del).toFixed(2);
         }
-        function checkout(){ Swal.fire({title:'Order Submitted',icon:'success'}); cart=[]; updateCartUI(); goHome(); }
+        function setDelivery(v){ state.delivery=v; toggle('del-ship',v==='ship'); toggle('del-local',v==='local'); document.getElementById('form-ship').style.display=v==='ship'?'grid':'none'; document.getElementById('info-local').style.display=v==='local'?'block':'none'; updateCartUI(); }
+        function checkout(){ Swal.fire({title:'Order Submitted',text:'Thank you for printing with Magic Printer!',icon:'success'}); cart=[]; updateCartUI(); goHome(); }
         
-        function parsePageRange(val){ /* Same as v38 */ }
+        function parsePageRange(val){ /* Same as v38 logic */ if (!val.trim()) state.printList = Array.from({length: state.pages}, (_, i) => i + 1); else { const list = new Set(); val.split(',').forEach(p => { if (p.includes('-')) { const [s,e]=p.split('-').map(Number); for(let i=s;i<=e;i++) if(i<=state.pages) list.add(i); } else { const n=Number(p); if(n<=state.pages) list.add(n); } }); state.printList = Array.from(list).sort((a,b)=>a-b); } state.previewIdx = 0; renderPreview(); updatePrice(); }
         function prevPage(){ if(state.previewIdx>0){ state.previewIdx--; renderPreview(); } }
         function nextPage(){ const j=state.layout==='booklet'?2:1; if(state.previewIdx+j<state.printList.length){ state.previewIdx+=j; renderPreview(); } }
+        function useAddress() { Swal.fire('Address Applied','','success'); toggleProfile(); }
+        function reorder(n) { cart.push({file:n, desc:"Reorder", qty:1, price:10.00}); updateCartUI(); gotoCart(); toggleProfile(); }
     </script>
 </body>
 </html>

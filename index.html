@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Magic Printer | v13</title>
+    <title>Magic Printer | v14 Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
@@ -20,6 +20,7 @@
                 }
             }
         }
+        // Initialize PDF Worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
     <style>
@@ -29,34 +30,32 @@
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background: #000; font-family: 'Inter', sans-serif; color: white; touch-action: none; }
         
         /* 2. EDITOR CANVAS */
-        #editor-layer { position: absolute; inset: 0; padding-bottom: 120px; /* Space for peek drawer */ z-index: 0; background: #111; }
+        #editor-layer { position: absolute; inset: 0; padding-bottom: 140px; z-index: 0; background: #111; }
         .cropper-view-box { outline: 1px solid rgba(255,255,255,0.8); box-shadow: 0 0 0 9999px rgba(0,0,0,0.9); } 
         .cropper-bg { background: #fff; }
 
-        /* 3. SLIDING DRAWER (Physics Enabled) */
+        /* 3. SLIDING DRAWER */
         #bottom-sheet {
             position: absolute; left: 0; right: 0; bottom: 0;
-            height: 75vh; /* Max expansion */
-            background: #111827;
+            height: 75vh;
+            background: #1f2937;
             border-top-left-radius: 24px; border-top-right-radius: 24px;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
             z-index: 50;
-            transform: translateY(calc(100% - 130px)); /* Default Peek State */
+            transform: translateY(calc(100% - 160px)); /* Peek Height */
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             will-change: transform;
         }
+        #bottom-sheet.open { transform: translateY(0); }
         
-        .sheet-header { padding: 12px 0 16px 0; cursor: grab; }
+        .sheet-header { padding: 12px 0 16px 0; cursor: grab; background: #1f2937; border-radius: 24px 24px 0 0; }
         .sheet-handle { width: 40px; height: 5px; background: #4b5563; border-radius: 10px; margin: 0 auto 12px auto; }
         .sheet-content { height: 100%; overflow-y: auto; padding: 0 20px 150px 20px; -webkit-overflow-scrolling: touch; }
 
-        /* 4. OVERLAYS (Accurate) */
+        /* 4. OVERLAYS */
         .finish-layer { pointer-events: none; position: absolute; inset: 0; z-index: 10; overflow: hidden; }
-        
-        /* Staple: Angled 45deg (Corner) */
         .staple-corner { position: absolute; width: 24px; height: 4px; background: linear-gradient(90deg, #aaa, #fff, #aaa); transform: rotate(-45deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
-        /* Staple: Vertical (Dual) */
         .staple-dual { position: absolute; width: 4px; height: 24px; background: linear-gradient(180deg, #aaa, #fff, #aaa); box-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
-        /* Punch: Circle */
         .punch { position: absolute; width: 12px; height: 12px; background: #0b0f19; border: 1px solid #555; border-radius: 50%; box-shadow: inset 1px 1px 2px black; }
 
         /* 5. TOP CONTROLS */
@@ -73,13 +72,23 @@
             display: flex; pointer-events: auto;
         }
         .orient-btn {
-            padding: 6px 12px; border-radius: 99px; font-size: 11px; font-weight: bold; color: #9ca3af;
+            padding: 8px 16px; border-radius: 99px; font-size: 11px; font-weight: bold; color: #9ca3af;
             display: flex; align-items: center; gap: 6px; transition: all 0.2s;
         }
         .orient-btn.active { background: #2563eb; color: white; box-shadow: 0 2px 10px rgba(37,99,235,0.3); }
+        
+        /* 6. LOADING SPINNER */
+        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+    <div id="loader" class="hidden">
+        <div class="spinner mb-4"></div>
+        <div class="text-sm font-bold text-gray-300">Processing File...</div>
+    </div>
 
     <div class="top-island">
         <button onclick="toggleProfile()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white">
@@ -97,16 +106,16 @@
 
         <button onclick="toggleCart()" class="pointer-events-auto w-10 h-10 bg-black/40 backdrop-blur rounded-full flex items-center justify-center border border-white/10 text-white relative">
             <i class="fa-solid fa-shopping-bag"></i>
-            <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-[9px] w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+            <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
         </button>
     </div>
 
     <div id="editor-layer">
         <div id="upload-prompt" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
             <div onclick="document.getElementById('file-input').click()" class="w-full max-w-xs h-64 border-2 border-dashed border-gray-700 rounded-3xl flex flex-col items-center justify-center bg-gray-900/50 active:scale-95 transition-transform cursor-pointer">
-                <i class="fa-solid fa-plus text-4xl text-gray-500 mb-4"></i>
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-500 mb-4"></i>
                 <span class="font-bold text-lg text-gray-300">New Project</span>
-                <span class="text-sm text-gray-500 mt-1">Upload PDF or Photo</span>
+                <span class="text-sm text-gray-500 mt-1">PDF, JPG, PNG</span>
             </div>
             <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
         </div>
@@ -127,14 +136,14 @@
     </div>
 
     <div id="bottom-sheet">
-        <div class="sheet-header" id="sheet-drag-zone">
+        <div class="sheet-header" id="sheet-drag-zone" onclick="toggleSheet()">
             <div class="sheet-handle"></div>
             <div class="px-6 flex justify-between items-center">
                 <div>
                     <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Total Estimate</div>
                     <div class="text-2xl font-bold text-white flex items-baseline gap-1" id="price-disp">$0.10</div>
                 </div>
-                <button onclick="addToCart()" id="btn-add" disabled class="bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 px-8 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
+                <button onclick="addToCart(event)" id="btn-add" disabled class="bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 px-8 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
                     Add to Order
                 </button>
             </div>
@@ -148,29 +157,20 @@
                     <button onclick="setSize('letter')" id="sz-letter" class="flex items-center justify-between p-3 bg-gray-800 border-2 border-blue-600 rounded-xl active:scale-95 transition-transform">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-10 border border-gray-500 bg-white/10 rounded-sm"></div>
-                            <div class="text-left">
-                                <div class="text-sm font-bold text-white">Letter</div>
-                                <div class="text-[10px] text-gray-400">8.5 x 11 inches</div>
-                            </div>
+                            <div class="text-left"><div class="text-sm font-bold text-white">Letter</div><div class="text-[10px] text-gray-400">8.5 x 11 inches</div></div>
                         </div>
                         <i class="fa-solid fa-check-circle text-blue-500 text-lg check-icon"></i>
                     </button>
                     <button onclick="setSize('legal')" id="sz-legal" class="flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-12 border border-gray-600 bg-gray-800 rounded-sm"></div>
-                            <div class="text-left">
-                                <div class="text-sm font-bold text-gray-300">Legal</div>
-                                <div class="text-[10px] text-gray-500">8.5 x 14 inches</div>
-                            </div>
+                            <div class="text-left"><div class="text-sm font-bold text-gray-300">Legal</div><div class="text-[10px] text-gray-500">8.5 x 14 inches</div></div>
                         </div>
                     </button>
                     <button onclick="setSize('tabloid')" id="sz-tabloid" class="flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-14 border border-gray-600 bg-gray-800 rounded-sm"></div>
-                            <div class="text-left">
-                                <div class="text-sm font-bold text-gray-300">Tabloid</div>
-                                <div class="text-[10px] text-gray-500">11 x 17 inches</div>
-                            </div>
+                            <div class="text-left"><div class="text-sm font-bold text-gray-300">Tabloid</div><div class="text-[10px] text-gray-500">11 x 17 inches</div></div>
                         </div>
                     </button>
                 </div>
@@ -207,67 +207,72 @@
         let cropper = null;
         let state = { size: 'letter', orient: 'portrait', finish: 'none', fit: 'cover', qty: 1 };
         
-        // --- DRAG PHYSICS ENGINE ---
-        const sheet = document.getElementById('bottom-sheet');
-        const handle = document.getElementById('sheet-drag-zone');
-        let startY = 0;
-        let currentY = 0;
-        let isDragging = false;
-        
-        // We calculate positions based on screen height
-        const SNAP_PEEK = -130; // px from bottom (Showing header)
-        const SNAP_FULL = 0;    // Top of screen relative container (handled via CSS transform reset)
-        
-        // CSS manages the heavy lifting, we just toggle classes or set transform
-        // For V13, let's implement a simple "Toggle" on tap, and "Drag" logic
-        
-        handle.addEventListener('click', (e) => {
-            if (e.target.id === 'btn-add') return; // Don't toggle if clicking button
-            toggleSheet();
-        });
-
-        function toggleSheet() {
-            // Check current computed transform
-            const style = window.getComputedStyle(sheet);
-            const matrix = new WebKitCSSMatrix(style.transform);
-            const is collapsed = matrix.m42 > 0; // Positive Y translation means down/collapsed relative to top? 
-            
-            // Simpler: Check class or explicit style
-            const current = sheet.style.transform;
-            if (current.includes('0px') || current === '') {
-                // It is open, close it
-                sheet.style.transform = `translateY(calc(100% - 130px))`;
-            } else {
-                // It is closed, open it
-                sheet.style.transform = `translateY(0px)`;
-            }
-        }
-
-        // --- UPLOAD ---
+        // --- IMPROVED FILE HANDLING (PDF & ERROR CHECK) ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
             const file = e.target.files[0];
-            let src = URL.createObjectURL(file);
+            const loader = document.getElementById('loader');
             
-            const img = new Image();
-            img.onload = () => {
-                // Auto-detect
-                state.orient = img.width > img.height ? 'landscape' : 'portrait';
-                updateOrientUI();
+            loader.classList.remove('hidden'); // Show loading spinner
 
-                document.getElementById('upload-prompt').classList.add('hidden');
-                document.getElementById('editor-stage').classList.remove('hidden');
-                document.getElementById('image-target').src = src;
-                document.getElementById('btn-add').disabled = false;
+            try {
+                let src = '';
                 
-                // Pop the drawer to peek
-                sheet.style.transform = `translateY(calc(100% - 130px))`;
-                initCropper();
-            };
-            img.src = src;
+                if(file.type.includes('pdf')) {
+                    // PDF Processing Logic
+                    const buff = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument(buff).promise;
+                    const page = await pdf.getPage(1);
+                    const viewport = page.getViewport({ scale: 2 });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width; canvas.height = viewport.height;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                    src = canvas.toDataURL('image/jpeg');
+                } else {
+                    // Standard Image
+                    src = URL.createObjectURL(file);
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    loader.classList.add('hidden'); // Hide spinner
+                    
+                    // Detect Orientation
+                    state.orient = img.width > img.height ? 'landscape' : 'portrait';
+                    updateOrientUI();
+
+                    // Switch View
+                    document.getElementById('upload-prompt').classList.add('hidden');
+                    document.getElementById('editor-stage').classList.remove('hidden');
+                    document.getElementById('image-target').src = src;
+                    document.getElementById('btn-add').disabled = false;
+                    
+                    // Peek Drawer
+                    document.getElementById('bottom-sheet').classList.remove('open');
+                    
+                    initCropper();
+                };
+                
+                img.onerror = () => {
+                    loader.classList.add('hidden');
+                    Swal.fire('Error', 'Could not load image. Please try a JPG or PNG.', 'error');
+                };
+                
+                img.src = src;
+
+            } catch (err) {
+                console.error(err);
+                loader.classList.add('hidden');
+                Swal.fire('Error', 'Failed to process file. If using PDF, ensure it is valid.', 'error');
+            }
         });
 
-        // --- CROPPER & EDITOR ---
+        // --- SHEET LOGIC ---
+        function toggleSheet() {
+            document.getElementById('bottom-sheet').classList.toggle('open');
+        }
+
+        // --- CROPPER ---
         function initCropper() {
             if(cropper) cropper.destroy();
             const el = document.getElementById('image-target');
@@ -284,6 +289,7 @@
             });
         }
 
+        // --- ACTIONS ---
         function setOrient(o) {
             state.orient = o;
             updateOrientUI();
@@ -302,21 +308,17 @@
 
         function setSize(sz) {
             state.size = sz;
-            // Visual Update
             const mapping = { letter: 'sz-letter', legal: 'sz-legal', tabloid: 'sz-tabloid' };
             Object.values(mapping).forEach(id => {
                 const el = document.getElementById(id);
                 el.className = 'flex items-center justify-between p-3 bg-gray-900 border-2 border-transparent rounded-xl active:scale-95 transition-transform';
-                // Remove check if exists (simplified)
                 if(el.querySelector('.check-icon')) el.querySelector('.check-icon').remove();
                 el.querySelector('.text-sm').classList.replace('text-white', 'text-gray-300');
             });
-            
             const active = document.getElementById(mapping[sz]);
             active.className = 'flex items-center justify-between p-3 bg-gray-800 border-2 border-blue-600 rounded-xl active:scale-95 transition-transform';
             active.querySelector('.text-sm').classList.replace('text-gray-300', 'text-white');
             active.innerHTML += '<i class="fa-solid fa-check-circle text-blue-500 text-lg check-icon"></i>';
-
             initCropper(); updatePrice();
         }
 
@@ -329,42 +331,31 @@
             drawOverlays(); updatePrice();
         }
 
-        // --- KYOCERA FINISHING LOGIC ---
+        // --- OVERLAYS ---
         function drawOverlays() {
             const l = document.getElementById('finish-layer'); l.innerHTML = '';
             if(!cropper) return;
-            
             const box = cropper.getCropBoxData();
-            const { top, left, width, height } = box;
-
-            // Mark Logic based on Kyocera DF-7120
-            // Punch is always Left Edge relative to reading direction
-            // Staple Corner is Top-Left
             
             if(state.finish.includes('staple-corn')) {
-                const s = document.createElement('div');
-                s.className = 'staple-corner';
-                s.style.top = (top + 15) + 'px';
-                s.style.left = (left + 15) + 'px';
+                const s = document.createElement('div'); s.className = 'staple-corner';
+                s.style.top = (box.top + 15) + 'px'; s.style.left = (box.left + 15) + 'px';
                 l.appendChild(s);
             }
             if(state.finish.includes('staple-dual')) {
-                // Two staples on left edge
                 const s1 = document.createElement('div'); s1.className = 'staple-dual';
-                s1.style.top = (top + (height * 0.25)) + 'px'; s1.style.left = (left + 8) + 'px';
+                s1.style.top = (box.top + (box.height*0.25)) + 'px'; s1.style.left = (box.left + 8) + 'px';
                 l.appendChild(s1);
-                
                 const s2 = document.createElement('div'); s2.className = 'staple-dual';
-                s2.style.top = (top + (height * 0.75)) + 'px'; s2.style.left = (left + 8) + 'px';
+                s2.style.top = (box.top + (box.height*0.75)) + 'px'; s2.style.left = (box.left + 8) + 'px';
                 l.appendChild(s2);
             }
             if(state.finish.includes('punch')) {
                 const count = state.finish.includes('3') ? 3 : 2;
                 for(let i=1; i<=count; i++) {
                     const p = document.createElement('div'); p.className = 'punch';
-                    p.style.left = (left + 8) + 'px';
-                    // Distribute vertically
-                    p.style.top = (top + (height * (i/(count+1))) - 6) + 'px';
+                    p.style.left = (box.left + 8) + 'px';
+                    p.style.top = (box.top + (box.height * (i/(count+1))) - 6) + 'px';
                     l.appendChild(p);
                 }
             }
@@ -399,15 +390,15 @@
             document.getElementById('price-disp').innerText = '$' + t.toFixed(2);
         }
         
-        function addToCart() {
-            Swal.fire({icon:'success', title:'Added to Cart', toast:true, position:'top', timer:1500, showConfirmButton:false});
-            document.getElementById('cart-badge').innerText = '1';
+        function addToCart(e) {
+            e.stopPropagation();
+            Swal.fire({icon:'success', title:'Added', toast:true, position:'top', timer:1500, showConfirmButton:false});
+            document.getElementById('bottom-sheet').classList.remove('open');
             document.getElementById('cart-badge').classList.remove('hidden');
-            // Collapse drawer
-            sheet.style.transform = `translateY(calc(100% - 130px))`;
+            document.getElementById('cart-badge').innerText = '1';
         }
-        function toggleProfile() { alert("Profile View"); }
-        function toggleCart() { alert("Cart View"); }
+        function toggleProfile() { alert("Profile Placeholder"); }
+        function toggleCart() { alert("Cart Placeholder"); }
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | Premium Printing Solutions</title>
+    <title>MagicPrinter | Enterprise Print Logistics</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -17,8 +17,9 @@
             theme: {
                 extend: {
                     colors: { 
-                        brand: { 950: '#0a0f1a', 900: '#111827', 800: '#1f2937', 700: '#374151', 600: '#4b5563', 500: '#6b7280' },
-                        accent: { 500: '#d4af37', 600: '#b8962f' } /* Gold retained for accents, but logo is white */
+                        brand: { 950: '#05080f', 900: '#0f172a', 800: '#1e293b', 700: '#334155', 600: '#475569' },
+                        accent: { 500: '#fbbf24', 600: '#d97706' }, /* Professional Gold/Amber */
+                        action: { 500: '#3b82f6', 600: '#2563eb' } /* Trust Blue */
                     },
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     spacing: { 'safe-b': 'env(safe-area-inset-bottom)' }
@@ -31,569 +32,548 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-        /* RESET & BASE */
-        body { background: #0a0f1a; color: #f3f4f6; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
+        /* BASE */
+        body { background: #05080f; color: #f8fafc; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
         #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
-
-        /* UI COMPONENTS */
-        .glass-panel { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glass-btn { background: rgba(55, 65, 81, 0.6); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.1); color: #e5e7eb; transition: all 0.2s; }
-        .glass-btn.active { background: rgba(212, 175, 55, 0.9); border-color: #d4af37; color: #0a0f1a; font-weight: 600; box-shadow: 0 2px 10px rgba(212, 175, 55, 0.3); }
-        .accent-btn { background: linear-gradient(135deg, #d4af37 0%, #b8962f 100%); color: #0a0f1a; font-weight: 700; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); transition: transform 0.1s; }
-        .accent-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5); }
 
         /* HEADER */
         .global-header { 
-            height: 70px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 24px; background: rgba(10, 15, 26, 0.95); backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 1000; position: relative;
+            height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 24px; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #334155; z-index: 1000;
         }
-        .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        /* New White Logo & Text */
-        .logo-svg { width: 40px; height: 40px; text-white; } 
-        .logo-text { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px; }
-        
-        .nav-actions { display: flex; gap: 20px; align-items: center; }
-        .nav-btn { color: #9ca3af; font-size: 22px; cursor: pointer; position: relative; transition: color 0.2s; }
-        .nav-btn:hover { color: white; }
-        .badge { position: absolute; top: -6px; right: -6px; background: #d4af37; color: #0a0f1a; font-size: 11px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; transition: opacity 0.2s; }
+        .logo-area:hover { opacity: 0.8; }
+        .logo-text { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: white; }
+        .nav-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #94a3b8; border-radius: 8px; transition: all 0.2s; position: relative; }
+        .nav-btn:hover { background: #1e293b; color: white; }
+        .badge { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; }
 
         /* SCREENS */
-        #homepage { position: absolute; inset: 0; top: 70px; z-index: 50; background: #0a0f1a; overflow-y: auto; transition: transform 0.3s ease-in-out; }
-        #homepage.hidden-page { transform: translateX(-100%); }
-        .app-screen { position: absolute; inset: 0; top: 70px; background: #0a0f1a; display: none; flex-direction: column; z-index: 10; }
-        .app-screen.active { display: flex; }
+        .screen { position: absolute; inset: 0; top: 64px; background: #05080f; display: none; flex-direction: column; z-index: 10; overflow-y: auto; }
+        .screen.active { display: flex; }
 
-        /* HOME HERO */
-        .hero { padding: 60px 24px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: radial-gradient(circle at top center, #111827 0%, #0a0f1a 70%); }
-        .hero h1 { font-size: 40px; font-weight: 800; margin-bottom: 16px; color: white; line-height: 1.1; letter-spacing: -1px; }
-        .hero p { color: #9ca3af; font-size: 16px; line-height: 1.6; max-width: 500px; margin: 0 auto 24px; }
-        .hero-badge { display: inline-block; background: rgba(212, 175, 55, 0.15); color: #d4af37; font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: 99px; margin-bottom: 20px; border: 1px solid rgba(212, 175, 55, 0.3); letter-spacing: 0.5px; }
+        /* HOMEPAGE */
+        .hero { 
+            padding: 80px 24px; text-align: center; 
+            background: linear-gradient(180deg, #0f172a 0%, #05080f 100%);
+            border-bottom: 1px solid #1e293b;
+        }
+        .hero h1 { font-size: 42px; font-weight: 800; margin-bottom: 16px; letter-spacing: -1.5px; line-height: 1.1; }
+        .hero p { color: #94a3b8; font-size: 18px; max-width: 600px; margin: 0 auto 32px; line-height: 1.6; }
+        .value-pill { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); padding: 6px 16px; border-radius: 99px; font-size: 12px; font-weight: 600; margin-bottom: 24px; display: inline-block; }
 
-        /* HOME CONTENT */
-        .content-grid { padding: 32px 24px; display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 1200px; margin: 0 auto; }
-        @media (min-width: 1024px) { .content-grid { grid-template-columns: 2fr 1fr; align-items: start; } }
-        
-        .price-card { background: rgba(31, 41, 55, 0.4); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); overflow: hidden; }
-        .pc-row { display: flex; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 14px; }
-        .pc-row:last-child { border-bottom: none; }
-        .pc-head { background: rgba(31, 41, 55, 0.8); color: #d4af37; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; }
-        .pc-them { color: #ef4444; text-decoration: line-through; }
-        .pc-us { color: #d4af37; font-weight: 700; font-size: 16px; }
+        .btn-primary { 
+            background: #2563eb; color: white; font-weight: 600; padding: 16px 32px; border-radius: 10px; 
+            font-size: 16px; transition: all 0.2s; box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
 
-        .feature-card { background: rgba(31, 41, 55, 0.4); padding: 24px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
-        .feature-icon { color: #d4af37; font-size: 28px; }
-        .feature-title { font-weight: 700; color: white; font-size: 16px; }
-        .feature-desc { color: #9ca3af; font-size: 13px; line-height: 1.4; }
+        /* PREVIEW UI */
+        .workspace { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; background: #05080f; position: relative; }
+        #paper-envelope { 
+            background: white; box-shadow: 0 50px 100px -20px rgba(0,0,0,0.7); 
+            transition: all 0.4s ease; position: relative; display: flex; justify-content: center; align-items: center;
+            max-width: 90%; max-height: 90%; aspect-ratio: 8.5/11;
+        }
         
-        .clients-bar { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 32px; }
-        .client-pill { background: rgba(55, 65, 81, 0.4); color: #d1d5db; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.1); }
+        /* CAD DIMENSIONS */
+        .dim-line { position: absolute; background: #475569; }
+        .dim-text { position: absolute; font-family: monospace; font-size: 10px; color: #94a3b8; background: #05080f; padding: 2px 6px; }
+        .dim-w-line { top: -20px; left: 0; width: 100%; height: 1px; }
+        .dim-w-line::before, .dim-w-line::after { content:''; position: absolute; width: 1px; height: 8px; background: #475569; bottom: -4px; }
+        .dim-w-line::before { left: 0; } .dim-w-line::after { right: 0; }
+        .dim-w-text { top: -32px; left: 50%; transform: translateX(-50%); }
         
-        .cta-box { padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-        .btn-hero { width: 100%; max-width: 360px; padding: 18px; border-radius: 12px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .dim-h-line { left: -20px; top: 0; height: 100%; width: 1px; }
+        .dim-h-line::before, .dim-h-line::after { content:''; position: absolute; height: 1px; width: 8px; background: #475569; right: -4px; }
+        .dim-h-line::before { top: 0; } .dim-h-line::after { bottom: 0; }
+        .dim-h-text { left: -50px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
 
-        /* CONFIG SCREEN */
-        .workspace { flex: 1; position: relative; background: #0a0f1a; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: hidden; }
-        #paper-preview { background: white; box-shadow: 0 30px 80px rgba(0,0,0,0.7); transition: aspect-ratio 0.3s ease; position: relative; width: auto; height: auto; max-width: 100%; max-height: 100%; aspect-ratio: 8.5/11; display: flex; justify-content: center; align-items: center; border-radius: 2px; }
-        
         /* CONTROLS */
-        .controls { height: 60vh; flex-shrink: 0; background: #111827; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; box-shadow: 0 -4px 25px rgba(0,0,0,0.5); }
-        .controls-scroll { flex: 1; overflow-y: auto; padding: 24px; }
-        .controls-footer { padding: 20px 24px; background: #111827; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 16px; }
-        .label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
-        .select-input { width: 100%; background: #1f2937; color: white; border: 1px solid rgba(255, 255, 255, 0.1); padding: 14px 18px; border-radius: 10px; font-size: 14px; outline: none; appearance: none; transition: border-color 0.2s; }
-        .select-input:focus { border-color: #d4af37; }
-        .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-control { padding: 14px; border-radius: 10px; font-size: 14px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+        .panel { background: #0f172a; border-top: 1px solid #1e293b; height: 50vh; display: flex; flex-direction: column; }
+        .panel-scroll { flex: 1; overflow-y: auto; padding: 24px; }
+        .control-grid { display: grid; gap: 20px; }
+        
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .std-select { width: 100%; background: #1e293b; border: 1px solid #334155; color: white; padding: 12px; border-radius: 8px; font-size: 14px; outline: none; appearance: none; }
+        .std-select:focus { border-color: #3b82f6; }
+        
+        .btn-toggle-group { display: flex; background: #1e293b; border-radius: 8px; padding: 4px; border: 1px solid #334155; }
+        .btn-toggle { flex: 1; padding: 8px; font-size: 13px; color: #94a3b8; text-align: center; border-radius: 6px; cursor: pointer; transition: all 0.1s; }
+        .btn-toggle.active { background: #3b82f6; color: white; font-weight: 600; shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .btn-toggle:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        /* CART & PROFILE */
-        .cart-item { background: #1f2937; border-radius: 12px; padding: 18px; margin-bottom: 14px; display: flex; gap: 14px; border: 1px solid rgba(255, 255, 255, 0.08); }
-        #profile-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.85); display: none; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
-        #profile-overlay.open { display: flex; opacity: 1; }
-        .profile-drawer { width: 90%; max-width: 400px; height: 100%; background: #111827; border-left: 1px solid rgba(255, 255, 255, 0.1); transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
-        #profile-overlay.open .profile-drawer { transform: translateX(0); }
-        .profile-header { padding: 40px 30px; background: #0a0f1a; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: center; position: relative; }
-        .avatar { width: 72px; height: 72px; background: linear-gradient(135deg, #d4af37, #b8962f); color: #0a0f1a; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
+        /* CART ITEMS */
+        .cart-row { display: flex; justify-content: space-between; padding: 16px; background: #1e293b; border-radius: 8px; margin-bottom: 12px; border: 1px solid #334155; }
+        .cart-meta { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+        .min-order-alert { background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.2); color: #f87171; padding: 12px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-top: 16px; }
 
-        /* UTILS */
-        .dim-line { position: absolute; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 11px; font-family: monospace; font-weight: bold; pointer-events: none; }
-        .dim-top { top: -25px; left: 0; width: 100%; height: 20px; border-bottom: 1px solid #6b7280; } .dim-top::before, .dim-top::after { content: ''; position: absolute; bottom: -3px; width: 1px; height: 7px; background: #6b7280; } .dim-top::before { left: 0; } .dim-top::after { right: 0; } .dim-top span { background: #0a0f1a; padding: 0 8px; position: relative; top: 10px; }
-        .dim-side { left: -35px; top: 0; height: 100%; width: 20px; border-right: 1px solid #6b7280; writing-mode: vertical-rl; transform: rotate(180deg); } .dim-side::before, .dim-side::after { content: ''; position: absolute; right: -3px; width: 7px; height: 1px; background: #6b7280; } .dim-side::before { top: 0; } .dim-side::after { bottom: 0; } .dim-side span { background: #0a0f1a; padding: 8px 0; position: relative; right: -10px; }
-        .content-area { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .render-target { width: 100%; height: 100%; object-fit: contain; }
-        .booklet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #d1d5db; }
-        .booklet-grid .page-slot { background: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .grayscale { filter: grayscale(100%) contrast(1.15); }
-        .finish-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
-        .staple { position: absolute; width: 3%; height: 1.5%; background: linear-gradient(90deg, #9ca3af, #e5e7eb, #9ca3af); border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
-        .punch { position: absolute; width: 2.5%; aspect-ratio: 1/1; background: #0a0f1a; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); }
-        #loader { position: fixed; inset: 0; background: rgba(10, 15, 26, 0.95); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .spinner { width: 36px; height: 36px; border: 3px solid rgba(212, 175, 55, 0.2); border-top-color: #d4af37; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 16px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* MODAL */
+        #portal-overlay { position: fixed; inset: 0; background: rgba(5, 8, 15, 0.9); z-index: 2000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        #portal-overlay.open { opacity: 1; }
+        .portal-card { background: #0f172a; width: 100%; max-width: 400px; border-radius: 16px; border: 1px solid #334155; overflow: hidden; transform: translateY(20px); transition: transform 0.3s; }
+        #portal-overlay.open .portal-card { transform: translateY(0); }
+
+        /* LOADER */
+        #loader { position: fixed; inset: 0; background: #05080f; z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s; }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div class="spinner"></div><div class="text-xs font-bold text-accent-500 uppercase tracking-wider">Loading Application...</div></div>
+    <div id="loader">
+        <svg class="w-12 h-12 text-blue-500 animate-spin mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <div class="text-sm font-mono text-slate-500">INITIALIZING PRINT ENGINE...</div>
+    </div>
 
     <div id="app-container">
-
+        
         <div class="global-header">
             <div class="logo-area" onclick="goHome()">
-                <svg class="logo-svg text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21.71 2.29l-2-2a1 1 0 0 0-1.42 0l-3 3a1 1 0 0 0 0 1.42l2 2a1 1 0 0 0 1.42 0l3-3a1 1 0 0 0 0-1.42zM14.12 7.71l-7.78 7.78a1 1 0 0 0 0 1.41l2.12 2.12a1 1 0 0 0 1.42 0l7.78-7.78a1 1 0 0 0 0-1.42l-2.12-2.12a1 1 0 0 0-1.42 0z"/>
-                    <path d="M18 10H6a2 2 0 0 0-2 2v7h2v-2h12v2h2v-7a2 2 0 0 0-2-2zm-2 5H8v-3h8v3zm-1-9H9V2h6v4z"/>
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 10V4H26V10" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6 10H30C31.1 10 32 10.9 32 12V22C32 23.1 31.1 24 30 24H26V28H10V24H6C4.9 24 4 23.1 4 22V12C4 10.9 4.9 10 6 10Z" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+                    <path d="M12 20H24" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M28 2L22 8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M29.5 0.5L30.5 1.5M26.5 3.5L25.5 4.5M31 5L32 6" stroke="#fbbf24" stroke-width="1.5"/>
                 </svg>
-                <div class="logo-text">Magic Printer</div>
+                <div class="logo-text ml-2">MagicPrinter</div>
             </div>
-            <div class="nav-actions">
-                <div class="nav-btn" onclick="toggleProfile()"><i class="fa-solid fa-user-circle"></i></div>
-                <div class="nav-btn" onclick="gotoCart()">
-                    <i class="fa-solid fa-shopping-cart"></i>
-                    <div id="cart-badge" class="badge" style="display:none">0</div>
-                </div>
+            <div class="flex gap-4">
+                <button class="nav-btn" onclick="openProfile()"><i class="fa-solid fa-user-gear"></i></button>
+                <button class="nav-btn" onclick="openCart()">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <div id="cart-dot" class="hidden absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                </button>
             </div>
         </div>
 
-        <div id="homepage">
+        <div id="screen-home" class="screen" style="display:flex;">
             <div class="hero">
-                <div class="hero-badge">THE PROFESSIONAL'S CHOICE</div>
-                <h1>Your Premium,<br>On-Demand Print Partner.</h1>
-                <p>High-quality documents delivered with speed and precision. Superior to big box stores, designed for professionals.</p>
-            </div>
-
-            <div class="content-grid">
-                <div style="display: flex; flex-direction: column; gap: 24px;">
-                    <div class="feature-card glass-panel">
-                        <i class="fa-solid fa-wand-magic-sparkles feature-icon"></i>
-                        <div class="feature-title">Magical Quality & Speed</div>
-                        <div class="feature-desc">We use state-of-the-art digital presses for crisp, vibrant prints. Orders are processed instantly for rapid turnaround.</div>
-                    </div>
-                    <div class="feature-card glass-panel">
-                        <i class="fa-solid fa-layer-group feature-icon"></i>
-                        <div class="feature-title">Dynamic Bulk Pricing</div>
-                        <div class="feature-desc">The more you print, the more you save. Our intelligent pricing engine automatically applies the best discount tier to your order.</div>
-                    </div>
-                    <div class="feature-card glass-panel">
-                        <i class="fa-solid fa-truck-fast feature-icon"></i>
-                        <div class="feature-title">Flexible Logistics</div>
-                        <div class="feature-desc">Choose between secure nationwide shipping via UPS/FedEx or our premium local delivery service.</div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="price-card glass-panel mb-8">
-                        <div class="pc-row pc-head">
-                            <div>Standard Price Per Page (Color)</div>
-                            <div>Retail</div>
-                            <div>Us</div>
-                        </div>
-                        <div class="pc-row">
-                            <div class="text-gray-300">Letter (8.5x11)</div>
-                            <div class="pc-them">$0.79</div>
-                            <div class="pc-us">$0.29</div>
-                        </div>
-                        <div class="pc-row">
-                            <div class="text-gray-300">Tabloid (11x17)</div>
-                            <div class="pc-them">$2.49</div>
-                            <div class="pc-us">$0.59</div>
-                        </div>
-                        <div class="text-center text-[10px] text-gray-500 py-3 bg-brand-800/50 font-medium">
-                            *Base price. Bulk discounts applied at checkout.
-                        </div>
-                    </div>
-
-                    <div class="text-center mb-4">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Trusted By Professionals In</span>
-                    </div>
-                    <div class="clients-bar">
-                        <span class="client-pill">Legal</span>
-                        <span class="client-pill">Real Estate</span>
-                        <span class="client-pill">Finance</span>
-                        <span class="client-pill">Healthcare</span>
-                        <span class="client-pill">Education</span>
-                        <span class="client-pill">Non-Profits</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cta-box">
-                <button class="accent-btn btn-hero" onclick="startOrder()">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> <span id="home-btn-text">Upload & Print Now</span>
+                <div class="value-pill">CHEAPER THAN YOUR OFFICE LEASE</div>
+                <h1>Print Smarter.<br>Save Bigger.</h1>
+                <p>Commercial grade printing available to everyone. From single sheets to corporate bulk orders. We beat any local or big box price.</p>
+                <button class="btn-primary" onclick="startOrder()">
+                    <i class="fa-solid fa-upload"></i> Start Print Job
                 </button>
-                <div class="text-[11px] text-gray-500 font-medium flex items-center gap-2">
-                    <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M21.71 2.29l-2-2a1 1 0 0 0-1.42 0l-3 3a1 1 0 0 0 0 1.42l2 2a1 1 0 0 0 1.42 0l3-3a1 1 0 0 0 0-1.42zM14.12 7.71l-7.78 7.78a1 1 0 0 0 0 1.41l2.12 2.12a1 1 0 0 0 1.42 0l7.78-7.78a1 1 0 0 0 0-1.42l-2.12-2.12a1 1 0 0 0-1.42 0z"/>
-                        <path d="M18 10H6a2 2 0 0 0-2 2v7h2v-2h12v2h2v-7a2 2 0 0 0-2-2zm-2 5H8v-3h8v3zm-1-9H9V2h6v4z"/>
-                    </svg>
-                    Magic Printer • PDF, JPG, PNG Supported
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 max-w-5xl mx-auto w-full pb-10">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-piggy-bank text-yellow-500 text-xl"></i>
+                        <h3 class="font-bold text-lg text-white">Unbeatable Economics</h3>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        We don't just sell prints; we provide logistics. 
+                        <span class="text-white font-bold">B&W starts at $0.09</span>. 
+                        <span class="text-white font-bold">Color at $0.29</span>. 
+                        Bulk tiers automatically apply for high volume.
+                    </p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-truck-ramp-box text-blue-500 text-xl"></i>
+                        <h3 class="font-bold text-lg text-white">Logistics & Fulfillment</h3>
+                    </div>
+                    <ul class="text-sm text-slate-400 space-y-2">
+                        <li><i class="fa-solid fa-check text-blue-500 mr-2"></i> <b>Local Pickup:</b> Free ($5.00 min order)</li>
+                        <li><i class="fa-solid fa-check text-blue-500 mr-2"></i> <b>Local Delivery:</b> Surcharge applies</li>
+                        <li><i class="fa-solid fa-check text-blue-500 mr-2"></i> <b>Nationwide:</b> Volume-weight shipping</li>
+                    </ul>
                 </div>
             </div>
         </div>
 
-        <div id="screen-config" class="app-screen">
+        <div id="screen-config" class="screen">
             <div class="workspace">
-                <div id="paper-preview">
-                    <div class="dim-line dim-top"><span id="lbl-w">8.5"</span></div>
-                    <div class="dim-line dim-side"><span id="lbl-h">11"</span></div>
+                <div id="paper-envelope">
+                    <div id="print-content" class="content-area"></div>
                     
-                    <div id="content-area" class="content-area"></div>
-                    <div class="finish-overlay" id="finish-layer"></div>
-                    
-                    <div id="nav-overlay" class="absolute bottom-4 bg-brand-900/90 px-3 py-1.5 rounded-full text-xs text-white border border-brand-700 hidden items-center gap-3 z-30 shadow-lg backdrop-blur-sm">
-                        <button onclick="prevPage()" class="hover:text-accent-500"><i class="fa-solid fa-chevron-left"></i></button>
-                        <span id="nav-info" class="font-bold">1/1</span>
-                        <button onclick="nextPage()" class="hover:text-accent-500"><i class="fa-solid fa-chevron-right"></i></button>
-                    </div>
+                    <div id="finishing-layer" class="absolute inset-0 pointer-events-none"></div>
+
+                    <div class="dim-line dim-w-line"><span class="dim-text dim-w-text" id="lbl-w">8.5"</span></div>
+                    <div class="dim-line dim-h-line"><span class="dim-text dim-h-text" id="lbl-h">11.0"</span></div>
                 </div>
             </div>
 
-            <div class="controls">
-                <div class="controls-scroll">
-                    
-                    <div class="mb-5">
-                        <label class="label">Paper Size</label>
-                        <select id="size-sel" class="select-input" onchange="updateSize(this.value)">
-                            <option value="letter">Letter (8.5 x 11)</option>
-                            <option value="legal">Legal (8.5 x 14)</option>
-                            <option value="tabloid">Tabloid (11 x 17)</option>
-                            <option value="12x18">Arch B (12 x 18)</option>
-                            <option value="a4">A4 (8.3 x 11.7)</option>
-                            <option value="a3">A3 (11.7 x 16.5)</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-5" id="range-group" style="display:none;">
-                        <label class="label">Pages</label>
-                        <input type="text" id="page-range" class="select-input" placeholder="All Pages (e.g. 1-5, 8)" onchange="parsePageRange(this.value)">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-5">
-                        <div>
-                            <label class="label">Orientation</label>
-                            <div class="toggle-row">
-                                <button class="glass-btn btn-control active" id="btn-port" onclick="setOrient('portrait')">
-                                    <i class="fa-regular fa-file mb-1"></i> Portrait
-                                </button>
-                                <button class="glass-btn btn-control" id="btn-land" onclick="setOrient('landscape')">
-                                    <i class="fa-regular fa-file fa-rotate-90 mb-1"></i> Landscape
-                                </button>
+            <div class="panel">
+                <div class="panel-scroll">
+                    <div class="control-grid">
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <label>Size</label>
+                                <select id="input-size" class="std-select" onchange="render()">
+                                    <option value="letter">Letter (8.5x11)</option>
+                                    <option value="legal">Legal (8.5x14)</option>
+                                    <option value="tabloid">Tabloid (11x17)</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Paper Type</label>
+                                <select class="std-select">
+                                    <option>20lb Bond (Standard)</option>
+                                    <option>28lb Laser (Premium)</option>
+                                    <option>80lb Cover (Cardstock)</option>
+                                </select>
                             </div>
                         </div>
-                        <div>
-                            <label class="label">Color Mode</label>
-                            <div class="toggle-row">
-                                <button class="glass-btn btn-control active" id="btn-color" onclick="toggleColor()">
-                                    <i class="fa-solid fa-palette mb-1"></i> Color
-                                </button>
-                                <button class="glass-btn btn-control" id="btn-bw" onclick="toggleColor()">
-                                    <i class="fa-solid fa-ban mb-1"></i> B&W
-                                </button>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <label>Color Mode</label>
+                                <div class="btn-toggle-group">
+                                    <div class="btn-toggle active" id="btn-color" onclick="setMode('color')">Color</div>
+                                    <div class="btn-toggle" id="btn-bw" onclick="setMode('bw')">B&W</div>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Sides</label>
+                                <div class="btn-toggle-group">
+                                    <div class="btn-toggle active" id="btn-1s" onclick="setSides(1)">1-Sided</div>
+                                    <div class="btn-toggle" id="btn-2s" onclick="setSides(2)">2-Sided</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="mb-5">
-                        <label class="label">Layout</label>
-                        <div class="toggle-row">
-                            <button class="glass-btn btn-control active" id="btn-std" onclick="setLayout('standard')"><i class="fa-regular fa-file mb-1"></i> Standard</button>
-                            <button class="glass-btn btn-control" id="btn-book" onclick="setLayout('booklet')"><i class="fa-solid fa-book-open mb-1"></i> Booklet</button>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <label>Layout</label>
+                                <div class="btn-toggle-group">
+                                    <div class="btn-toggle active" id="btn-std" onclick="setLayout('std')">Standard</div>
+                                    <div class="btn-toggle" id="btn-book" onclick="setLayout('book')">Booklet</div>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Finish</label>
+                                <div class="btn-toggle-group">
+                                    <div class="btn-toggle" id="btn-staple" onclick="toggleFinish('staple')">Staple</div>
+                                    <div class="btn-toggle" id="btn-punch" onclick="toggleFinish('punch')">Punch</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <label class="label">Finishing Options</label>
-                        <div class="flex gap-3 mb-3">
-                            <button class="glass-btn btn-control flex-1" id="fn-staple" onclick="toggleStaple()">Is Staple</button>
-                            <button class="glass-btn btn-control flex-1" id="fn-punch3" onclick="setPunch('3')">3-Hole</button>
-                        </div>
-                        <button class="glass-btn btn-control active w-full" id="fn-none" onclick="clearFinish()">No Finishing</button>
                     </div>
                 </div>
-
-                <div class="controls-footer flex-col gap-2">
-                    <div id="bulk-notice" class="text-[11px] text-accent-500 font-bold text-center" style="display: none;">
-                        Bulk Discount Applied! <span id="bulk-tier-name"></span>
+                
+                <div class="p-5 bg-slate-900 border-t border-slate-800 flex gap-4 items-center">
+                    <div class="flex items-center bg-slate-800 rounded px-3 py-2 border border-slate-700">
+                        <span class="text-xs text-slate-400 font-bold mr-2">QTY</span>
+                        <input type="number" id="input-qty" value="1" min="1" class="w-12 bg-transparent text-center font-bold text-white outline-none" oninput="calcPrice()">
                     </div>
-                    <div class="flex gap-3 w-full">
-                        <div class="flex items-center bg-brand-800 rounded-xl px-5 h-14 gap-3 border border-brand-700">
-                            <span class="text-xs font-bold text-gray-400">QTY</span>
-                            <input type="number" id="qty-input" value="1" min="1" class="w-14 bg-transparent text-center font-bold text-white outline-none text-xl" onchange="updatePrice()" onkeyup="updatePrice()">
-                        </div>
-                        <button class="accent-btn flex-1 h-14 rounded-xl flex items-center justify-between px-6" onclick="addToCart()">
-                            <span>Add to Cart</span>
-                            <div class="flex flex-col items-end leading-tight">
-                                <span id="price-disp" class="text-lg">$0.29</span>
-                                <span class="text-[10px] font-medium opacity-80">Per Set</span>
-                            </div>
-                        </button>
-                    </div>
+                    <button class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg flex justify-between px-6 transition-all" onclick="addToCart()">
+                        <span>Add to Order</span>
+                        <span id="price-tag">$0.29</span>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div id="screen-cart" class="app-screen">
-            <div class="flex-1 overflow-y-auto p-6">
-                <h2 class="text-xl font-bold text-white mb-5">Your Cart</h2>
-                <div id="cart-list"></div>
-                <button class="w-full py-4 border-2 border-dashed border-brand-700 text-gray-400 rounded-xl mb-8 hover:bg-brand-800 hover:text-accent-500 hover:border-accent-500/50 transition-all font-bold" onclick="addMoreFiles()">
-                    <i class="fa-solid fa-plus mr-2"></i> Add Another File
+        <div id="screen-cart" class="screen">
+            <div class="flex-1 p-6 overflow-y-auto max-w-3xl mx-auto w-full">
+                <h2 class="text-2xl font-bold text-white mb-6">Order Logistics</h2>
+                
+                <div id="cart-items-container"></div>
+
+                <div class="mt-8 bg-slate-900 p-6 rounded-xl border border-slate-800">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-4">Fulfillment Method</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                        <div class="btn-toggle p-4 border border-slate-700 rounded-lg active" id="opt-pickup" onclick="setLogistics('pickup')">
+                            <i class="fa-solid fa-store mb-2 text-xl"></i><br>Local Pickup<br><span class="text-xs opacity-70">Free ($5 Min)</span>
+                        </div>
+                        <div class="btn-toggle p-4 border border-slate-700 rounded-lg" id="opt-local" onclick="setLogistics('local')">
+                            <i class="fa-solid fa-car-side mb-2 text-xl"></i><br>Local Delivery<br><span class="text-xs opacity-70">+$15.00</span>
+                        </div>
+                        <div class="btn-toggle p-4 border border-slate-700 rounded-lg" id="opt-ship" onclick="setLogistics('ship')">
+                            <i class="fa-solid fa-box mb-2 text-xl"></i><br>Shipping<br><span class="text-xs opacity-70">Calculated</span>
+                        </div>
+                    </div>
+
+                    <div id="address-box" class="space-y-3">
+                        <input id="inp-name" type="text" placeholder="Contact Name" class="w-full bg-slate-800 border border-slate-700 p-3 rounded text-white text-sm">
+                        <input id="inp-addr" type="text" placeholder="Delivery Address" class="w-full bg-slate-800 border border-slate-700 p-3 rounded text-white text-sm">
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t border-slate-800 pt-6">
+                    <div class="flex justify-between text-slate-400 mb-2"><span>Subtotal</span><span id="txt-sub">$0.00</span></div>
+                    <div class="flex justify-between text-slate-400 mb-2"><span>Logistics Surcharge</span><span id="txt-ship">$0.00</span></div>
+                    <div class="flex justify-between text-xl font-bold text-white mt-4"><span>Total</span><span id="txt-total">$0.00</span></div>
+                </div>
+
+                <div id="min-order-warning" class="min-order-alert hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Local Pickup requires a minimum order of $5.00. Please add more items.</span>
+                </div>
+
+                <button id="btn-checkout" class="w-full mt-6 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all" onclick="submitOrder()">
+                    Submit Order
                 </button>
-
-                <div class="section-box glass-panel">
-                    <div class="label">Delivery Method</div>
-                    <div class="grid grid-cols-2 gap-4 mb-5">
-                        <button class="glass-btn btn-control active" id="del-ship" onclick="setDelivery('ship')">
-                            <i class="fa-solid fa-truck-fast mb-1 text-lg"></i> Nationwide Ship
-                        </button>
-                        <button class="glass-btn btn-control" id="del-local" onclick="setDelivery('local')">
-                            <i class="fa-solid fa-hand-holding-box mb-1 text-lg"></i> Local Delivery
-                        </button>
-                    </div>
-                    <div id="form-ship" class="grid gap-4">
-                        <input type="text" class="select-input" placeholder="Recipient Name" id="ship-name">
-                        <input type="text" class="select-input" placeholder="Street Address" id="ship-addr">
-                    </div>
-                    <div id="info-ship" class="text-xs text-gray-400 bg-brand-800 p-4 rounded-xl mt-4 border border-brand-700 flex items-center">
-                        <i class="fa-solid fa-shield-check mr-3 text-accent-500 text-lg"></i> 
-                        <span>Secure 3-5 Day Shipping via UPS/FedEx ($12.00)</span>
-                    </div>
-                    <div id="info-local" class="hidden text-xs text-gray-400 bg-brand-800 p-4 rounded-xl mt-4 border border-brand-700 flex items-center">
-                        <i class="fa-solid fa-map-location-dot mr-3 text-accent-500 text-lg"></i>
-                        <span>Premium Local Delivery within 50 miles ($10.00)</span>
-                    </div>
-                </div>
-
-                <div class="section-box glass-panel mt-6">
-                    <div class="flex justify-between text-sm text-gray-400 mb-3"><span>Subtotal (Includes Bulk Discounts)</span><span id="sum-sub" class="font-medium text-white">$0.00</span></div>
-                    <div class="flex justify-between text-sm text-gray-400 mb-3"><span>Delivery & Handling</span><span id="sum-del" class="font-medium text-white">$0.00</span></div>
-                    <div class="flex justify-between text-xl font-bold text-accent-500 mt-5 pt-5 border-t border-brand-700"><span>Total Pay</span><span id="sum-total">$0.00</span></div>
-                </div>
-            </div>
-            <div class="controls-footer">
-                <button class="accent-btn w-full h-14 rounded-xl shadow-lg text-lg" onclick="checkout()">Complete Order</button>
             </div>
         </div>
 
     </div>
 
-    <div id="profile-overlay" onclick="toggleProfile()">
-        <div class="profile-drawer" onclick="event.stopPropagation()">
-            <div class="profile-header">
-                <div class="avatar" onclick="editProfile()"><i class="fa-solid fa-user-pen"></i></div>
-                <h3 class="text-xl font-bold text-white mb-1" id="prof-name">Guest User</h3>
-                <p class="text-xs font-medium text-accent-500 uppercase tracking-wider" id="prof-loc">Tap avatar to edit</p>
-                <button onclick="toggleProfile()" class="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-2xl"></i></button>
-            </div>
-            <div class="p-6 flex-1 overflow-y-auto bg-brand-900">
-                <div class="label mb-3">Saved Information</div>
-                <div class="p-5 bg-brand-800 rounded-xl border border-brand-700 text-sm text-gray-300 mb-6 cursor-pointer hover:border-accent-500 transition-all group" onclick="useAddress()" id="prof-saved-addr">
-                    <div class="flex items-center text-gray-500 group-hover:text-accent-500 mb-2"><i class="fa-solid fa-location-dot mr-2"></i> <b>Shipping Address</b></div>
-                    <div class="opacity-60 italic">No address saved yet.</div>
-                </div>
-                <div class="label mb-3">Recent Orders</div>
-                <div id="history-list" class="text-sm text-gray-500 italic">No recent order history.</div>
-            </div>
-        </div>
-    </div>
-
-    <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+    <input type="file" id="file-upload" class="hidden" accept=".pdf,.jpg,.png">
 
     <script>
-        // --- DATA & STATE ---
-        const DIMS={letter:{w:8.5,h:11},legal:{w:8.5,h:14},tabloid:{w:11,h:17}, '12x18':{w:12,h:18}, a4:{w:8.3,h:11.7}, a3:{w:11.7,h:16.5}};
-        const BASE_PRICES={letter:0.09,legal:0.12,tabloid:0.19, '12x18':0.29, a4:0.09, a3:0.19};
-        const COLOR_ADD={letter:0.20,legal:0.25,tabloid:0.40, '12x18':0.50, a4:0.20, a3:0.40};
-        const BULK_TIERS = [{ min: 1, max: 10, discount: 0.00, name: "" },{ min: 11, max: 50, discount: 0.10, name: "10% Off (11+)" },{ min: 51, max: 100, discount: 0.15, name: "15% Off (51+)" },{ min: 101, max: Infinity, discount: 0.25, name: "25% Off (101+)" }];
-        let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:'',delivery:'ship'};
-        let cart=[];
-        let userProfile = JSON.parse(localStorage.getItem('mp_profile')) || { name: "Guest User", addr: "", city: "" };
-        let orderHistory = JSON.parse(localStorage.getItem('mp_history')) || [];
+        // --- CORE LOGIC ---
+        const PRICING = {
+            letter: { bw: 0.09, color: 0.29 },
+            legal: { bw: 0.12, color: 0.35 },
+            tabloid: { bw: 0.19, color: 0.59 }
+        };
+        
+        let appState = {
+            file: null,
+            fileName: '',
+            pageCount: 1,
+            config: { size: 'letter', mode: 'color', sides: 1, layout: 'std', finish: [] },
+            qty: 1,
+            cart: [],
+            logistics: 'pickup'
+        };
 
-        window.onload = function() { updateProfileUI(); updateHistoryUI(); }
-        function safe(id, fn) { const el = document.getElementById(id); if(el) fn(el); }
-
-        // --- NAVIGATION ---
-        function goHome() {
-            if (state.doc) {
-                Swal.fire({
-                    title: 'Go Home?', text: "Your current job configuration will be saved.", icon: 'question',
-                    showCancelButton: true, confirmButtonText: 'Yes, Go Home', confirmButtonColor: '#d4af37', cancelButtonColor: '#374151', background: '#1f2937', color: '#fff'
-                }).then((r) => {
-                    if (r.isConfirmed) {
-                        document.getElementById('homepage').classList.remove('hidden-page');
-                        document.getElementById('home-btn-text').innerText = "Resume Job";
-                    }
-                });
-            } else {
-                document.getElementById('homepage').classList.remove('hidden-page');
-            }
-        }
-        function startOrder() { if (state.doc) { document.getElementById('homepage').classList.add('hidden-page'); showScreen('config'); } else { document.getElementById('file-input').click(); } }
-        function toggleProfile() { document.getElementById('profile-overlay').classList.toggle('open'); }
-        function showScreen(id) { document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-'+id).classList.add('active'); }
-        function gotoCart() { document.getElementById('homepage').classList.add('hidden-page'); showScreen('cart'); updateCartUI(); }
-        function addMoreFiles() { document.getElementById('file-input').click(); }
-
-        // --- FILE ENGINE ---
-        document.getElementById('file-input').addEventListener('change', async (e)=>{
-            if(!e.target.files[0]) return;
-            const file=e.target.files[0];
-            const loader=document.getElementById('loader');
-            loader.style.display='flex';
-            try {
-                state.fileName=file.name;
-                if(file.type==='application/pdf'){
-                    const b=await file.arrayBuffer();
-                    state.doc=await pdfjsLib.getDocument(b).promise;
-                    state.type='pdf'; state.pages=state.doc.numPages;
-                    state.printList=Array.from({length:state.pages},(_,i)=>i+1);
-                    safe('range-group', el => el.style.display='block');
-                    safe('nav-overlay', el => el.style.display='flex');
-                } else {
-                    state.doc=URL.createObjectURL(file);
-                    state.type='img'; state.pages=1; state.printList=[1];
-                    safe('range-group', el => el.style.display='none');
-                    safe('nav-overlay', el => el.style.display='none');
-                }
-                document.getElementById('homepage').classList.add('hidden-page');
-                showScreen('config');
-                state.previewIdx=0; renderPreview(); updatePrice();
-                loader.style.display='none';
-            } catch(err){ loader.style.display='none'; Swal.fire({icon: 'error', title: 'Oops...', text: err.message, background: '#1f2937', color: '#fff'}); }
+        // --- INIT ---
+        window.addEventListener('load', () => {
+            setTimeout(() => { 
+                document.getElementById('loader').style.opacity = 0;
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }, 800);
         });
 
-        // --- RENDER ENGINE ---
-        async function renderPreview(){
-            const paper=document.getElementById('paper-preview');
-            const dim=DIMS[state.size];
-            const w=state.orient==='portrait'?dim.w:dim.h;
-            const h=state.orient==='portrait'?dim.h:dim.w;
-            paper.style.aspectRatio=`${w}/${h}`;
-            safe('lbl-w', el => el.innerText=`${w}"`);
-            safe('lbl-h', el => el.innerText=`${h}"`);
-            const area=document.getElementById('content-area');
-            area.innerHTML=''; area.className='content-area';
-            if(state.layout==='booklet'){
-                area.classList.add('booklet-grid');
-                await renderSlot(area,state.printList[state.previewIdx]);
-                if(state.previewIdx+1<state.printList.length) await renderSlot(area,state.printList[state.previewIdx+1]);
-                else area.appendChild(document.createElement('div'));
-                safe('nav-info', el => el.innerText=`${state.previewIdx+1}-${Math.min(state.previewIdx+2,state.printList.length)}/${state.printList.length}`);
-            } else {
-                await renderSlot(area,state.printList[state.previewIdx]);
-                safe('nav-info', el => el.innerText=`${state.previewIdx+1}/${state.printList.length}`);
-            }
-            updateFinishUI();
-        }
-        async function renderSlot(container,pageNum){
-            const slot=document.createElement('div'); slot.className='page-slot'; slot.style.width='100%'; slot.style.height='100%';
-            let content=null;
-            if(state.type==='img'){ content=document.createElement('img'); content.src=state.doc; content.className='render-target'; }
-            else if(state.type==='pdf' && pageNum){
-                const page=await state.doc.getPage(pageNum);
-                const viewport=page.getViewport({scale:0.5});
-                content=document.createElement('canvas'); content.className='render-target';
-                content.width=viewport.width; content.height=viewport.height;
-                const ctx=content.getContext('2d');
-                if(state.color==='bw') ctx.filter='grayscale(100%)';
-                await page.render({canvasContext:ctx,viewport}).promise;
-            }
-            if(content){ if(state.color==='bw') content.style.filter='grayscale(100%)'; slot.appendChild(content); }
-            container.appendChild(slot);
-        }
-
-        // --- CONTROLS ---
-        function updateSize(v){ state.size=v; renderPreview(); updatePrice(); }
-        function setOrient(v){ state.orient=v; toggle('btn-port',v==='portrait'); toggle('btn-land',v==='landscape'); renderPreview(); }
-        function setLayout(v){ 
-            state.layout=v; toggle('btn-std',v==='standard'); toggle('btn-book',v==='booklet');
-            if(v==='booklet'){ state.orient='landscape'; state.size='tabloid'; toggle('btn-land',true); toggle('btn-port',false); document.getElementById('size-sel').value='tabloid'; if(state.punch==='3') state.punch='none'; }
-            renderPreview(); updatePrice();
-        }
-        function toggleColor(){ state.color=state.color==='color'?'bw':'color'; toggle('btn-bw',state.color==='bw'); toggle('btn-color',state.color==='color'); renderPreview(); updatePrice(); }
-        function clearFinish(){ state.staple=false; state.punch='none'; updateFinishUI(); }
-        function toggleStaple(){ state.staple=!state.staple; updateFinishUI(); }
-        function setPunch(v){ if(state.layout==='booklet') return; state.punch=(state.punch===v)?'none':v; updateFinishUI(); }
-        function updateFinishUI(){ 
-            const isBooklet = state.layout === 'booklet';
-            safe('fn-punch3', el => { el.disabled = isBooklet; el.style.opacity = isBooklet ? '0.3' : '1'; });
-            toggle('fn-none',!state.staple && state.punch==='none'); toggle('fn-staple',state.staple); 
-            safe('fn-punch3', el => { const active = state.punch==='3' && !isBooklet; if(active) { el.classList.add('active'); } else { el.classList.remove('active'); } });
-            updateFinishOverlay(); updatePrice();
-        }
-        function updateFinishOverlay(){
-            const l=document.getElementById('finish-layer'); l.innerHTML='';
-            if(state.staple){ const s=document.createElement('div'); s.className='staple'; s.style.top='4%'; s.style.left='4%'; s.style.transform='rotate(-45deg)'; l.appendChild(s); }
-            if(state.punch!=='none'){ for(let i=1;i<=3;i++){ const p=document.createElement('div'); p.className='punch'; p.style.left='2%'; p.style.top=(i/4*100)+'%'; l.appendChild(p); } }
-        }
-        function toggle(id,active){ safe(id, el=>{ if(active){ el.classList.add('active'); } else { el.classList.remove('active'); } }); }
+        // --- NAVIGATION ---
+        function goHome() { switchScreen('home'); }
+        function openCart() { switchScreen('cart'); renderCart(); }
+        function startOrder() { document.getElementById('file-upload').click(); }
         
-        // --- PRICING & CART ---
-        function updatePrice(){
-            let basePagePrice = BASE_PRICES[state.size]; 
-            if(state.color==='color') basePagePrice += COLOR_ADD[state.size];
-            const totalPages = state.layout==='booklet' ? Math.ceil(state.printList.length/4) : state.printList.length;
-            let qtyInput = document.getElementById('qty-input');
-            state.qty = parseInt(qtyInput.value) || 1;
-            if(state.qty < 1) { state.qty = 1; qtyInput.value = 1; }
-            let appliedTier = BULK_TIERS.find(tier => state.qty >= tier.min && state.qty <= tier.max) || BULK_TIERS[0];
-            let pricePerSet = basePagePrice * totalPages;
-            let discountedPricePerSet = pricePerSet * (1 - appliedTier.discount);
-            document.getElementById('price-disp').innerText = '$' + discountedPricePerSet.toFixed(2);
-            const notice = document.getElementById('bulk-notice');
-            if(appliedTier.discount > 0) { notice.style.display = 'block'; document.getElementById('bulk-tier-name').innerText = appliedTier.name; } else { notice.style.display = 'none'; }
-        }
-        function addToCart(){
-            updatePrice();
-            let finalPricePerSet = parseFloat(document.getElementById('price-disp').innerText.replace('$',''));
-            cart.push({ file: state.fileName, desc: `${state.size.toUpperCase()} • ${state.layout.toUpperCase()} • ${state.color.toUpperCase()}`, qty: state.qty, price: finalPricePerSet * state.qty });
-            safe('cart-badge', el => { el.innerText=cart.length; el.style.display='flex'; }); gotoCart();
-        }
-        function updateCartUI(){
-            const l=document.getElementById('cart-list'); l.innerHTML=''; let tot=0;
-            cart.forEach((i, idx)=>{ tot+=i.price; l.innerHTML+=`<div class="cart-item glass-panel"><div class="flex-1"><div class="text-sm font-bold text-white truncate">${i.file}</div><div class="text-xs text-gray-400 mt-1">${i.desc}</div><div class="text-xs font-medium text-accent-500 mt-1">Qty: ${i.qty}</div></div><div class="flex flex-col items-end justify-between"><div class="text-white font-bold">$${i.price.toFixed(2)}</div><div class="text-red-500 cursor-pointer hover:text-red-400 text-sm" onclick="cart.splice(${idx},1);updateCartUI()"><i class="fa-solid fa-trash-can"></i></div></div></div>`; });
-            let del = state.delivery==='ship' ? 12 : 10; 
-            document.getElementById('sum-sub').innerText = '$' + tot.toFixed(2); document.getElementById('sum-del').innerText = '$' + del.toFixed(2); document.getElementById('sum-total').innerText = '$' + (tot+del).toFixed(2);
-        }
-        function setDelivery(v){ 
-            state.delivery=v; toggle('del-ship',v==='ship'); toggle('del-local',v==='local'); 
-            safe('info-ship', el => el.style.display=v==='ship'?'flex':'none'); safe('info-local', el => el.style.display=v==='local'?'flex':'none'); updateCartUI(); 
-        }
-        function checkout(){ 
-            if(cart.length === 0) return;
-            const now = new Date().toLocaleDateString();
-            cart.forEach(item => { orderHistory.unshift({...item, date: now}); });
-            localStorage.setItem('mp_history', JSON.stringify(orderHistory));
-            updateHistoryUI();
-            Swal.fire({title:'Order Submitted!', html:'Thank you for choosing Magic Printer.<br>Your documents are being processed.', icon:'success', background: '#1f2937', color: '#fff', confirmButtonColor: '#d4af37'}); 
-            cart=[]; safe('cart-badge', el => el.style.display='none'); updateCartUI(); goHome(); 
+        function switchScreen(name) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById('screen-' + name).classList.add('active');
+            // Hide hero on non-home
+            document.getElementById('screen-home').style.display = (name === 'home') ? 'flex' : 'none';
         }
 
-        // --- PROFILE & UTILS ---
-        function editProfile() {
+        // --- FILE HANDLER ---
+        document.getElementById('file-upload').addEventListener('change', async (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                appState.fileName = file.name;
+                
+                // Simulating PDF parse for demo
+                appState.pageCount = Math.floor(Math.random() * 10) + 1; // Fake page count
+                
+                if (file.type === 'application/pdf') {
+                    // Real PDF logic would go here
+                } else {
+                    appState.file = URL.createObjectURL(file);
+                }
+                
+                switchScreen('config');
+                render();
+            }
+        });
+
+        // --- CONFIGURATOR LOGIC ---
+        function render() {
+            // Update State from DOM
+            appState.config.size = document.getElementById('input-size').value;
+            
+            // Visual Updates
+            const preview = document.getElementById('paper-envelope');
+            const dims = { letter: [8.5, 11], legal: [8.5, 14], tabloid: [11, 17] };
+            const [w, h] = dims[appState.config.size];
+            
+            // Aspect Ratio
+            preview.style.aspectRatio = `${w}/${h}`;
+            document.getElementById('lbl-w').innerText = w + '"';
+            document.getElementById('lbl-h').innerText = h + '"';
+
+            // Background color for B&W simulation
+            preview.style.filter = appState.config.mode === 'bw' ? 'grayscale(100%)' : 'none';
+
+            // Booklet Constraint
+            if (appState.config.layout === 'book') {
+                if (appState.config.finish.includes('punch')) {
+                    toggleFinish('punch'); // Auto-remove punch
+                    Swal.fire({toast:true, position:'top', icon:'info', title:'Hole punch removed for booklet', timer:2000, showConfirmButton:false, background:'#1e293b', color:'#fff'});
+                }
+                // Force Tabloid for booklet usually, but let's just rotate
+                preview.style.aspectRatio = `${h}/${w}`; // Landscapish
+            }
+
+            // Finish Layer
+            const finLayer = document.getElementById('finishing-layer');
+            finLayer.innerHTML = '';
+            if (appState.config.finish.includes('staple')) {
+                const s = document.createElement('div');
+                s.className = 'staple'; s.style.top='10px'; s.style.left='10px'; s.style.transform='rotate(-45deg)';
+                finLayer.appendChild(s);
+            }
+            if (appState.config.finish.includes('punch')) {
+                for(let i=1; i<=3; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'punch'; p.style.left='5px'; p.style.top=`${i*25}%`;
+                    finLayer.appendChild(p);
+                }
+            }
+
+            calcPrice();
+        }
+
+        // --- ACTIONS ---
+        function setMode(m) { 
+            appState.config.mode = m; 
+            updateToggleGroup('btn-color', 'btn-bw', m === 'color');
+            render(); 
+        }
+        function setSides(n) {
+            appState.config.sides = n;
+            updateToggleGroup('btn-1s', 'btn-2s', n === 1);
+            render();
+        }
+        function setLayout(l) {
+            appState.config.layout = l;
+            updateToggleGroup('btn-std', 'btn-book', l === 'std');
+            render();
+        }
+        function toggleFinish(f) {
+            const idx = appState.config.finish.indexOf(f);
+            if (idx > -1) appState.config.finish.splice(idx, 1);
+            else appState.config.finish.push(f);
+            
+            document.getElementById('btn-' + f).classList.toggle('active');
+            render();
+        }
+
+        function updateToggleGroup(id1, id2, isFirst) {
+            document.getElementById(id1).classList.toggle('active', isFirst);
+            document.getElementById(id2).classList.toggle('active', !isFirst);
+        }
+
+        // --- PRICING ---
+        function calcPrice() {
+            const base = PRICING[appState.config.size][appState.config.mode];
+            const qty = parseInt(document.getElementById('input-qty').value) || 1;
+            appState.qty = qty;
+            
+            // Logic: Base * Pages * Qty
+            let total = base * appState.pageCount * qty;
+            
+            // Simple Bulk Disc
+            if (qty > 50) total *= 0.90; // 10% off
+            if (qty > 100) total *= 0.80; // 20% off
+
+            document.getElementById('price-tag').innerText = '$' + total.toFixed(2);
+            return total;
+        }
+
+        function addToCart() {
+            const price = calcPrice();
+            appState.cart.push({
+                file: appState.fileName,
+                desc: `${appState.config.size.toUpperCase()} / ${appState.config.mode.toUpperCase()} / ${appState.config.layout}`,
+                qty: appState.qty,
+                price: price
+            });
+            
+            // Visual Feedback
+            document.getElementById('cart-dot').classList.remove('hidden');
+            openCart();
+        }
+
+        // --- CART & LOGISTICS ---
+        function setLogistics(type) {
+            appState.logistics = type;
+            ['opt-pickup', 'opt-local', 'opt-ship'].forEach(id => document.getElementById(id).classList.remove('active'));
+            document.getElementById('opt-' + type).classList.add('active');
+            
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            container.innerHTML = '';
+            let subtotal = 0;
+
+            appState.cart.forEach((item, index) => {
+                subtotal += item.price;
+                const div = document.createElement('div');
+                div.className = 'cart-row';
+                div.innerHTML = `
+                    <div>
+                        <div class="font-bold text-white">${item.file}</div>
+                        <div class="cart-meta">${item.desc} • Qty: ${item.qty}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-white">$${item.price.toFixed(2)}</div>
+                        <button class="text-xs text-red-500 mt-2" onclick="removeCartItem(${index})">Remove</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            // Logistics Math
+            let surcharge = 0;
+            if (appState.logistics === 'local') surcharge = 15.00;
+            if (appState.logistics === 'ship') {
+                // Fake weight calc: $10 base + $0.05 per item unit equivalent
+                surcharge = 10.00 + (subtotal * 0.1); 
+            }
+
+            const total = subtotal + surcharge;
+
+            // UI Updates
+            document.getElementById('txt-sub').innerText = '$' + subtotal.toFixed(2);
+            document.getElementById('txt-ship').innerText = '$' + surcharge.toFixed(2);
+            document.getElementById('txt-total').innerText = '$' + total.toFixed(2);
+
+            // Validation (Minimum Order)
+            const btn = document.getElementById('btn-checkout');
+            const warning = document.getElementById('min-order-warning');
+            
+            if (appState.logistics === 'pickup' && subtotal < 5.00) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                warning.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                warning.classList.add('hidden');
+            }
+        }
+
+        function removeCartItem(idx) {
+            appState.cart.splice(idx, 1);
+            renderCart();
+        }
+
+        function submitOrder() {
+            // Check Address
+            const name = document.getElementById('inp-name').value;
+            const addr = document.getElementById('inp-addr').value;
+            
+            if (appState.logistics !== 'pickup' && (!name || !addr)) {
+                Swal.fire({title: 'Details Needed', text: 'Please enter a name and delivery address.', icon: 'warning', background: '#1e293b', color: '#fff'});
+                return;
+            }
+
             Swal.fire({
-                title: 'Edit Profile',
-                html: `<input id="swal-name" class="swal2-input" placeholder="Full Name" value="${userProfile.name}" style="background:#374151;color:white;border:none;">` +
-                      `<input id="swal-city" class="swal2-input" placeholder="City / Company" value="${userProfile.city}" style="background:#374151;color:white;border:none;">` +
-                      `<textarea id="swal-addr" class="swal2-textarea" placeholder="Shipping Address" style="background:#374151;color:white;border:none;">${userProfile.addr}</textarea>`,
-                background: '#1f2937', color: '#fff', confirmButtonColor: '#d4af37', focusConfirm: false,
-                preConfirm: () => { return { name: document.getElementById('swal-name').value, city: document.getElementById('swal-city').value, addr: document.getElementById('swal-addr').value } }
-            }).then((result) => { if(result.isConfirmed) { userProfile = result.value; localStorage.setItem('mp_profile', JSON.stringify(userProfile)); updateProfileUI(); } })
+                title: 'Order Received!',
+                text: `Thank you, ${name || 'Customer'}. We are processing your job.`,
+                icon: 'success',
+                background: '#1e293b', color: '#fff',
+                confirmButtonColor: '#2563eb'
+            }).then(() => {
+                appState.cart = [];
+                document.getElementById('cart-dot').classList.add('hidden');
+                goHome();
+            });
         }
-        function updateProfileUI() {
-            safe('prof-name', el => el.innerText = userProfile.name); safe('prof-loc', el => el.innerText = userProfile.city || "Tap avatar to edit");
-            safe('prof-saved-addr', el => { el.innerHTML = `<div class="flex items-center text-gray-400 group-hover:text-accent-500 mb-2"><i class="fa-solid fa-location-dot mr-2"></i> <b>Shipping Address</b></div>`; el.innerHTML += userProfile.addr ? `<div class="text-white">${userProfile.addr}</div>` : `<div class="opacity-60 italic">No address saved yet.</div>`; });
-        }
-        function updateHistoryUI() {
-            const h = document.getElementById('history-list'); if(orderHistory.length === 0) { h.innerHTML = "No recent order history."; return; } h.innerHTML = '';
-            orderHistory.slice(0,3).forEach(o => { h.innerHTML += `<div class="cart-item glass-panel" style="padding: 12px;"><div class="flex-1 overflow-hidden"><div class="text-sm font-bold text-white truncate">${o.file}</div><div class="text-[11px] text-gray-400 mt-1">${o.date} • ${o.desc}</div></div><button class="accent-btn px-3 py-1 rounded-lg text-[11px] h-8 shadow-none" onclick="reorder('${o.file}')">Reorder</button></div>`; });
-        }
-        function useAddress() { if(userProfile.addr) { safe('ship-name', el => el.value = userProfile.name); safe('ship-addr', el => el.value = userProfile.addr); toggleProfile(); Swal.fire({icon:'success', title:'Address Applied', toast:true, position:'top-end', showConfirmButton:false, timer:2000, background:'#1f2937', color:'#fff'}); } else { editProfile(); } }
-        function reorder(n) { cart.push({file:n, desc:"Reorder", qty:1, price:10.00}); updateCartUI(); gotoCart(); toggleProfile(); }
-        function parsePageRange(val){ if (!val.trim()) state.printList = Array.from({length: state.pages}, (_, i) => i + 1); else { const list = new Set(); val.split(',').forEach(p => { if (p.includes('-')) { const [s,e]=p.split('-').map(Number); for(let i=s;i<=e;i++) if(i<=state.pages) list.add(i); } else { const n=Number(p); if(n<=state.pages) list.add(n); } }); state.printList = Array.from(list).sort((a,b)=>a-b); } state.previewIdx = 0; renderPreview(); updatePrice(); }
-        function prevPage(){ if(state.previewIdx>0){ state.previewIdx--; renderPreview(); } }
-        function nextPage(){ const j=state.layout==='booklet'?2:1; if(state.previewIdx+j<state.printList.length){ state.previewIdx+=j; renderPreview(); } }
     </script>
 </body>
 </html>

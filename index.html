@@ -1,9 +1,9 @@
-l<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Printer | v51 Stable</title>
+    <title>Magic Printer | Premium Printing Solutions</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -17,8 +17,10 @@ l<!DOCTYPE html>
             theme: {
                 extend: {
                     colors: { 
-                        brand: { 900: '#0f172a', 800: '#1e293b', 700: '#334155', 600: '#2563eb', 500: '#3b82f6', 400: '#60a5fa' } 
+                        brand: { 950: '#0a0f1a', 900: '#111827', 800: '#1f2937', 700: '#374151', 600: '#4b5563', 500: '#6b7280' },
+                        accent: { 500: '#d4af37', 600: '#b8962f' } /* Gold */
                     },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     spacing: { 'safe-b': 'env(safe-area-inset-bottom)' }
                 }
             }
@@ -27,97 +29,116 @@ l<!DOCTYPE html>
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         /* RESET & BASE */
-        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
+        body { background: #0a0f1a; color: #f3f4f6; font-family: 'Inter', sans-serif; overflow: hidden; touch-action: pan-y; }
         #app-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
+
+        /* UI COMPONENTS */
+        .glass-panel { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-btn { background: rgba(55, 65, 81, 0.6); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.1); color: #e5e7eb; transition: all 0.2s; }
+        .glass-btn.active { background: rgba(212, 175, 55, 0.9); border-color: #d4af37; color: #0a0f1a; font-weight: 600; box-shadow: 0 2px 10px rgba(212, 175, 55, 0.3); }
+        .accent-btn { background: linear-gradient(135deg, #d4af37 0%, #b8962f 100%); color: #0a0f1a; font-weight: 700; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); transition: transform 0.1s; }
+        .accent-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5); }
 
         /* HEADER */
         .global-header { 
-            height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 16px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px);
-            border-bottom: 1px solid #334155; z-index: 1000; position: relative;
+            height: 70px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 24px; background: rgba(10, 15, 26, 0.95); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 1000; position: relative;
         }
-        .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .logo-icon { width: 32px; height: 32px; background: #2563eb; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .logo-text { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.5px; }
-        .nav-actions { display: flex; gap: 16px; align-items: center; }
-        .nav-btn { color: #94a3b8; font-size: 20px; cursor: pointer; position: relative; }
-        .badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .logo-svg { width: 42px; height: 42px; fill: #d4af37; }
+        .logo-text { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px; background: linear-gradient(to right, #fff, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-actions { display: flex; gap: 20px; align-items: center; }
+        .nav-btn { color: #9ca3af; font-size: 22px; cursor: pointer; position: relative; transition: color 0.2s; }
+        .nav-btn:hover { color: #d4af37; }
+        .badge { position: absolute; top: -6px; right: -6px; background: #d4af37; color: #0a0f1a; font-size: 11px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
         /* SCREENS */
-        #homepage { position: absolute; inset: 0; top: 60px; z-index: 50; background: #0f172a; overflow-y: auto; transition: transform 0.3s ease-in-out; }
+        #homepage { position: absolute; inset: 0; top: 70px; z-index: 50; background: #0a0f1a; overflow-y: auto; transition: transform 0.3s ease-in-out; }
         #homepage.hidden-page { transform: translateX(-100%); }
-        .app-screen { position: absolute; inset: 0; top: 60px; background: #0f172a; display: none; flex-direction: column; z-index: 10; }
+        .app-screen { position: absolute; inset: 0; top: 70px; background: #0a0f1a; display: none; flex-direction: column; z-index: 10; }
         .app-screen.active { display: flex; }
 
-        /* HERO & HOME */
-        .hero { padding: 40px 24px; text-align: center; border-bottom: 1px solid #1e293b; background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); }
-        .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 12px; color: white; line-height: 1.1; }
-        .hero-badge { display: inline-block; background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 99px; margin-bottom: 16px; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .price-comp { margin: 0 24px 24px; background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
-        .pc-row { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #334155; font-size: 13px; }
-        .pc-head { background: #334155; color: white; font-weight: 700; }
-        .pc-them { color: #f87171; text-decoration: line-through; }
-        .pc-us { color: #34d399; font-weight: 700; }
-        .feature-card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
-        .btn-big { width: 100%; max-width: 300px; background: #2563eb; color: white; padding: 16px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(37,99,235,0.4); }
+        /* HOME HERO */
+        .hero { padding: 60px 24px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: radial-gradient(circle at top center, #111827 0%, #0a0f1a 70%); }
+        .hero h1 { font-size: 40px; font-weight: 800; margin-bottom: 16px; color: white; line-height: 1.1; letter-spacing: -1px; }
+        .hero p { color: #9ca3af; font-size: 16px; line-height: 1.6; max-width: 500px; margin: 0 auto 24px; }
+        .hero-badge { display: inline-block; background: rgba(212, 175, 55, 0.15); color: #d4af37; font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: 99px; margin-bottom: 20px; border: 1px solid rgba(212, 175, 55, 0.3); letter-spacing: 0.5px; }
 
-        /* PREVIEW */
-        .workspace { flex: 1; position: relative; background: #0f172a; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: hidden; }
-        #paper-preview { background: white; box-shadow: 0 30px 80px rgba(0,0,0,0.6); transition: aspect-ratio 0.3s ease; position: relative; width: auto; height: auto; max-width: 100%; max-height: 100%; aspect-ratio: 8.5/11; display: flex; justify-content: center; align-items: center; }
-        .dim-line { position: absolute; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 11px; font-family: monospace; font-weight: bold; pointer-events: none; }
-        .dim-top { top: -25px; left: 0; width: 100%; height: 20px; border-bottom: 1px solid #475569; }
-        .dim-top span { background: #0f172a; padding: 0 8px; position: relative; top: 10px; }
-        .dim-side { left: -35px; top: 0; height: 100%; width: 20px; border-right: 1px solid #475569; writing-mode: vertical-rl; transform: rotate(180deg); }
-        .dim-side span { background: #0f172a; padding: 8px 0; position: relative; right: -10px; }
+        /* HOME CONTENT */
+        .content-grid { padding: 32px 24px; display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 1200px; margin: 0 auto; }
+        @media (min-width: 1024px) { .content-grid { grid-template-columns: 2fr 1fr; align-items: start; } }
+        
+        .price-card { background: rgba(31, 41, 55, 0.4); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); overflow: hidden; }
+        .pc-row { display: flex; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 14px; }
+        .pc-row:last-child { border-bottom: none; }
+        .pc-head { background: rgba(31, 41, 55, 0.8); color: #d4af37; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; }
+        .pc-them { color: #ef4444; text-decoration: line-through; }
+        .pc-us { color: #d4af37; font-weight: 700; font-size: 16px; }
+
+        .feature-card { background: rgba(31, 41, 55, 0.4); padding: 24px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+        .feature-icon { color: #d4af37; font-size: 28px; }
+        .feature-title { font-weight: 700; color: white; font-size: 16px; }
+        .feature-desc { color: #9ca3af; font-size: 13px; line-height: 1.4; }
+        
+        .clients-bar { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 32px; }
+        .client-pill { background: rgba(55, 65, 81, 0.4); color: #d1d5db; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        .cta-box { padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+        .btn-hero { width: 100%; max-width: 360px; padding: 18px; border-radius: 12px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+        /* CONFIG SCREEN */
+        .workspace { flex: 1; position: relative; background: #0a0f1a; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: hidden; }
+        #paper-preview { background: white; box-shadow: 0 30px 80px rgba(0,0,0,0.7); transition: aspect-ratio 0.3s ease; position: relative; width: auto; height: auto; max-width: 100%; max-height: 100%; aspect-ratio: 8.5/11; display: flex; justify-content: center; align-items: center; border-radius: 2px; }
+        
+        /* CONTROLS */
+        .controls { height: 60vh; flex-shrink: 0; background: #111827; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; box-shadow: 0 -4px 25px rgba(0,0,0,0.5); }
+        .controls-scroll { flex: 1; overflow-y: auto; padding: 24px; }
+        .controls-footer { padding: 20px 24px; background: #111827; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 16px; }
+        .label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
+        .select-input { width: 100%; background: #1f2937; color: white; border: 1px solid rgba(255, 255, 255, 0.1); padding: 14px 18px; border-radius: 10px; font-size: 14px; outline: none; appearance: none; transition: border-color 0.2s; }
+        .select-input:focus { border-color: #d4af37; }
+        .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-control { padding: 14px; border-radius: 10px; font-size: 14px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+
+        /* CART & PROFILE */
+        .cart-item { background: #1f2937; border-radius: 12px; padding: 18px; margin-bottom: 14px; display: flex; gap: 14px; border: 1px solid rgba(255, 255, 255, 0.08); }
+        #profile-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.85); display: none; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
+        #profile-overlay.open { display: flex; opacity: 1; }
+        .profile-drawer { width: 90%; max-width: 400px; height: 100%; background: #111827; border-left: 1px solid rgba(255, 255, 255, 0.1); transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
+        #profile-overlay.open .profile-drawer { transform: translateX(0); }
+        .profile-header { padding: 40px 30px; background: #0a0f1a; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: center; position: relative; }
+        .avatar { width: 72px; height: 72px; background: linear-gradient(135deg, #d4af37, #b8962f); color: #0a0f1a; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
+
+        /* UTILS */
+        .dim-line { position: absolute; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 11px; font-family: monospace; font-weight: bold; pointer-events: none; }
+        .dim-top { top: -25px; left: 0; width: 100%; height: 20px; border-bottom: 1px solid #6b7280; } .dim-top::before, .dim-top::after { content: ''; position: absolute; bottom: -3px; width: 1px; height: 7px; background: #6b7280; } .dim-top::before { left: 0; } .dim-top::after { right: 0; } .dim-top span { background: #0a0f1a; padding: 0 8px; position: relative; top: 10px; }
+        .dim-side { left: -35px; top: 0; height: 100%; width: 20px; border-right: 1px solid #6b7280; writing-mode: vertical-rl; transform: rotate(180deg); } .dim-side::before, .dim-side::after { content: ''; position: absolute; right: -3px; width: 7px; height: 1px; background: #6b7280; } .dim-side::before { top: 0; } .dim-side::after { bottom: 0; } .dim-side span { background: #0a0f1a; padding: 8px 0; position: relative; right: -10px; }
         .content-area { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .render-target { width: 100%; height: 100%; object-fit: contain; }
-        .booklet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #cbd5e1; }
+        .booklet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #d1d5db; }
         .booklet-grid .page-slot { background: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .grayscale { filter: grayscale(100%) contrast(1.15); }
         .finish-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
-        .staple { position: absolute; width: 3%; height: 1.5%; background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8); border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
-        .punch { position: absolute; width: 2.5%; aspect-ratio: 1/1; background: #0f172a; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); }
-
-        /* CONTROLS */
-        .controls { height: 55vh; flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; flex-direction: column; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); }
-        .controls-scroll { flex: 1; overflow-y: auto; padding: 20px; }
-        .controls-footer { padding: 16px 20px; background: #1e293b; border-top: 1px solid #334155; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: flex; gap: 12px; }
-        .label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
-        .select-input { width: 100%; background: #0f172a; color: white; border: 1px solid #334155; padding: 12px 16px; border-radius: 8px; font-size: 14px; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 10px; }
-        .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .btn-toggle { background: #0f172a; border: 1px solid #334155; color: #94a3b8; padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-        .btn-toggle.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; box-shadow: 0 2px 5px rgba(37,99,235,0.3); }
-        .btn-toggle:disabled { opacity: 0.3; cursor: not-allowed; border-color: #334155; background: #0f172a; color: #475569; }
-
-        /* PROFILE */
-        #profile-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); display: none; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
-        #profile-overlay.open { display: flex; opacity: 1; }
-        .profile-drawer { width: 85%; max-width: 350px; height: 100%; background: #1e293b; border-left: 1px solid #334155; transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
-        #profile-overlay.open .profile-drawer { transform: translateX(0); }
-        .profile-header { padding: 30px; background: #0f172a; border-bottom: 1px solid #334155; text-align: center; position: relative; }
-        .avatar { width: 64px; height: 64px; background: #3b82f6; color: white; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
-        
-        /* CART */
-        .cart-item { background: #2a3546; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; gap: 12px; border: 1px solid #334155; }
-        .section-box { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
-
-        #loader { position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .spinner { width: 32px; height: 32px; border: 3px solid #1e293b; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 12px; }
+        .staple { position: absolute; width: 3%; height: 1.5%; background: linear-gradient(90deg, #9ca3af, #e5e7eb, #9ca3af); border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
+        .punch { position: absolute; width: 2.5%; aspect-ratio: 1/1; background: #0a0f1a; border-radius: 50%; box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8); }
+        #loader { position: fixed; inset: 0; background: rgba(10, 15, 26, 0.95); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { width: 36px; height: 36px; border: 3px solid rgba(212, 175, 55, 0.2); border-top-color: #d4af37; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 16px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div class="spinner"></div><div class="text-xs text-gray-400">Loading...</div></div>
+    <div id="loader"><div class="spinner"></div><div class="text-xs font-bold text-accent-500 uppercase tracking-wider">Loading Application...</div></div>
 
     <div id="app-container">
 
         <div class="global-header">
             <div class="logo-area" onclick="goHome()">
-                <div class="logo-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 8h-1V3H6v5H5c-1.1 0-2 .9-2 2v10h18V10c0-1.1-.9-2-2-2zM8 5h8v3H8V5zm8 14H8v-4h8v4zm2-6c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/><path d="M15.5 13.5l-2.12-2.12-1.42 1.42L13.38 14.2 12 15.58 10.62 14.2l1.42-1.42L9.92 10.66 8.5 12.08l2.12 2.12L8.5 16.32l1.42 1.42L12 15.62l2.08 2.08 1.42-1.42-2.12-2.12zM18.86 4.48l-1.42-1.42L16.02 4.5l1.42 1.42 1.42-1.44zM21.04 9.02l-1.42-1.42-1.42 1.42 1.42 1.42 1.42-1.42zM5.14 4.48L6.56 3.06 7.98 4.5 6.56 5.92 5.14 4.48zM2.96 9.02L4.38 7.6 5.8 9.02 4.38 10.44 2.96 9.02z"/></svg>
                 <div class="logo-text">Magic Printer</div>
             </div>
             <div class="nav-actions">
@@ -131,58 +152,71 @@ l<!DOCTYPE html>
 
         <div id="homepage">
             <div class="hero">
-                <div class="hero-badge">50% CHEAPER THAN COPY SHOPS</div>
-                <h1>Stop Overpaying at<br>the Copy Shop.</h1>
-                <p>Professional quality prints for less than half the price of the big box stores.</p>
+                <div class="hero-badge">THE PROFESSIONAL'S CHOICE</div>
+                <h1>Your Premium,<br>On-Demand Print Partner.</h1>
+                <p>High-quality documents delivered with speed and precision. Superior to big box stores, designed for professionals.</p>
             </div>
 
-            <div class="price-comp">
-                <div class="pc-row pc-head">
-                    <div>Price Per Page (Color)</div>
-                    <div>Retail</div>
-                    <div>Us</div>
+            <div class="content-grid">
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div class="feature-card glass-panel">
+                        <i class="fa-solid fa-wand-magic-sparkles feature-icon"></i>
+                        <div class="feature-title">Magical Quality & Speed</div>
+                        <div class="feature-desc">We use state-of-the-art digital presses for crisp, vibrant prints. Orders are processed instantly for rapid turnaround.</div>
+                    </div>
+                    <div class="feature-card glass-panel">
+                        <i class="fa-solid fa-layer-group feature-icon"></i>
+                        <div class="feature-title">Dynamic Bulk Pricing</div>
+                        <div class="feature-desc">The more you print, the more you save. Our intelligent pricing engine automatically applies the best discount tier to your order.</div>
+                    </div>
+                    <div class="feature-card glass-panel">
+                        <i class="fa-solid fa-truck-fast feature-icon"></i>
+                        <div class="feature-title">Flexible Logistics</div>
+                        <div class="feature-desc">Choose between secure nationwide shipping via UPS/FedEx or our premium local delivery service.</div>
+                    </div>
                 </div>
-                <div class="pc-row">
-                    <div class="text-slate-300">Letter (8.5x11)</div>
-                    <div class="pc-them">$0.79</div>
-                    <div class="pc-us">$0.29</div>
-                </div>
-                <div class="pc-row">
-                    <div class="text-slate-300">Tabloid (11x17)</div>
-                    <div class="pc-them">$2.49</div>
-                    <div class="pc-us">$0.59</div>
-                </div>
-                <div class="text-center text-[10px] text-slate-500 py-2 bg-slate-900/50">
-                    *Compared to avg. retail walk-in prices (2025)
+
+                <div>
+                    <div class="price-card glass-panel mb-8">
+                        <div class="pc-row pc-head">
+                            <div>Standard Price Per Page (Color)</div>
+                            <div>Retail</div>
+                            <div>Us</div>
+                        </div>
+                        <div class="pc-row">
+                            <div class="text-gray-300">Letter (8.5x11)</div>
+                            <div class="pc-them">$0.79</div>
+                            <div class="pc-us">$0.29</div>
+                        </div>
+                        <div class="pc-row">
+                            <div class="text-gray-300">Tabloid (11x17)</div>
+                            <div class="pc-them">$2.49</div>
+                            <div class="pc-us">$0.59</div>
+                        </div>
+                        <div class="text-center text-[10px] text-gray-500 py-3 bg-brand-800/50 font-medium">
+                            *Base price. Bulk discounts applied at checkout.
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Trusted By Professionals In</span>
+                    </div>
+                    <div class="clients-bar">
+                        <span class="client-pill">Legal</span>
+                        <span class="client-pill">Real Estate</span>
+                        <span class="client-pill">Finance</span>
+                        <span class="client-pill">Healthcare</span>
+                        <span class="client-pill">Education</span>
+                        <span class="client-pill">Non-Profits</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="features" style="padding: 24px; padding-top: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div class="feature-card">
-                    <i class="fa-solid fa-truck-fast text-blue-500 text-2xl mb-2"></i>
-                    <div class="font-bold text-sm text-white">Local Delivery</div>
-                    <div class="text-xs text-slate-400">Temecula + 50 Miles ($10)</div>
-                </div>
-                <div class="feature-card">
-                    <i class="fa-solid fa-plane-departure text-blue-500 text-2xl mb-2"></i>
-                    <div class="font-bold text-sm text-white">Nationwide Shipping</div>
-                    <div class="text-xs text-slate-400">Secure UPS & FedEx</div>
-                </div>
-            </div>
-
-            <div class="text-center mb-4 mt-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Printing Solutions For Everyone</span>
-            </div>
-            <div class="flex justify-center gap-2 flex-wrap px-6 mb-8">
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Personal</span>
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Small Business</span>
-                <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700">Enterprise</span>
-            </div>
-
-            <div class="cta-box" style="padding: 24px; display: flex; justify-content: center;">
-                <button class="btn-big" onclick="startOrder()">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> <span id="home-btn-text">Upload & Save</span>
+            <div class="cta-box">
+                <button class="accent-btn btn-hero" onclick="startOrder()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span id="home-btn-text">Upload & Print Now</span>
                 </button>
+                <div class="text-[11px] text-gray-500 font-medium">v52 Apex Edition • PDF, JPG, PNG Supported</div>
             </div>
         </div>
 
@@ -195,17 +229,18 @@ l<!DOCTYPE html>
                     <div id="content-area" class="content-area"></div>
                     <div class="finish-overlay" id="finish-layer"></div>
                     
-                    <div id="nav-overlay" class="absolute bottom-4 bg-slate-900/90 px-3 py-1 rounded-full text-xs text-white border border-slate-700 hidden items-center gap-2 z-30">
-                        <button onclick="prevPage()"><i class="fa-solid fa-chevron-left"></i></button>
-                        <span id="nav-info">1/1</span>
-                        <button onclick="nextPage()"><i class="fa-solid fa-chevron-right"></i></button>
+                    <div id="nav-overlay" class="absolute bottom-4 bg-brand-900/90 px-3 py-1.5 rounded-full text-xs text-white border border-brand-700 hidden items-center gap-3 z-30 shadow-lg backdrop-blur-sm">
+                        <button onclick="prevPage()" class="hover:text-accent-500"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span id="nav-info" class="font-bold">1/1</span>
+                        <button onclick="nextPage()" class="hover:text-accent-500"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                 </div>
             </div>
 
             <div class="controls">
                 <div class="controls-scroll">
-                    <div class="mb-4">
+                    
+                    <div class="mb-5">
                         <label class="label">Paper Size</label>
                         <select id="size-sel" class="select-input" onchange="updateSize(this.value)">
                             <option value="letter">Letter (8.5 x 11)</option>
@@ -217,95 +252,115 @@ l<!DOCTYPE html>
                         </select>
                     </div>
 
-                    <div class="mb-4" id="range-group" style="display:none;">
+                    <div class="mb-5" id="range-group" style="display:none;">
                         <label class="label">Pages</label>
                         <input type="text" id="page-range" class="select-input" placeholder="All Pages (e.g. 1-5, 8)" onchange="parsePageRange(this.value)">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="grid grid-cols-2 gap-4 mb-5">
                         <div>
                             <label class="label">Orientation</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button class="btn-toggle active" id="btn-port" onclick="setOrient('portrait')">
-                                    <i class="fa-regular fa-file"></i> Portrait
+                            <div class="toggle-row">
+                                <button class="glass-btn btn-control active" id="btn-port" onclick="setOrient('portrait')">
+                                    <i class="fa-regular fa-file mb-1"></i> Portrait
                                 </button>
-                                <button class="btn-toggle" id="btn-land" onclick="setOrient('landscape')">
-                                    <i class="fa-regular fa-file fa-rotate-90"></i> Landscape
+                                <button class="glass-btn btn-control" id="btn-land" onclick="setOrient('landscape')">
+                                    <i class="fa-regular fa-file fa-rotate-90 mb-1"></i> Landscape
                                 </button>
                             </div>
                         </div>
                         <div>
-                            <label class="label">Color</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button class="btn-toggle active" id="btn-color" onclick="toggleColor()">Color</button>
-                                <button class="btn-toggle" id="btn-bw" onclick="toggleColor()">B&W</button>
+                            <label class="label">Color Mode</label>
+                            <div class="toggle-row">
+                                <button class="glass-btn btn-control active" id="btn-color" onclick="toggleColor()">
+                                    <i class="fa-solid fa-palette mb-1"></i> Color
+                                </button>
+                                <button class="glass-btn btn-control" id="btn-bw" onclick="toggleColor()">
+                                    <i class="fa-solid fa-ban mb-1"></i> B&W
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-5">
                         <label class="label">Layout</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button class="btn-toggle active" id="btn-std" onclick="setLayout('standard')"><i class="fa-regular fa-file"></i> Standard</button>
-                            <button class="btn-toggle" id="btn-book" onclick="setLayout('booklet')"><i class="fa-solid fa-book-open"></i> Booklet</button>
+                        <div class="toggle-row">
+                            <button class="glass-btn btn-control active" id="btn-std" onclick="setLayout('standard')"><i class="fa-regular fa-file mb-1"></i> Standard</button>
+                            <button class="glass-btn btn-control" id="btn-book" onclick="setLayout('booklet')"><i class="fa-solid fa-book-open mb-1"></i> Booklet</button>
                         </div>
                     </div>
 
                     <div>
-                        <label class="label">Finishing</label>
-                        <div class="flex gap-2 mb-2">
-                            <button class="btn-toggle flex-1" id="fn-staple" onclick="toggleStaple()">Staple</button>
-                            <button class="btn-toggle flex-1" id="fn-punch3" onclick="setPunch('3')">Hole Punch</button>
+                        <label class="label">Finishing Options</label>
+                        <div class="flex gap-3 mb-3">
+                            <button class="glass-btn btn-control flex-1" id="fn-staple" onclick="toggleStaple()">Is Staple</button>
+                            <button class="glass-btn btn-control flex-1" id="fn-punch3" onclick="setPunch('3')">3-Hole</button>
                         </div>
-                        <button class="btn-toggle active w-full" id="fn-none" onclick="clearFinish()">No Finishing</button>
+                        <button class="glass-btn btn-control active w-full" id="fn-none" onclick="clearFinish()">No Finishing</button>
                     </div>
                 </div>
 
-                <div class="controls-footer">
-                    <div class="flex items-center bg-slate-800 rounded-lg px-4 h-12 gap-3 border border-slate-700">
-                        <span class="text-xs font-bold text-slate-400">QTY</span>
-                        <input type="number" id="qty-input" value="1" class="w-12 bg-transparent text-center font-bold text-white outline-none text-lg" onchange="updatePrice()">
+                <div class="controls-footer flex-col gap-2">
+                    <div id="bulk-notice" class="text-[11px] text-accent-500 font-bold text-center" style="display: none;">
+                        Bulk Discount Applied! <span id="bulk-tier-name"></span>
                     </div>
-                    <button class="flex-1 h-12 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg flex items-center justify-between px-6" onclick="addToCart()">
-                        <span>Add to Cart</span>
-                        <span id="price-disp">$0.29</span>
-                    </button>
+                    <div class="flex gap-3 w-full">
+                        <div class="flex items-center bg-brand-800 rounded-xl px-5 h-14 gap-3 border border-brand-700">
+                            <span class="text-xs font-bold text-gray-400">QTY</span>
+                            <input type="number" id="qty-input" value="1" min="1" class="w-14 bg-transparent text-center font-bold text-white outline-none text-xl" onchange="updatePrice()" onkeyup="updatePrice()">
+                        </div>
+                        <button class="accent-btn flex-1 h-14 rounded-xl flex items-center justify-between px-6" onclick="addToCart()">
+                            <span>Add to Cart</span>
+                            <div class="flex flex-col items-end leading-tight">
+                                <span id="price-disp" class="text-lg">$0.29</span>
+                                <span class="text-[10px] font-medium opacity-80">Per Set</span>
+                            </div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="screen-cart" class="app-screen">
-            <div class="flex-1 overflow-y-auto p-5">
-                <h2 class="text-lg font-bold text-white mb-4">Your Cart</h2>
+            <div class="flex-1 overflow-y-auto p-6">
+                <h2 class="text-xl font-bold text-white mb-5">Your Cart</h2>
                 <div id="cart-list"></div>
-                <button class="w-full py-3 border border-dashed border-slate-600 text-slate-400 rounded-lg mb-6 hover:bg-slate-800" onclick="addMoreFiles()">+ Add Another File</button>
+                <button class="w-full py-4 border-2 border-dashed border-brand-700 text-gray-400 rounded-xl mb-8 hover:bg-brand-800 hover:text-accent-500 hover:border-accent-500/50 transition-all font-bold" onclick="addMoreFiles()">
+                    <i class="fa-solid fa-plus mr-2"></i> Add Another File
+                </button>
 
-                <div class="section-box" style="background:#1e293b; padding:20px; border-radius:12px; border:1px solid #334155;">
+                <div class="section-box glass-panel">
                     <div class="label">Delivery Method</div>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <button class="btn-toggle active" id="del-ship" onclick="setDelivery('ship')">Nationwide Ship</button>
-                        <button class="btn-toggle" id="del-local" onclick="setDelivery('local')">Local Delivery</button>
+                    <div class="grid grid-cols-2 gap-4 mb-5">
+                        <button class="glass-btn btn-control active" id="del-ship" onclick="setDelivery('ship')">
+                            <i class="fa-solid fa-truck-fast mb-1 text-lg"></i> Nationwide Ship
+                        </button>
+                        <button class="glass-btn btn-control" id="del-local" onclick="setDelivery('local')">
+                            <i class="fa-solid fa-hand-holding-box mb-1 text-lg"></i> Local Delivery
+                        </button>
                     </div>
-                    <div id="form-ship" class="grid gap-3">
-                        <input type="text" class="select-input" placeholder="Full Name" id="ship-name">
-                        <input type="text" class="select-input" placeholder="Address" id="ship-addr">
+                    <div id="form-ship" class="grid gap-4">
+                        <input type="text" class="select-input" placeholder="Recipient Name" id="ship-name">
+                        <input type="text" class="select-input" placeholder="Street Address" id="ship-addr">
                     </div>
-                    <div id="info-ship" class="text-xs text-slate-400 bg-slate-800 p-3 rounded mt-3">
-                        <i class="fa-solid fa-truck mr-1 text-blue-400"></i> Standard Shipping ($12.00)
+                    <div id="info-ship" class="text-xs text-gray-400 bg-brand-800 p-4 rounded-xl mt-4 border border-brand-700 flex items-center">
+                        <i class="fa-solid fa-shield-check mr-3 text-accent-500 text-lg"></i> 
+                        <span>Secure 3-5 Day Shipping via UPS/FedEx ($12.00)</span>
                     </div>
-                    <div id="info-local" class="hidden text-xs text-slate-400 bg-slate-800 p-3 rounded mt-3">
-                        <i class="fa-solid fa-map-pin mr-1 text-blue-400"></i> Local Delivery within 50 miles ($10.00)
+                    <div id="info-local" class="hidden text-xs text-gray-400 bg-brand-800 p-4 rounded-xl mt-4 border border-brand-700 flex items-center">
+                        <i class="fa-solid fa-map-location-dot mr-3 text-accent-500 text-lg"></i>
+                        <span>Premium Local Delivery within 50 miles ($10.00)</span>
                     </div>
                 </div>
 
-                <div class="section-box" style="background:#1e293b; padding:20px; border-radius:12px; border:1px solid #334155; margin-top:20px;">
-                    <div class="flex justify-between text-sm text-slate-400 mb-2"><span>Subtotal</span><span id="sum-sub">$0.00</span></div>
-                    <div class="flex justify-between text-sm text-slate-400 mb-2"><span>Delivery</span><span id="sum-del">$0.00</span></div>
-                    <div class="flex justify-between text-lg font-bold text-white mt-3 pt-3 border-t border-slate-700"><span>Total</span><span id="sum-total">$0.00</span></div>
+                <div class="section-box glass-panel mt-6">
+                    <div class="flex justify-between text-sm text-gray-400 mb-3"><span>Subtotal (Includes Bulk Discounts)</span><span id="sum-sub" class="font-medium text-white">$0.00</span></div>
+                    <div class="flex justify-between text-sm text-gray-400 mb-3"><span>Delivery & Handling</span><span id="sum-del" class="font-medium text-white">$0.00</span></div>
+                    <div class="flex justify-between text-xl font-bold text-accent-500 mt-5 pt-5 border-t border-brand-700"><span>Total Pay</span><span id="sum-total">$0.00</span></div>
                 </div>
             </div>
             <div class="controls-footer">
-                <button class="w-full h-12 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg shadow-lg" onclick="checkout()">Checkout</button>
+                <button class="accent-btn w-full h-14 rounded-xl shadow-lg text-lg" onclick="checkout()">Complete Order</button>
             </div>
         </div>
 
@@ -313,18 +368,20 @@ l<!DOCTYPE html>
 
     <div id="profile-overlay" onclick="toggleProfile()">
         <div class="profile-drawer" onclick="event.stopPropagation()">
-            <div class="profile-header" style="padding:30px; background:#0f172a; border-bottom:1px solid #334155; text-align:center;">
+            <div class="profile-header">
                 <div class="avatar" onclick="editProfile()"><i class="fa-solid fa-user-pen"></i></div>
-                <h3 class="text-lg font-bold text-white" id="prof-name">Guest</h3>
-                <p class="text-xs text-slate-400" id="prof-loc">Click icon to edit</p>
+                <h3 class="text-xl font-bold text-white mb-1" id="prof-name">Guest User</h3>
+                <p class="text-xs font-medium text-accent-500 uppercase tracking-wider" id="prof-loc">Tap avatar to edit</p>
+                <button onclick="toggleProfile()" class="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-2xl"></i></button>
             </div>
-            <div class="p-5 flex-1 overflow-y-auto">
-                <div class="label mb-2">Saved Addresses</div>
-                <div class="p-3 bg-slate-800 rounded border border-slate-700 text-sm text-slate-300 mb-4 cursor-pointer hover:border-blue-500" onclick="useAddress()" id="prof-saved-addr">
-                    No address saved.
+            <div class="p-6 flex-1 overflow-y-auto bg-brand-900">
+                <div class="label mb-3">Saved Information</div>
+                <div class="p-5 bg-brand-800 rounded-xl border border-brand-700 text-sm text-gray-300 mb-6 cursor-pointer hover:border-accent-500 transition-all group" onclick="useAddress()" id="prof-saved-addr">
+                    <div class="flex items-center text-gray-500 group-hover:text-accent-500 mb-2"><i class="fa-solid fa-location-dot mr-2"></i> <b>Shipping Address</b></div>
+                    <div class="opacity-60 italic">No address saved yet.</div>
                 </div>
-                <div class="label mb-2">Order History</div>
-                <div id="history-list" class="text-sm text-slate-500">No recent orders.</div>
+                <div class="label mb-3">Recent Orders</div>
+                <div id="history-list" class="text-sm text-gray-500 italic">No recent order history.</div>
             </div>
         </div>
     </div>
@@ -332,32 +389,41 @@ l<!DOCTYPE html>
     <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
 
     <script>
-        // --- PRICING & DATA ---
+        // --- DATA & STATE ---
         const DIMS={letter:{w:8.5,h:11},legal:{w:8.5,h:14},tabloid:{w:11,h:17}, '12x18':{w:12,h:18}, a4:{w:8.3,h:11.7}, a3:{w:11.7,h:16.5}};
         const BASE_PRICES={letter:0.09,legal:0.12,tabloid:0.19, '12x18':0.29, a4:0.09, a3:0.19};
         const COLOR_ADD={letter:0.20,legal:0.25,tabloid:0.40, '12x18':0.50, a4:0.20, a3:0.40};
         
+        // NEW: Bulk Discount Tiers (Percentage Off)
+        const BULK_TIERS = [
+            { min: 1, max: 10, discount: 0.00, name: "" },
+            { min: 11, max: 50, discount: 0.10, name: "10% Off (11+)" },
+            { min: 51, max: 100, discount: 0.15, name: "15% Off (51+)" },
+            { min: 101, max: Infinity, discount: 0.25, name: "25% Off (101+)" }
+        ];
+        
         let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:'',delivery:'ship'};
         let cart=[];
-        let userProfile = JSON.parse(localStorage.getItem('mp_profile')) || { name: "Guest", addr: "", city: "" };
+        let userProfile = JSON.parse(localStorage.getItem('mp_profile')) || { name: "Guest User", addr: "", city: "" };
         let orderHistory = JSON.parse(localStorage.getItem('mp_history')) || [];
 
+        // --- INIT ---
         window.onload = function() {
             updateProfileUI();
             updateHistoryUI();
         }
-
         function safe(id, fn) { const el = document.getElementById(id); if(el) fn(el); }
 
+        // --- NAVIGATION ---
         function goHome() {
             if (state.doc) {
                 Swal.fire({
-                    title: 'Go Home?', text: "Current job will be saved.", icon: 'question',
-                    showCancelButton: true, confirmButtonText: 'Yes', confirmButtonColor: '#2563eb'
+                    title: 'Go Home?', text: "Your current job configuration will be saved.", icon: 'question',
+                    showCancelButton: true, confirmButtonText: 'Yes, Go Home', confirmButtonColor: '#d4af37', cancelButtonColor: '#374151', background: '#1f2937', color: '#fff'
                 }).then((r) => {
                     if (r.isConfirmed) {
                         document.getElementById('homepage').classList.remove('hidden-page');
-                        document.getElementById('home-btn-text').innerText = "Resume Order";
+                        document.getElementById('home-btn-text').innerText = "Resume Job";
                     }
                 });
             } else {
@@ -382,6 +448,7 @@ l<!DOCTYPE html>
         function gotoCart() { document.getElementById('homepage').classList.add('hidden-page'); showScreen('cart'); updateCartUI(); }
         function addMoreFiles() { document.getElementById('file-input').click(); }
 
+        // --- FILE ENGINE ---
         document.getElementById('file-input').addEventListener('change', async (e)=>{
             if(!e.target.files[0]) return;
             const file=e.target.files[0];
@@ -394,29 +461,30 @@ l<!DOCTYPE html>
                     state.doc=await pdfjsLib.getDocument(b).promise;
                     state.type='pdf'; state.pages=state.doc.numPages;
                     state.printList=Array.from({length:state.pages},(_,i)=>i+1);
-                    document.getElementById('range-group').style.display='block';
-                    document.getElementById('nav-overlay').style.display='flex';
+                    safe('range-group', el => el.style.display='block');
+                    safe('nav-overlay', el => el.style.display='flex');
                 } else {
                     state.doc=URL.createObjectURL(file);
                     state.type='img'; state.pages=1; state.printList=[1];
-                    document.getElementById('range-group').style.display='none';
-                    document.getElementById('nav-overlay').style.display='none';
+                    safe('range-group', el => el.style.display='none');
+                    safe('nav-overlay', el => el.style.display='none');
                 }
                 document.getElementById('homepage').classList.add('hidden-page');
                 showScreen('config');
                 state.previewIdx=0; renderPreview(); updatePrice();
                 loader.style.display='none';
-            } catch(err){ loader.style.display='none'; alert(err.message); }
+            } catch(err){ loader.style.display='none'; Swal.fire({icon: 'error', title: 'Oops...', text: err.message, background: '#1f2937', color: '#fff'}); }
         });
 
+        // --- RENDER ENGINE ---
         async function renderPreview(){
             const paper=document.getElementById('paper-preview');
             const dim=DIMS[state.size];
             const w=state.orient==='portrait'?dim.w:dim.h;
             const h=state.orient==='portrait'?dim.h:dim.w;
             paper.style.aspectRatio=`${w}/${h}`;
-            document.getElementById('lbl-w').innerText=`${w}"`;
-            document.getElementById('lbl-h').innerText=`${h}"`;
+            safe('lbl-w', el => el.innerText=`${w}"`);
+            safe('lbl-h', el => el.innerText=`${h}"`);
             
             const area=document.getElementById('content-area');
             area.innerHTML=''; area.className='content-area';
@@ -426,10 +494,10 @@ l<!DOCTYPE html>
                 await renderSlot(area,state.printList[state.previewIdx]);
                 if(state.previewIdx+1<state.printList.length) await renderSlot(area,state.printList[state.previewIdx+1]);
                 else area.appendChild(document.createElement('div'));
-                document.getElementById('nav-info').innerText=`${state.previewIdx+1}-${Math.min(state.previewIdx+2,state.printList.length)}/${state.printList.length}`;
+                safe('nav-info', el => el.innerText=`${state.previewIdx+1}-${Math.min(state.previewIdx+2,state.printList.length)}/${state.printList.length}`);
             } else {
                 await renderSlot(area,state.printList[state.previewIdx]);
-                document.getElementById('nav-info').innerText=`${state.previewIdx+1}/${state.printList.length}`;
+                safe('nav-info', el => el.innerText=`${state.previewIdx+1}/${state.printList.length}`);
             }
             updateFinishUI();
         }
@@ -451,42 +519,24 @@ l<!DOCTYPE html>
             container.appendChild(slot);
         }
 
+        // --- CONTROLS ---
         function updateSize(v){ state.size=v; renderPreview(); updatePrice(); }
         function setOrient(v){ state.orient=v; toggle('btn-port',v==='portrait'); toggle('btn-land',v==='landscape'); renderPreview(); }
-        
         function setLayout(v){ 
             state.layout=v; toggle('btn-std',v==='standard'); toggle('btn-book',v==='booklet');
-            if(v==='booklet'){ 
-                state.orient='landscape'; state.size='tabloid'; 
-                toggle('btn-land',true); toggle('btn-port',false); 
-                document.getElementById('size-sel').value='tabloid'; 
-                if(state.punch==='3') state.punch='none';
-            }
+            if(v==='booklet'){ state.orient='landscape'; state.size='tabloid'; toggle('btn-land',true); toggle('btn-port',false); document.getElementById('size-sel').value='tabloid'; if(state.punch==='3') state.punch='none'; }
             renderPreview(); updatePrice();
         }
         function toggleColor(){ state.color=state.color==='color'?'bw':'color'; toggle('btn-bw',state.color==='bw'); toggle('btn-color',state.color==='color'); renderPreview(); updatePrice(); }
-        
         function clearFinish(){ state.staple=false; state.punch='none'; updateFinishUI(); }
         function toggleStaple(){ state.staple=!state.staple; updateFinishUI(); }
-        function setPunch(v){ 
-            if(state.layout==='booklet') return; 
-            state.punch=(state.punch===v)?'none':v; updateFinishUI(); 
-        }
+        function setPunch(v){ if(state.layout==='booklet') return; state.punch=(state.punch===v)?'none':v; updateFinishUI(); }
         
         function updateFinishUI(){ 
             const isBooklet = state.layout === 'booklet';
-            const p3 = document.getElementById('fn-punch3');
-            if(p3) {
-                p3.disabled = isBooklet;
-                p3.style.opacity = isBooklet ? '0.3' : '1';
-            }
+            safe('fn-punch3', el => { el.disabled = isBooklet; el.style.opacity = isBooklet ? '0.3' : '1'; });
             toggle('fn-none',!state.staple && state.punch==='none'); toggle('fn-staple',state.staple); 
-            
-            if(p3) {
-                const p3Active = state.punch==='3' && !isBooklet;
-                if(p3Active) { p3.classList.add('active'); p3.classList.replace('text-gray-500','white'); } 
-                else { p3.classList.remove('active'); p3.classList.replace('white','text-gray-500'); }
-            }
+            safe('fn-punch3', el => { const active = state.punch==='3' && !isBooklet; if(active) { el.classList.add('active'); el.classList.replace('text-gray-500','white'); } else { el.classList.remove('active'); el.classList.replace('white','text-gray-500'); } });
             updateFinishOverlay(); updatePrice();
         }
 
@@ -496,59 +546,110 @@ l<!DOCTYPE html>
             if(state.punch!=='none'){ for(let i=1;i<=3;i++){ const p=document.createElement('div'); p.className='punch'; p.style.left='2%'; p.style.top=(i/4*100)+'%'; l.appendChild(p); } }
         }
 
-        function toggle(id,active){ safe(id, el=>{ if(active){ el.classList.add('active'); el.classList.replace('text-gray-500','white'); } else { el.classList.remove('active'); el.classList.replace('white','text-gray-500'); } }); }
+        function toggle(id,active){ safe(id, el=>{ if(active){ el.classList.add('active'); } else { el.classList.remove('active'); } }); }
         
+        // --- PRICING ENGINE (With Bulk Discounts) ---
         function updatePrice(){
-            let base=BASE_PRICES[state.size]; 
-            if(state.color==='color') base += COLOR_ADD[state.size];
-            state.qty=document.getElementById('qty-input').value;
-            const pages=state.layout==='booklet'?Math.ceil(state.printList.length/4):state.printList.length;
-            document.getElementById('price-disp').innerText='$'+(base*pages*state.qty).toFixed(2);
+            // 1. Get Base Price Per Page
+            let basePagePrice = BASE_PRICES[state.size]; 
+            if(state.color==='color') basePagePrice += COLOR_ADD[state.size];
+            
+            // 2. Calculate Total Pages in Document
+            const totalPages = state.layout==='booklet' ? Math.ceil(state.printList.length/4) : state.printList.length;
+            
+            // 3. Get Quantity
+            let qtyInput = document.getElementById('qty-input');
+            state.qty = parseInt(qtyInput.value) || 1;
+            if(state.qty < 1) { state.qty = 1; qtyInput.value = 1; }
+
+            // 4. Determine Bulk Discount Tier based on QTY
+            let appliedTier = BULK_TIERS.find(tier => state.qty >= tier.min && state.qty <= tier.max) || BULK_TIERS[0];
+            
+            // 5. Calculate Discounted Price Per Set
+            let pricePerSet = basePagePrice * totalPages;
+            let discountedPricePerSet = pricePerSet * (1 - appliedTier.discount);
+
+            // 6. Update UI
+            document.getElementById('price-disp').innerText = '$' + discountedPricePerSet.toFixed(2);
+            
+            // Show/Hide Discount Notice
+            const notice = document.getElementById('bulk-notice');
+            if(appliedTier.discount > 0) {
+                notice.style.display = 'block';
+                document.getElementById('bulk-tier-name').innerText = appliedTier.name;
+            } else {
+                notice.style.display = 'none';
+            }
         }
 
+        // --- CART ---
         function addToCart(){
-            cart.push({file:state.fileName, desc:`${state.size.toUpperCase()} • ${state.layout}`, qty:state.qty, price:parseFloat(document.getElementById('price-disp').innerText.replace('$',''))});
-            document.getElementById('cart-badge').innerText=cart.length; document.getElementById('cart-badge').style.display='flex';
+            // Calculate final price again to be safe
+            updatePrice();
+            let finalPricePerSet = parseFloat(document.getElementById('price-disp').innerText.replace('$',''));
+            let totalPrice = finalPricePerSet * state.qty;
+
+            cart.push({
+                file: state.fileName, 
+                desc: `${state.size.toUpperCase()} • ${state.layout.toUpperCase()} • ${state.color.toUpperCase()}`, 
+                qty: state.qty, 
+                price: totalPrice
+            });
+            
+            safe('cart-badge', el => { el.innerText=cart.length; el.style.display='flex'; });
             gotoCart();
         }
+
         function updateCartUI(){
             const l=document.getElementById('cart-list'); l.innerHTML='';
             let tot=0;
-            cart.forEach((i, idx)=>{ tot+=i.price; l.innerHTML+=`<div class="cart-item"><div class="flex-1 text-white font-bold text-sm">${i.file}<div class="text-xs text-slate-400 font-normal">${i.desc} • Qty ${i.qty}</div></div><div class="text-white font-bold">$${i.price.toFixed(2)}</div><div class="text-red-500 ml-3 cursor-pointer" onclick="cart.splice(${idx},1);updateCartUI()"><i class="fa-solid fa-trash"></i></div></div>`; });
-            let del=state.delivery==='ship'?12:10; 
-            document.getElementById('sum-sub').innerText='$'+tot.toFixed(2);
-            document.getElementById('sum-del').innerText='$'+del.toFixed(2);
-            document.getElementById('sum-total').innerText='$'+(tot+del).toFixed(2);
+            cart.forEach((i, idx)=>{ 
+                tot+=i.price; 
+                l.innerHTML+=`
+                <div class="cart-item glass-panel">
+                    <div class="flex-1">
+                        <div class="text-sm font-bold text-white truncate">${i.file}</div>
+                        <div class="text-xs text-gray-400 mt-1">${i.desc}</div>
+                        <div class="text-xs font-medium text-accent-500 mt-1">Qty: ${i.qty}</div>
+                    </div>
+                    <div class="flex flex-col items-end justify-between">
+                        <div class="text-white font-bold">$${i.price.toFixed(2)}</div>
+                        <div class="text-red-500 cursor-pointer hover:text-red-400 text-sm" onclick="cart.splice(${idx},1);updateCartUI()"><i class="fa-solid fa-trash-can"></i></div>
+                    </div>
+                </div>`; 
+            });
+            
+            let del = state.delivery==='ship' ? 12 : 10; 
+            document.getElementById('sum-sub').innerText = '$' + tot.toFixed(2);
+            document.getElementById('sum-del').innerText = '$' + del.toFixed(2);
+            document.getElementById('sum-total').innerText = '$' + (tot+del).toFixed(2);
         }
         function setDelivery(v){ 
             state.delivery=v; toggle('del-ship',v==='ship'); toggle('del-local',v==='local'); 
-            document.getElementById('info-ship').style.display=v==='ship'?'block':'none';
-            document.getElementById('info-local').style.display=v==='local'?'block':'none';
+            safe('info-ship', el => el.style.display=v==='ship'?'flex':'none');
+            safe('info-local', el => el.style.display=v==='local'?'flex':'none');
             updateCartUI(); 
         }
         function checkout(){ 
+            if(cart.length === 0) return;
             const now = new Date().toLocaleDateString();
             cart.forEach(item => { orderHistory.unshift({...item, date: now}); });
             localStorage.setItem('mp_history', JSON.stringify(orderHistory));
             updateHistoryUI();
-            Swal.fire({title:'Order Submitted',text:'Thank you for printing with Magic Printer!',icon:'success'}); 
-            cart=[]; updateCartUI(); goHome(); 
+            Swal.fire({title:'Order Submitted!', html:'Thank you for choosing Magic Printer.<br>Your documents are being processed.', icon:'success', background: '#1f2937', color: '#fff', confirmButtonColor: '#d4af37'}); 
+            cart=[]; safe('cart-badge', el => el.style.display='none'); updateCartUI(); goHome(); 
         }
 
+        // --- PROFILE & UTILS ---
         function editProfile() {
             Swal.fire({
                 title: 'Edit Profile',
-                html: `<input id="swal-name" class="swal2-input" placeholder="Name" value="${userProfile.name}">` +
-                      `<input id="swal-city" class="swal2-input" placeholder="City" value="${userProfile.city}">` +
-                      `<input id="swal-addr" class="swal2-input" placeholder="Address" value="${userProfile.addr}">`,
+                html: `<input id="swal-name" class="swal2-input" placeholder="Full Name" value="${userProfile.name}" style="background:#374151;color:white;border:none;">` +
+                      `<input id="swal-city" class="swal2-input" placeholder="City / Company" value="${userProfile.city}" style="background:#374151;color:white;border:none;">` +
+                      `<textarea id="swal-addr" class="swal2-textarea" placeholder="Shipping Address" style="background:#374151;color:white;border:none;">${userProfile.addr}</textarea>`,
+                background: '#1f2937', color: '#fff', confirmButtonColor: '#d4af37',
                 focusConfirm: false,
-                preConfirm: () => {
-                    return { 
-                        name: document.getElementById('swal-name').value, 
-                        city: document.getElementById('swal-city').value, 
-                        addr: document.getElementById('swal-addr').value 
-                    }
-                }
+                preConfirm: () => { return { name: document.getElementById('swal-name').value, city: document.getElementById('swal-city').value, addr: document.getElementById('swal-addr').value } }
             }).then((result) => {
                 if(result.isConfirmed) {
                     userProfile = result.value;
@@ -557,38 +658,38 @@ l<!DOCTYPE html>
                 }
             })
         }
-
         function updateProfileUI() {
-            document.getElementById('prof-name').innerText = userProfile.name;
-            document.getElementById('prof-loc').innerText = userProfile.city || "No City";
-            document.getElementById('prof-saved-addr').innerHTML = userProfile.addr ? `<b>Saved</b><br>${userProfile.addr}` : "No address saved. Click icon to edit.";
-        }
-
-        function updateHistoryUI() {
-            const h = document.getElementById('history-list');
-            if(orderHistory.length === 0) { h.innerHTML = "No recent orders."; return; }
-            h.innerHTML = '';
-            orderHistory.slice(0,3).forEach(o => {
-                h.innerHTML += `<div class="cart-item"><div class="flex-1"><div class="text-sm font-bold text-white">${o.file}</div><div class="text-xs text-slate-400">${o.date} • ${o.desc}</div></div><button class="bg-slate-700 text-white px-3 py-1 rounded text-xs" onclick="reorder('${o.file}')">Reorder</button></div>`;
+            safe('prof-name', el => el.innerText = userProfile.name);
+            safe('prof-loc', el => el.innerText = userProfile.city || "Tap avatar to edit");
+            safe('prof-saved-addr', el => {
+                el.innerHTML = `<div class="flex items-center text-gray-400 group-hover:text-accent-500 mb-2"><i class="fa-solid fa-location-dot mr-2"></i> <b>Shipping Address</b></div>`;
+                el.innerHTML += userProfile.addr ? `<div class="text-white">${userProfile.addr}</div>` : `<div class="opacity-60 italic">No address saved yet.</div>`;
             });
         }
-
+        function updateHistoryUI() {
+            const h = document.getElementById('history-list');
+            if(orderHistory.length === 0) { h.innerHTML = "No recent order history."; return; }
+            h.innerHTML = '';
+            orderHistory.slice(0,3).forEach(o => {
+                h.innerHTML += `
+                <div class="cart-item glass-panel" style="padding: 12px;">
+                    <div class="flex-1 overflow-hidden">
+                        <div class="text-sm font-bold text-white truncate">${o.file}</div>
+                        <div class="text-[11px] text-gray-400 mt-1">${o.date} • ${o.desc}</div>
+                    </div>
+                    <button class="accent-btn px-3 py-1 rounded-lg text-[11px] h-8 shadow-none" onclick="reorder('${o.file}')">Reorder</button>
+                </div>`;
+            });
+        }
         function useAddress() {
             if(userProfile.addr) {
-                const nameEl = document.getElementById('ship-name');
-                const addrEl = document.getElementById('ship-addr');
-                if(nameEl && addrEl) {
-                    nameEl.value = userProfile.name;
-                    addrEl.value = userProfile.addr;
-                    toggleProfile();
-                    Swal.fire('Address Applied','','success');
-                }
-            } else {
-                editProfile();
-            }
+                safe('ship-name', el => el.value = userProfile.name);
+                safe('ship-addr', el => el.value = userProfile.addr);
+                toggleProfile();
+                Swal.fire({icon:'success', title:'Address Applied', toast:true, position:'top-end', showConfirmButton:false, timer:2000, background:'#1f2937', color:'#fff'});
+            } else { editProfile(); }
         }
         function reorder(n) { cart.push({file:n, desc:"Reorder", qty:1, price:10.00}); updateCartUI(); gotoCart(); toggleProfile(); }
-
         function parsePageRange(val){ if (!val.trim()) state.printList = Array.from({length: state.pages}, (_, i) => i + 1); else { const list = new Set(); val.split(',').forEach(p => { if (p.includes('-')) { const [s,e]=p.split('-').map(Number); for(let i=s;i<=e;i++) if(i<=state.pages) list.add(i); } else { const n=Number(p); if(n<=state.pages) list.add(n); } }); state.printList = Array.from(list).sort((a,b)=>a-b); } state.previewIdx = 0; renderPreview(); updatePrice(); }
         function prevPage(){ if(state.previewIdx>0){ state.previewIdx--; renderPreview(); } }
         function nextPage(){ const j=state.layout==='booklet'?2:1; if(state.previewIdx+j<state.printList.length){ state.previewIdx+=j; renderPreview(); } }

@@ -18,7 +18,7 @@
                 extend: {
                     colors: { 
                         brand: { 950: '#0a0f1a', 900: '#111827', 800: '#1f2937', 700: '#374151', 600: '#4b5563', 500: '#6b7280' },
-                        accent: { 500: '#d4af37', 600: '#b8962f' } /* Gold */
+                        accent: { 500: '#d4af37', 600: '#b8962f' } /* Gold retained for accents, but logo is white */
                     },
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     spacing: { 'safe-b': 'env(safe-area-inset-bottom)' }
@@ -49,11 +49,13 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05); z-index: 1000; position: relative;
         }
         .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .logo-svg { width: 42px; height: 42px; fill: #d4af37; }
-        .logo-text { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px; background: linear-gradient(to right, #fff, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        /* New White Logo & Text */
+        .logo-svg { width: 40px; height: 40px; text-white; } 
+        .logo-text { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+        
         .nav-actions { display: flex; gap: 20px; align-items: center; }
         .nav-btn { color: #9ca3af; font-size: 22px; cursor: pointer; position: relative; transition: color 0.2s; }
-        .nav-btn:hover { color: #d4af37; }
+        .nav-btn:hover { color: white; }
         .badge { position: absolute; top: -6px; right: -6px; background: #d4af37; color: #0a0f1a; font-size: 11px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
         /* SCREENS */
@@ -138,7 +140,10 @@
 
         <div class="global-header">
             <div class="logo-area" onclick="goHome()">
-                <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 8h-1V3H6v5H5c-1.1 0-2 .9-2 2v10h18V10c0-1.1-.9-2-2-2zM8 5h8v3H8V5zm8 14H8v-4h8v4zm2-6c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/><path d="M15.5 13.5l-2.12-2.12-1.42 1.42L13.38 14.2 12 15.58 10.62 14.2l1.42-1.42L9.92 10.66 8.5 12.08l2.12 2.12L8.5 16.32l1.42 1.42L12 15.62l2.08 2.08 1.42-1.42-2.12-2.12zM18.86 4.48l-1.42-1.42L16.02 4.5l1.42 1.42 1.42-1.44zM21.04 9.02l-1.42-1.42-1.42 1.42 1.42 1.42 1.42-1.42zM5.14 4.48L6.56 3.06 7.98 4.5 6.56 5.92 5.14 4.48zM2.96 9.02L4.38 7.6 5.8 9.02 4.38 10.44 2.96 9.02z"/></svg>
+                <svg class="logo-svg text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21.71 2.29l-2-2a1 1 0 0 0-1.42 0l-3 3a1 1 0 0 0 0 1.42l2 2a1 1 0 0 0 1.42 0l3-3a1 1 0 0 0 0-1.42zM14.12 7.71l-7.78 7.78a1 1 0 0 0 0 1.41l2.12 2.12a1 1 0 0 0 1.42 0l7.78-7.78a1 1 0 0 0 0-1.42l-2.12-2.12a1 1 0 0 0-1.42 0z"/>
+                    <path d="M18 10H6a2 2 0 0 0-2 2v7h2v-2h12v2h2v-7a2 2 0 0 0-2-2zm-2 5H8v-3h8v3zm-1-9H9V2h6v4z"/>
+                </svg>
                 <div class="logo-text">Magic Printer</div>
             </div>
             <div class="nav-actions">
@@ -216,7 +221,13 @@
                 <button class="accent-btn btn-hero" onclick="startOrder()">
                     <i class="fa-solid fa-cloud-arrow-up"></i> <span id="home-btn-text">Upload & Print Now</span>
                 </button>
-                <div class="text-[11px] text-gray-500 font-medium">v52 Apex Edition • PDF, JPG, PNG Supported</div>
+                <div class="text-[11px] text-gray-500 font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21.71 2.29l-2-2a1 1 0 0 0-1.42 0l-3 3a1 1 0 0 0 0 1.42l2 2a1 1 0 0 0 1.42 0l3-3a1 1 0 0 0 0-1.42zM14.12 7.71l-7.78 7.78a1 1 0 0 0 0 1.41l2.12 2.12a1 1 0 0 0 1.42 0l7.78-7.78a1 1 0 0 0 0-1.42l-2.12-2.12a1 1 0 0 0-1.42 0z"/>
+                        <path d="M18 10H6a2 2 0 0 0-2 2v7h2v-2h12v2h2v-7a2 2 0 0 0-2-2zm-2 5H8v-3h8v3zm-1-9H9V2h6v4z"/>
+                    </svg>
+                    Magic Printer • PDF, JPG, PNG Supported
+                </div>
             </div>
         </div>
 
@@ -393,25 +404,13 @@
         const DIMS={letter:{w:8.5,h:11},legal:{w:8.5,h:14},tabloid:{w:11,h:17}, '12x18':{w:12,h:18}, a4:{w:8.3,h:11.7}, a3:{w:11.7,h:16.5}};
         const BASE_PRICES={letter:0.09,legal:0.12,tabloid:0.19, '12x18':0.29, a4:0.09, a3:0.19};
         const COLOR_ADD={letter:0.20,legal:0.25,tabloid:0.40, '12x18':0.50, a4:0.20, a3:0.40};
-        
-        // NEW: Bulk Discount Tiers (Percentage Off)
-        const BULK_TIERS = [
-            { min: 1, max: 10, discount: 0.00, name: "" },
-            { min: 11, max: 50, discount: 0.10, name: "10% Off (11+)" },
-            { min: 51, max: 100, discount: 0.15, name: "15% Off (51+)" },
-            { min: 101, max: Infinity, discount: 0.25, name: "25% Off (101+)" }
-        ];
-        
+        const BULK_TIERS = [{ min: 1, max: 10, discount: 0.00, name: "" },{ min: 11, max: 50, discount: 0.10, name: "10% Off (11+)" },{ min: 51, max: 100, discount: 0.15, name: "15% Off (51+)" },{ min: 101, max: Infinity, discount: 0.25, name: "25% Off (101+)" }];
         let state={size:'letter',orient:'portrait',color:'color',layout:'standard',staple:false,punch:'none',qty:1,doc:null,type:'none',pages:1,printList:[],previewIdx:0,fileName:'',delivery:'ship'};
         let cart=[];
         let userProfile = JSON.parse(localStorage.getItem('mp_profile')) || { name: "Guest User", addr: "", city: "" };
         let orderHistory = JSON.parse(localStorage.getItem('mp_history')) || [];
 
-        // --- INIT ---
-        window.onload = function() {
-            updateProfileUI();
-            updateHistoryUI();
-        }
+        window.onload = function() { updateProfileUI(); updateHistoryUI(); }
         function safe(id, fn) { const el = document.getElementById(id); if(el) fn(el); }
 
         // --- NAVIGATION ---
@@ -430,21 +429,9 @@
                 document.getElementById('homepage').classList.remove('hidden-page');
             }
         }
-
-        function startOrder() {
-            if (state.doc) {
-                document.getElementById('homepage').classList.add('hidden-page');
-                showScreen('config');
-            } else {
-                document.getElementById('file-input').click();
-            }
-        }
-
+        function startOrder() { if (state.doc) { document.getElementById('homepage').classList.add('hidden-page'); showScreen('config'); } else { document.getElementById('file-input').click(); } }
         function toggleProfile() { document.getElementById('profile-overlay').classList.toggle('open'); }
-        function showScreen(id) {
-            document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('screen-'+id).classList.add('active');
-        }
+        function showScreen(id) { document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-'+id).classList.add('active'); }
         function gotoCart() { document.getElementById('homepage').classList.add('hidden-page'); showScreen('cart'); updateCartUI(); }
         function addMoreFiles() { document.getElementById('file-input').click(); }
 
@@ -485,10 +472,8 @@
             paper.style.aspectRatio=`${w}/${h}`;
             safe('lbl-w', el => el.innerText=`${w}"`);
             safe('lbl-h', el => el.innerText=`${h}"`);
-            
             const area=document.getElementById('content-area');
             area.innerHTML=''; area.className='content-area';
-            
             if(state.layout==='booklet'){
                 area.classList.add('booklet-grid');
                 await renderSlot(area,state.printList[state.previewIdx]);
@@ -501,7 +486,6 @@
             }
             updateFinishUI();
         }
-
         async function renderSlot(container,pageNum){
             const slot=document.createElement('div'); slot.className='page-slot'; slot.style.width='100%'; slot.style.height='100%';
             let content=null;
@@ -531,104 +515,50 @@
         function clearFinish(){ state.staple=false; state.punch='none'; updateFinishUI(); }
         function toggleStaple(){ state.staple=!state.staple; updateFinishUI(); }
         function setPunch(v){ if(state.layout==='booklet') return; state.punch=(state.punch===v)?'none':v; updateFinishUI(); }
-        
         function updateFinishUI(){ 
             const isBooklet = state.layout === 'booklet';
             safe('fn-punch3', el => { el.disabled = isBooklet; el.style.opacity = isBooklet ? '0.3' : '1'; });
             toggle('fn-none',!state.staple && state.punch==='none'); toggle('fn-staple',state.staple); 
-            safe('fn-punch3', el => { const active = state.punch==='3' && !isBooklet; if(active) { el.classList.add('active'); el.classList.replace('text-gray-500','white'); } else { el.classList.remove('active'); el.classList.replace('white','text-gray-500'); } });
+            safe('fn-punch3', el => { const active = state.punch==='3' && !isBooklet; if(active) { el.classList.add('active'); } else { el.classList.remove('active'); } });
             updateFinishOverlay(); updatePrice();
         }
-
         function updateFinishOverlay(){
             const l=document.getElementById('finish-layer'); l.innerHTML='';
             if(state.staple){ const s=document.createElement('div'); s.className='staple'; s.style.top='4%'; s.style.left='4%'; s.style.transform='rotate(-45deg)'; l.appendChild(s); }
             if(state.punch!=='none'){ for(let i=1;i<=3;i++){ const p=document.createElement('div'); p.className='punch'; p.style.left='2%'; p.style.top=(i/4*100)+'%'; l.appendChild(p); } }
         }
-
         function toggle(id,active){ safe(id, el=>{ if(active){ el.classList.add('active'); } else { el.classList.remove('active'); } }); }
         
-        // --- PRICING ENGINE (With Bulk Discounts) ---
+        // --- PRICING & CART ---
         function updatePrice(){
-            // 1. Get Base Price Per Page
             let basePagePrice = BASE_PRICES[state.size]; 
             if(state.color==='color') basePagePrice += COLOR_ADD[state.size];
-            
-            // 2. Calculate Total Pages in Document
             const totalPages = state.layout==='booklet' ? Math.ceil(state.printList.length/4) : state.printList.length;
-            
-            // 3. Get Quantity
             let qtyInput = document.getElementById('qty-input');
             state.qty = parseInt(qtyInput.value) || 1;
             if(state.qty < 1) { state.qty = 1; qtyInput.value = 1; }
-
-            // 4. Determine Bulk Discount Tier based on QTY
             let appliedTier = BULK_TIERS.find(tier => state.qty >= tier.min && state.qty <= tier.max) || BULK_TIERS[0];
-            
-            // 5. Calculate Discounted Price Per Set
             let pricePerSet = basePagePrice * totalPages;
             let discountedPricePerSet = pricePerSet * (1 - appliedTier.discount);
-
-            // 6. Update UI
             document.getElementById('price-disp').innerText = '$' + discountedPricePerSet.toFixed(2);
-            
-            // Show/Hide Discount Notice
             const notice = document.getElementById('bulk-notice');
-            if(appliedTier.discount > 0) {
-                notice.style.display = 'block';
-                document.getElementById('bulk-tier-name').innerText = appliedTier.name;
-            } else {
-                notice.style.display = 'none';
-            }
+            if(appliedTier.discount > 0) { notice.style.display = 'block'; document.getElementById('bulk-tier-name').innerText = appliedTier.name; } else { notice.style.display = 'none'; }
         }
-
-        // --- CART ---
         function addToCart(){
-            // Calculate final price again to be safe
             updatePrice();
             let finalPricePerSet = parseFloat(document.getElementById('price-disp').innerText.replace('$',''));
-            let totalPrice = finalPricePerSet * state.qty;
-
-            cart.push({
-                file: state.fileName, 
-                desc: `${state.size.toUpperCase()} • ${state.layout.toUpperCase()} • ${state.color.toUpperCase()}`, 
-                qty: state.qty, 
-                price: totalPrice
-            });
-            
-            safe('cart-badge', el => { el.innerText=cart.length; el.style.display='flex'; });
-            gotoCart();
+            cart.push({ file: state.fileName, desc: `${state.size.toUpperCase()} • ${state.layout.toUpperCase()} • ${state.color.toUpperCase()}`, qty: state.qty, price: finalPricePerSet * state.qty });
+            safe('cart-badge', el => { el.innerText=cart.length; el.style.display='flex'; }); gotoCart();
         }
-
         function updateCartUI(){
-            const l=document.getElementById('cart-list'); l.innerHTML='';
-            let tot=0;
-            cart.forEach((i, idx)=>{ 
-                tot+=i.price; 
-                l.innerHTML+=`
-                <div class="cart-item glass-panel">
-                    <div class="flex-1">
-                        <div class="text-sm font-bold text-white truncate">${i.file}</div>
-                        <div class="text-xs text-gray-400 mt-1">${i.desc}</div>
-                        <div class="text-xs font-medium text-accent-500 mt-1">Qty: ${i.qty}</div>
-                    </div>
-                    <div class="flex flex-col items-end justify-between">
-                        <div class="text-white font-bold">$${i.price.toFixed(2)}</div>
-                        <div class="text-red-500 cursor-pointer hover:text-red-400 text-sm" onclick="cart.splice(${idx},1);updateCartUI()"><i class="fa-solid fa-trash-can"></i></div>
-                    </div>
-                </div>`; 
-            });
-            
+            const l=document.getElementById('cart-list'); l.innerHTML=''; let tot=0;
+            cart.forEach((i, idx)=>{ tot+=i.price; l.innerHTML+=`<div class="cart-item glass-panel"><div class="flex-1"><div class="text-sm font-bold text-white truncate">${i.file}</div><div class="text-xs text-gray-400 mt-1">${i.desc}</div><div class="text-xs font-medium text-accent-500 mt-1">Qty: ${i.qty}</div></div><div class="flex flex-col items-end justify-between"><div class="text-white font-bold">$${i.price.toFixed(2)}</div><div class="text-red-500 cursor-pointer hover:text-red-400 text-sm" onclick="cart.splice(${idx},1);updateCartUI()"><i class="fa-solid fa-trash-can"></i></div></div></div>`; });
             let del = state.delivery==='ship' ? 12 : 10; 
-            document.getElementById('sum-sub').innerText = '$' + tot.toFixed(2);
-            document.getElementById('sum-del').innerText = '$' + del.toFixed(2);
-            document.getElementById('sum-total').innerText = '$' + (tot+del).toFixed(2);
+            document.getElementById('sum-sub').innerText = '$' + tot.toFixed(2); document.getElementById('sum-del').innerText = '$' + del.toFixed(2); document.getElementById('sum-total').innerText = '$' + (tot+del).toFixed(2);
         }
         function setDelivery(v){ 
             state.delivery=v; toggle('del-ship',v==='ship'); toggle('del-local',v==='local'); 
-            safe('info-ship', el => el.style.display=v==='ship'?'flex':'none');
-            safe('info-local', el => el.style.display=v==='local'?'flex':'none');
-            updateCartUI(); 
+            safe('info-ship', el => el.style.display=v==='ship'?'flex':'none'); safe('info-local', el => el.style.display=v==='local'?'flex':'none'); updateCartUI(); 
         }
         function checkout(){ 
             if(cart.length === 0) return;
@@ -647,48 +577,19 @@
                 html: `<input id="swal-name" class="swal2-input" placeholder="Full Name" value="${userProfile.name}" style="background:#374151;color:white;border:none;">` +
                       `<input id="swal-city" class="swal2-input" placeholder="City / Company" value="${userProfile.city}" style="background:#374151;color:white;border:none;">` +
                       `<textarea id="swal-addr" class="swal2-textarea" placeholder="Shipping Address" style="background:#374151;color:white;border:none;">${userProfile.addr}</textarea>`,
-                background: '#1f2937', color: '#fff', confirmButtonColor: '#d4af37',
-                focusConfirm: false,
+                background: '#1f2937', color: '#fff', confirmButtonColor: '#d4af37', focusConfirm: false,
                 preConfirm: () => { return { name: document.getElementById('swal-name').value, city: document.getElementById('swal-city').value, addr: document.getElementById('swal-addr').value } }
-            }).then((result) => {
-                if(result.isConfirmed) {
-                    userProfile = result.value;
-                    localStorage.setItem('mp_profile', JSON.stringify(userProfile));
-                    updateProfileUI();
-                }
-            })
+            }).then((result) => { if(result.isConfirmed) { userProfile = result.value; localStorage.setItem('mp_profile', JSON.stringify(userProfile)); updateProfileUI(); } })
         }
         function updateProfileUI() {
-            safe('prof-name', el => el.innerText = userProfile.name);
-            safe('prof-loc', el => el.innerText = userProfile.city || "Tap avatar to edit");
-            safe('prof-saved-addr', el => {
-                el.innerHTML = `<div class="flex items-center text-gray-400 group-hover:text-accent-500 mb-2"><i class="fa-solid fa-location-dot mr-2"></i> <b>Shipping Address</b></div>`;
-                el.innerHTML += userProfile.addr ? `<div class="text-white">${userProfile.addr}</div>` : `<div class="opacity-60 italic">No address saved yet.</div>`;
-            });
+            safe('prof-name', el => el.innerText = userProfile.name); safe('prof-loc', el => el.innerText = userProfile.city || "Tap avatar to edit");
+            safe('prof-saved-addr', el => { el.innerHTML = `<div class="flex items-center text-gray-400 group-hover:text-accent-500 mb-2"><i class="fa-solid fa-location-dot mr-2"></i> <b>Shipping Address</b></div>`; el.innerHTML += userProfile.addr ? `<div class="text-white">${userProfile.addr}</div>` : `<div class="opacity-60 italic">No address saved yet.</div>`; });
         }
         function updateHistoryUI() {
-            const h = document.getElementById('history-list');
-            if(orderHistory.length === 0) { h.innerHTML = "No recent order history."; return; }
-            h.innerHTML = '';
-            orderHistory.slice(0,3).forEach(o => {
-                h.innerHTML += `
-                <div class="cart-item glass-panel" style="padding: 12px;">
-                    <div class="flex-1 overflow-hidden">
-                        <div class="text-sm font-bold text-white truncate">${o.file}</div>
-                        <div class="text-[11px] text-gray-400 mt-1">${o.date} • ${o.desc}</div>
-                    </div>
-                    <button class="accent-btn px-3 py-1 rounded-lg text-[11px] h-8 shadow-none" onclick="reorder('${o.file}')">Reorder</button>
-                </div>`;
-            });
+            const h = document.getElementById('history-list'); if(orderHistory.length === 0) { h.innerHTML = "No recent order history."; return; } h.innerHTML = '';
+            orderHistory.slice(0,3).forEach(o => { h.innerHTML += `<div class="cart-item glass-panel" style="padding: 12px;"><div class="flex-1 overflow-hidden"><div class="text-sm font-bold text-white truncate">${o.file}</div><div class="text-[11px] text-gray-400 mt-1">${o.date} • ${o.desc}</div></div><button class="accent-btn px-3 py-1 rounded-lg text-[11px] h-8 shadow-none" onclick="reorder('${o.file}')">Reorder</button></div>`; });
         }
-        function useAddress() {
-            if(userProfile.addr) {
-                safe('ship-name', el => el.value = userProfile.name);
-                safe('ship-addr', el => el.value = userProfile.addr);
-                toggleProfile();
-                Swal.fire({icon:'success', title:'Address Applied', toast:true, position:'top-end', showConfirmButton:false, timer:2000, background:'#1f2937', color:'#fff'});
-            } else { editProfile(); }
-        }
+        function useAddress() { if(userProfile.addr) { safe('ship-name', el => el.value = userProfile.name); safe('ship-addr', el => el.value = userProfile.addr); toggleProfile(); Swal.fire({icon:'success', title:'Address Applied', toast:true, position:'top-end', showConfirmButton:false, timer:2000, background:'#1f2937', color:'#fff'}); } else { editProfile(); } }
         function reorder(n) { cart.push({file:n, desc:"Reorder", qty:1, price:10.00}); updateCartUI(); gotoCart(); toggleProfile(); }
         function parsePageRange(val){ if (!val.trim()) state.printList = Array.from({length: state.pages}, (_, i) => i + 1); else { const list = new Set(); val.split(',').forEach(p => { if (p.includes('-')) { const [s,e]=p.split('-').map(Number); for(let i=s;i<=e;i++) if(i<=state.pages) list.add(i); } else { const n=Number(p); if(n<=state.pages) list.add(n); } }); state.printList = Array.from(list).sort((a,b)=>a-b); } state.previewIdx = 0; renderPreview(); updatePrice(); }
         function prevPage(){ if(state.previewIdx>0){ state.previewIdx--; renderPreview(); } }
